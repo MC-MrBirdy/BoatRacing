@@ -55,7 +55,7 @@ public class TeamManager {
     Team team = new Team(id, name, color, leader.getUniqueId());
         teams.put(id, team);
         save();
-        leader.sendMessage(Text.colorize(plugin.pref() + "&aCreated team '" + name + "'"));
+        leader.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("team.created", "name", name)));
         return team;
     }
 

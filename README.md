@@ -14,11 +14,22 @@
 
 An F1‒style ice boat racing plugin for Bukkit/Spigot (compatible with Paper/Purpur) with a clean, vanilla‒like GUI. Manage teams, configure tracks with the built‒in BoatRacing selection tool, run timed races with checkpoints, pit area penalties, and a guided setup wizard.
 
-> Status: Public release (1.0.9)
+> Status: Public release (1.1.0)
 
 See the changelog in [CHANGELOG.md](https://github.com/Jaie55/BoatRacing/blob/main/CHANGELOG.md).
 
 This is how to test the plugin to validate its behavior after each update: see the QA checklist in [CHECKLIST.md](CHECKLIST.md)
+
+## What's new (1.1.0)
+Languages and player controls:
+- **Multi-language support**: messages are now fully translatable. Configure language in config.yml: `language: "en"` (English, default) or `language: "es"` (Español — Spain). Language files are automatically extracted to the plugin folder. Reload with `/boatracing reload` to switch languages without restart.
+- **Player-controlled race management**: new config option `player-actions.allow-player-race-start` (default: false) lets non-admin players open, start, force-start and stop races. Can be overridden per-track via `racing.allow-player-start: true` in individual track configs.
+- **Reward system**: full customizable race-end rewards. Configure under `racing.rewards` with position-specific commands, messages and broadcasts. Supports placeholders: {player}, {position}, {time}, {track}, {laps}. Per-track rewards override the global config.
+- **Performance**: PlayerMoveEvent throttle — checkpoint detection now only triggers when entering a new block, not every sub-meter movement.
+- **Complete i18n infrastructure**: all plugin messages (race, setup, team, admin) updated to use the new externalized message system with dynamic placeholder support.
+
+Previous versions:
+- **1.0.9**: Compatibility across 1.19–1.21.8; safe boat/raft materials; Bukkit/Spigot classification on Paper.
 
 ## What’s new (1.0.9)
 Compatibility and fixes:

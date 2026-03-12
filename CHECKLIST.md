@@ -1,5 +1,41 @@
 README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 
+## What to verify for 1.1.0
+- Multi-language support:
+	- With `language: "en"` (default), all messages appear in English; plugin loads messages_en.yml.
+	- With `language: "es"`, all messages appear in Español (España); plugin loads messages_es.yml.
+	- With `language: "zh_TW"`, all messages appear in Traditional Chinese; plugin loads messages_zh_TW.yml.
+	- With `language: "ru"`, all messages appear in Russian; plugin loads messages_ru.yml.
+	- In `messages_zh_TW.yml` and `messages_ru.yml`, an explicit warning indicates translations are unofficial and should be reviewed.
+	- Both files exist in the data folder after first run. `/boatracing reload` switches language without restart.
+	- Invalid language values fall back to English.
+	- Setup Wizard navigation/help lines must never show raw keys (e.g. `setup.wizard.nav-label`); labels render localized text correctly.
+- Player-controlled race management:
+	- With `player-actions.allow-player-race-start: false` (default), only admins can open/start/force/stop races; non-admins get permission denied.
+	- With `player-actions.allow-player-race-start: true`, any player can open/start/force/stop races on all tracks.
+	- Per-track override: set `racing.allow-player-start: true` in tracks/mytrack.yml to allow player race management only on that track.
+	- Admins always bypass the check and can manage races regardless of settings.
+- Reward system behavior:
+	- With `racing.rewards.enabled: false` (default), no rewards are given; race ends normally.
+	- With `racing.rewards.enabled: true`, at race end, rewards are given to racers by position (1st/2nd/3rd/default).
+	- Rewards can execute console commands (e.g. give items, add money) with placeholders: {player}, {position}, {time}, {track}, {laps}.
+	- Rewards can send player-specific messages and broadcast messages, also supporting placeholders.
+	- Custom per-track rewards can be defined (overrides global config for that track).
+- PlayerMoveEvent throttle:
+	- During a race, checkpoint detection no longer triggers on every sub-meter movement within the same block; only when entering a new block.
+	- Performance should improve on high-player-count servers.
+- i18n system:
+	- All user-facing text (race, setup, team, admin, plugin messages) is loaded from external files (messages_en.yml or messages_es.yml).
+	- `/boatracing reload` reloads messages without restart. New message keys in future versions merge automatically without overwriting custom values.
+	- Placeholders in messages work correctly (e.g. {player}, {track}, {laps}).
+- Race command flow:
+	- `race open/start/force/stop` commands now load the track BEFORE checking permissions, enabling per-track player-start checks.
+	- Track existence and validity checks happen first; permission check uses the new canManageRace(Player) helper.
+	- Help text shows admin commands only to admins or players with player-start enabled.
+- Version and docs:
+	- Project version is 1.1.0. CHANGELOG.md has 1.1.0 section. CHECKLIST.md reflects this version.
+	- Config includes language setting with clear documentation.
+
 ## What to verify for 1.0.9
 - Compatibility policy:
 	- Server range: 1.19, 1.20.1/1.20.4, 1.21/1.21.1/1.21.8 boot without errors. `/boatracing version` works.

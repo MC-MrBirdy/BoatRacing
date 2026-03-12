@@ -49,13 +49,13 @@ public final class Text {
         return c("&r" + text).decoration(TextDecoration.ITALIC, false);
     }
 
-    // Clickable command helper: blue label, suggest command on click, hover shows the command
+    // Clickable command helper: blue label, run command on click, hover shows the command
     public static Component cmd(String labelLegacy, String command) {
         if (labelLegacy == null) labelLegacy = "";
         if (command == null) command = "";
         Component base = c(labelLegacy).decoration(TextDecoration.ITALIC, false);
         return base
-            .clickEvent(ClickEvent.suggestCommand(command))
-            .hoverEvent(HoverEvent.showText(c("&7Click to paste: &b" + command)));
+            .clickEvent(ClickEvent.runCommand(command))
+            .hoverEvent(HoverEvent.showText(c("&b" + command)));
     }
 }

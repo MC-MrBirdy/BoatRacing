@@ -1,21 +1,21 @@
 package es.jaie55.boatracing.update;
 
+import es.jaie55.boatracing.BoatRacingPlugin;
 import es.jaie55.boatracing.util.Text;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.plugin.Plugin;
 
 public class UpdateNotifier implements Listener {
-    private final Plugin plugin;
+    private final BoatRacingPlugin plugin;
     private final UpdateChecker checker;
     private final String prefix;
     // Throttle network checks triggered by joins (ms)
     private volatile long lastJoinCheckMs = 0L;
     private static final long JOIN_CHECK_COOLDOWN_MS = 60_000L; // 60s
 
-    public UpdateNotifier(Plugin plugin, UpdateChecker checker, String prefix) {
+    public UpdateNotifier(BoatRacingPlugin plugin, UpdateChecker checker, String prefix) {
         this.plugin = plugin;
         this.checker = checker;
         this.prefix = prefix;
@@ -32,9 +32,9 @@ public class UpdateNotifier implements Listener {
             int behind = checker.getBehindCount();
             String latest = checker.getLatestVersion() != null ? checker.getLatestVersion() : "latest";
             String current = plugin.getDescription().getVersion();
-            p.sendMessage(Text.colorize(prefix + "&eYou're " + behind + " version(s) out of date!"));
-            p.sendMessage(Text.colorize(prefix + "&eYou are running &6" + current + "&e, the latest version is &6" + latest + "&e."));
-            p.sendMessage(Text.colorize(prefix + "&eDownload: &b" + checker.getLatestUrl()));
+            p.sendMessage(Text.colorize(prefix + plugin.msg().get("update.outdated", "behind", behind)));
+            p.sendMessage(Text.colorize(prefix + plugin.msg().get("update.version-info", "current", current, "latest", latest)));
+            p.sendMessage(Text.colorize(prefix + plugin.msg().get("update.download-link", "url", checker.getLatestUrl())));
         } else if (checker != null) {
             // If result is stale or not yet checked, trigger a quick check (throttled)
             long now = System.currentTimeMillis();
@@ -46,9 +46,9 @@ public class UpdateNotifier implements Listener {
                         int behind = checker.getBehindCount();
                         String latest = checker.getLatestVersion() != null ? checker.getLatestVersion() : "latest";
                         String current = plugin.getDescription().getVersion();
-                        p.sendMessage(Text.colorize(prefix + "&eYou're " + behind + " version(s) out of date!"));
-                        p.sendMessage(Text.colorize(prefix + "&eYou are running &6" + current + "&e, the latest version is &6" + latest + "&e."));
-                        p.sendMessage(Text.colorize(prefix + "&eDownload: &b" + checker.getLatestUrl()));
+                        p.sendMessage(Text.colorize(prefix + plugin.msg().get("update.outdated", "behind", behind)));
+                        p.sendMessage(Text.colorize(prefix + plugin.msg().get("update.version-info", "current", current, "latest", latest)));
+                        p.sendMessage(Text.colorize(prefix + plugin.msg().get("update.download-link", "url", checker.getLatestUrl())));
                     }
                 }, 20L * 5);
             }

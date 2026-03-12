@@ -1,4 +1,5 @@
 prefix: "&6[BoatRacing] "
+language: "en"  # Language: "en" (English), "es" (Español), "zh_TW" (繁體中文, unofficial), "ru" (Русский, unofficial)
 max-members-per-team: 2
 player-actions:
   # Allow non-admin players to perform these actions
@@ -8,6 +9,9 @@ player-actions:
   allow-team-disband: false
   allow-set-boat: true
   allow-set-number: true
+  # Allow non-admin players to open, start, force-start and stop races.
+  # Can also be overridden per-track in tracks/<name>.yml under racing.allow-player-start
+  allow-player-race-start: false
 bstats:
   enabled: true
   # Anonymous usage metrics via bStats. Set to false to opt-out.
@@ -18,6 +22,13 @@ updates:
   # Notify admins with permission in-game on join
   notify-admins: true
 racing:
+  # Default values for all tracks. Each track can override these
+  # in its own tracks/<name>.yml file under a 'racing:' section.
+  # Example in tracks/speedway.yml:
+  #   racing:
+  #     laps: 5
+  #     mandatory-pitstops: 1
+  #     pit-penalty-seconds: 3.0
   laps: 3
   mandatory-pitstops: 0  # Number of mandatory pit stops per racer per race; 0 to disable
   pit-penalty-seconds: 5.0
@@ -50,3 +61,41 @@ racing:
   # Registration announce message template
   # Placeholders: {track} = track name, {laps} = total laps, {cmd} = suggested join command
   registration-announce: "&6[BoatRacing] &eNew race on &f{track}&e (&f{laps}&e laps). &7Join with &f{cmd}"
+
+  # Rewards given to players when a race ends.
+  # Fully customizable per finishing position.
+  # Placeholders available in commands, messages, and broadcast:
+  #   {player}   - player name
+  #   {position} - finishing position (1, 2, 3...)
+  #   {time}     - formatted finish time (e.g. 1:23.456)
+  #   {track}    - track name
+  #   {laps}     - total laps
+  rewards:
+    enabled: false  # Set to true to activate rewards
+    positions:
+      # 1st place rewards
+      1:
+        commands:
+          # - "give {player} diamond 5"
+          # - "eco give {player} 1000"
+        messages:
+          - "&6&l1st Place! &eCongratulations, you won the race on &f{track}&e!"
+        broadcast: []
+      # 2nd place rewards
+      2:
+        commands: []
+        messages:
+          - "&7&l2nd Place! &7Nice race on &f{track}&7!"
+        broadcast: []
+      # 3rd place rewards
+      3:
+        commands: []
+        messages:
+          - "&c&l3rd Place! &7Good effort on &f{track}&7!"
+        broadcast: []
+      # Fallback for any position not listed above
+      default:
+        commands: []
+        messages:
+          - "&7You finished the race on &f{track}&7 in position &f#{position}&7."
+        broadcast: []

@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.1.0 — 2026-03-12
+### Added
+- **Multi-language support**: messages system now supports English (default) and Español (España). Configure the language in config.yml via the `language` setting ("en" or "es"). All user-facing text is externalized in messages_en.yml or messages_es.yml (stored in the plugin data folder after first run).
+- **New community translations**: added Traditional Chinese (`messages_zh_TW.yml`) and Russian (`messages_ru.yml`) language files. Both include a clear warning that they are unofficial translations and should be reviewed.
+- **Player-controlled race management**: new config option `player-actions.allow-player-race-start` (default: false) lets non-admin players open, start, force-start and stop races globally. Per-track override available via `racing.allow-player-start` in tracks/<name>.yml (uses the track config override system to allow selective enablement per track).
+- **Reward system**: fully customizable race completion rewards with support for finishing positions, configurable commands, player messages, and broadcast announcements. Positioned in config.yml under `racing.rewards` with enable/disable toggle, position-specific settings (1st/2nd/3rd/default), and placeholder support ({player}, {position}, {time}, {track}, {laps}).
+- **Race performance optimization**: PlayerMoveEvent listener now throttles unnecessary checkpoint checks by comparing only when the player moves to a different block (not within the same block).
+- **Complete i18n infrastructure**: MessageManager utility loads language files dynamically; all race, setup, team, and admin commands now use externalized messages. New messages can be added and will merge with defaults on reload without overwriting customizations.
+
+### Changed
+- **Permission flow refinement for race commands**: `race open/start/force/stop` now check track existence and load per-track settings before validating permissions, enabling per-track player-start override checks in a single canManageRace() helper.
+- All hardcoded messages across the plugin (BoatRacingPlugin, RaceManager, AdminGUI, AdminRaceGUI, AdminTracksGUI, UpdateNotifier, SetupWizard, TeamGUI, TrackConfig) replaced with i18n `msg().get()` calls.
+- Config option for team actions restructured: moved and renamed from various checks to `player-actions` section for consistency.
+
+### Fixed
+- **Setup Wizard i18n key mapping**: fixed wrong translation key paths in wizard navigation/summary prompts that could show raw keys (for example `setup.wizard.nav-label`) instead of localized text.
+
+### Docs
+- CHANGELOG and CHECKLIST updated for 1.1.0 with full feature list and verification steps.
+- Version number incremented from 1.0.9 to 1.1.0.
+
 ## 1.0.9 — 2025-08-19
 ### Added / Changed
 - Official support range declared: 1.19 → 1.21.8 (Bukkit/Spigot compatible; works on Paper/Purpur). Requires Java 17+; plugin.yml api-version set to 1.19.
