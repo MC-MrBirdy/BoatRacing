@@ -229,7 +229,7 @@ public class TeamManager {
             if (migrated) {
                 // Persist migrated data into racers.yml
                 save();
-                try { plugin.getLogger().info("Migrated racer numbers and boat types from old config.yml into racers.yml"); } catch (Throwable ignored) {}
+                try { plugin.getLogger().info("Migrated racer numbers and boat types from old config.yml into racers.yml"); } catch (Exception ignored) { plugin.getLogger().finer("Migration log failed: " + ignored.getMessage()); }
             }
         }
     }

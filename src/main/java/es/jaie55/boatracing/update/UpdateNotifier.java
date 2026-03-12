@@ -40,7 +40,7 @@ public class UpdateNotifier implements Listener {
             long now = System.currentTimeMillis();
             if (!checker.isChecked() || (now - lastJoinCheckMs) >= JOIN_CHECK_COOLDOWN_MS) {
                 lastJoinCheckMs = now;
-                try { checker.checkAsync(); } catch (Throwable ignored) {}
+                try { checker.checkAsync(); } catch (Exception ignored) { plugin.getLogger().finer("Async update check failed on join: " + ignored.getMessage()); }
                 org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     if (checker.isChecked() && checker.isOutdated() && p.isOnline() && p.hasPermission("boatracing.update")) {
                         int behind = checker.getBehindCount();

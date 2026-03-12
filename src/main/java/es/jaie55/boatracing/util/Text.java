@@ -13,13 +13,13 @@ import java.util.stream.Collectors;
 public final class Text {
     private Text() {}
 
-    // String-based color (for quick sendMessage(String))
+    // String-based color helper for sendMessage(String)
     public static String colorize(String s) {
         if (s == null) return "";
         return s.replace('&', '§');
     }
 
-    // Components (Adventure) from &-codes
+    // Helpers to build Adventure components from &-codes
     public static Component c(String legacyAmpersand) {
         if (legacyAmpersand == null) return Component.empty();
         return LegacyComponentSerializer.legacyAmpersand().deserialize(legacyAmpersand);

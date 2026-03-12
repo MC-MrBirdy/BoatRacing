@@ -66,7 +66,9 @@ public class BoatRacingPlugin extends JavaPlugin {
         // Ensure new default keys are merged into existing config.yml on updates
         try {
             mergeConfigDefaults();
-        } catch (Throwable t) {
+        } catch (Exception t) {
+            // Log the problem but continue startup; specific exception types can be handled
+            // if needed in the future.
             getLogger().warning("Failed to merge default config values: " + t.getMessage());
         }
         this.prefix = Text.colorize(getConfig().getString("prefix", "&6[BoatRacing] "));
@@ -103,7 +105,7 @@ public class BoatRacingPlugin extends JavaPlugin {
                 new org.bstats.bukkit.Metrics(this, pluginId);
                 getLogger().info("Starting Metrics. Opt-out using the global bStats config.");
             }
-        } catch (Throwable t) {
+        } catch (Exception t) {
             getLogger().warning("Failed to initialize bStats metrics: " + t.getMessage());
         }
 
@@ -137,26 +139,26 @@ public class BoatRacingPlugin extends JavaPlugin {
             // print a console WARN immediately (single time per version); hourly reminders handle repetition.
             long period = 20L * 60L * 5L; // 5 minutes
             Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-                try {
-                    if (!getConfig().getBoolean("updates.enabled", true)) return;
-                    updateChecker.checkAsync();
-                    // Evaluate result shortly after on the main thread to avoid race conditions
-                    Bukkit.getScheduler().runTaskLater(this, () -> {
+                    try {
                         if (!getConfig().getBoolean("updates.enabled", true)) return;
-                        if (!getConfig().getBoolean("updates.console-warn", true)) return;
-                        if (updateChecker.isChecked() && updateChecker.isOutdated()) {
-                            String latest = updateChecker.getLatestVersion();
-                            if (latest != null && (lastConsoleAnnouncedVersion == null || !latest.equals(lastConsoleAnnouncedVersion))) {
-                                int behind = updateChecker.getBehindCount();
-                                String current = getDescription().getVersion();
-                                Bukkit.getLogger().warning("[" + getName() + "] An update is available. You are " + behind + " version(s) out of date.");
-                                Bukkit.getLogger().warning("[" + getName() + "] You are running " + current + ", the latest version is " + latest + ".");
-                                Bukkit.getLogger().warning("[" + getName() + "] Update at " + updateChecker.getLatestUrl());
-                                lastConsoleAnnouncedVersion = latest; // avoid duplicate console prints for the same version here
+                        updateChecker.checkAsync();
+                        // Evaluate result shortly after on the main thread to avoid race conditions
+                        Bukkit.getScheduler().runTaskLater(this, () -> {
+                            if (!getConfig().getBoolean("updates.enabled", true)) return;
+                            if (!getConfig().getBoolean("updates.console-warn", true)) return;
+                            if (updateChecker.isChecked() && updateChecker.isOutdated()) {
+                                String latest = updateChecker.getLatestVersion();
+                                if (latest != null && (lastConsoleAnnouncedVersion == null || !latest.equals(lastConsoleAnnouncedVersion))) {
+                                    int behind = updateChecker.getBehindCount();
+                                    String current = getDescription().getVersion();
+                                    Bukkit.getLogger().warning("[" + getName() + "] An update is available. You are " + behind + " version(s) out of date.");
+                                    Bukkit.getLogger().warning("[" + getName() + "] You are running " + current + ", the latest version is " + latest + ".");
+                                    Bukkit.getLogger().warning("[" + getName() + "] Update at " + updateChecker.getLatestUrl());
+                                    lastConsoleAnnouncedVersion = latest; // avoid duplicate console prints for the same version here
+                                }
                             }
-                        }
-                    }, 20L * 8L);
-                } catch (Throwable ignored) {}
+                        }, 20L * 8L);
+                    } catch (Exception ignored) { getLogger().finer("Periodic update check failed: " + ignored.getMessage()); }
             }, period, period);
             // Console reminder every hour:
             // - Warn immediately if we already know we're outdated
@@ -169,7 +171,7 @@ public class BoatRacingPlugin extends JavaPlugin {
             Bukkit.getScheduler().runTaskTimer(this, () -> {
                 if (!getConfig().getBoolean("updates.enabled", true)) return;
                 if (!getConfig().getBoolean("updates.console-warn", true)) return;
-                try { updateChecker.checkAsync(); } catch (Throwable ignored) {}
+                try { updateChecker.checkAsync(); } catch (Exception ignored) { getLogger().finer("Update check failed: " + ignored.getMessage()); }
                 Bukkit.getScheduler().runTaskLater(this, () -> {
                     if (!getConfig().getBoolean("updates.enabled", true)) return;
                     if (!getConfig().getBoolean("updates.console-warn", true)) return;
@@ -287,7 +289,7 @@ public class BoatRacingPlugin extends JavaPlugin {
                 if (teamManager != null) teamManager.save();
                 reloadConfig();
                 // After reload, also merge any new defaults into config.yml
-                try { mergeConfigDefaults(); } catch (Throwable ignored) {}
+                try { mergeConfigDefaults(); } catch (Exception ignored) { getLogger().finer("mergeConfigDefaults() during reload failed: " + ignored.getMessage()); }
                 this.prefix = Text.colorize(getConfig().getString("prefix", "&6[BoatRacing] "));
                 // Recreate team manager to re-read data and settings
                 this.teamManager = new TeamManager(this);
