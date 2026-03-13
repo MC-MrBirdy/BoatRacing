@@ -4,6 +4,7 @@ import es.jaie55.boatracing.BoatRacingPlugin;
 import es.jaie55.boatracing.team.Team;
 import es.jaie55.boatracing.track.Region;
 import es.jaie55.boatracing.track.TrackConfig;
+import es.jaie55.boatracing.util.SchedulerCompat;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -16,6 +17,7 @@ import org.bukkit.scoreboard.Criteria;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import java.lang.reflect.Method;
 import java.util.*;
 
 public class RaceManager {
@@ -47,7 +49,8 @@ public class RaceManager {
     // Additional random jitter [0..jitter] seconds added to lights out
     private double lightsOutJitterSeconds;
     private final LinkedHashSet<UUID> registered = new LinkedHashSet<>();
-    private int registrationTaskId = -1;
+    private SchedulerCompat.TaskHandle registrationTask;
+    private long registrationSessionId = 0L;
     private final Map<UUID, Long> preStartPenalties = new HashMap<>();
     // Mandatory pitstops per racer
     private int mandatoryPitstops;
@@ -61,11 +64,25 @@ public class RaceManager {
     private boolean abShowCP;
     private boolean abShowTime;
     private boolean abShowPit;
+    // Optional registration lobby
+    private boolean lobbyEnabled;
+    private boolean lobbyReturnOnLeave;
+    private String lobbyWorld;
+    private double lobbyX;
+    private double lobbyY;
+    private double lobbyZ;
+    private float lobbyYaw;
+    private float lobbyPitch;
+    private final Map<UUID, Location> preLobbyLocations = new HashMap<>();
 
     // Scoreboard handling
-    private org.bukkit.scheduler.BukkitTask scoreboardTask;
+    private SchedulerCompat.TaskHandle scoreboardTask;
     private final Map<UUID, Scoreboard> scoreboards = new HashMap<>();
     private final Map<UUID, Scoreboard> previousScoreboards = new HashMap<>();
+    private final Set<UUID> sidebarDisabledPlayers = new HashSet<>();
+    private final Set<UUID> overlayPlayers = new HashSet<>();
+    private final Map<UUID, Objective> previousSidebarObjectives = new HashMap<>();
+    private final Set<UUID> simpleScoreHiddenByBoatRacing = new HashSet<>();
     // Per-player pitstop count for current lap
     private final Map<UUID, Integer> pitCount = new HashMap<>();
     // Sector leader times per lap: lap -> (checkpointIndex -> first time/ms)
@@ -104,6 +121,14 @@ public class RaceManager {
         this.abShowCP = cfg.getBoolean("racing.ui.actionbar.show-checkpoints", true);
         this.abShowTime = cfg.getBoolean("racing.ui.actionbar.show-time", true);
         this.abShowPit = cfg.getBoolean("racing.ui.actionbar.show-pitstops", true);
+        this.lobbyEnabled = cfg.getBoolean("racing.lobby.enabled", false);
+        this.lobbyReturnOnLeave = cfg.getBoolean("racing.lobby.return-on-leave", true);
+        this.lobbyWorld = cfg.getString("racing.lobby.world", "world");
+        this.lobbyX = cfg.getDouble("racing.lobby.x", 0.0);
+        this.lobbyY = cfg.getDouble("racing.lobby.y", 80.0);
+        this.lobbyZ = cfg.getDouble("racing.lobby.z", 0.0);
+        this.lobbyYaw = (float) cfg.getDouble("racing.lobby.yaw", 0.0);
+        this.lobbyPitch = (float) cfg.getDouble("racing.lobby.pitch", 0.0);
     }
 
     // Allow updating mandatory pitstops at runtime from Setup
@@ -121,12 +146,17 @@ public class RaceManager {
     // --- Race lifecycle ---
     public void startRace(Collection<Player> participants) {
         if (track.getFinish() == null) throw new IllegalStateException("Finish region is not set");
+        // Starting a race must always close any registration window/timer first.
+        closeRegistrationWindow();
         running = true;
         startTime = System.currentTimeMillis();
         states.clear();
     sectorLeaderTimes.clear();
     lapLeaderFinishTimes.clear();
         for (Player p : participants) {
+            if (trySimpleScoreHide(p)) {
+                simpleScoreHiddenByBoatRacing.add(p.getUniqueId());
+            }
             RaceState st = new RaceState();
             Long pre = enableFalseStartPenalty ? preStartPenalties.remove(p.getUniqueId()) : null;
             if (pre != null && pre > 0) st.penaltyMillis += pre;
@@ -148,15 +178,12 @@ public class RaceManager {
 
     public void reset() {
         running = false;
-        registering = false;
+        closeRegistrationWindow();
         states.clear();
         startTime = 0L;
         registered.clear();
         preStartPenalties.clear();
-        if (registrationTaskId != -1) {
-            Bukkit.getScheduler().cancelTask(registrationTaskId);
-            registrationTaskId = -1;
-        }
+        preLobbyLocations.clear();
         stopScoreboard();
     }
 
@@ -375,9 +402,11 @@ public class RaceManager {
     // --- Registration ---
     public boolean openRegistration(int laps, Long secondsOverride) {
         if (running || registering) return false;
+        stopRegistrationTimer();
         setTotalLaps(laps);
         registered.clear();
         registering = true;
+        final long sessionId = ++registrationSessionId;
         long seconds = secondsOverride != null ? secondsOverride : registrationSeconds;
         long endAt = System.currentTimeMillis() + (seconds * 1000L);
 
@@ -395,14 +424,15 @@ public class RaceManager {
         broadcast(color(line));
         broadcast(color(plugin.msg().get("race.registration.closes-in", "seconds", String.valueOf(seconds))));
 
-        registrationTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
+        registrationTask = SchedulerCompat.runTimer(plugin, new Runnable() {
             long lastAnnounced = seconds;
             @Override public void run() {
+                if (!registering || sessionId != registrationSessionId) {
+                    return;
+                }
                 long remain = Math.max(0, (endAt - System.currentTimeMillis()) / 1000L);
                 if (remain <= 0) {
-                    Bukkit.getScheduler().cancelTask(registrationTaskId);
-                    registrationTaskId = -1;
-                    registering = false;
+                    closeRegistrationWindow();
                     startFromRegistered();
                     return;
                 }
@@ -424,6 +454,7 @@ public class RaceManager {
     public boolean join(Player p) {
         if (!registering || running) return false;
         registered.add(p.getUniqueId());
+        teleportToLobbyIfEnabled(p);
         p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.joined", "laps", String.valueOf(totalLaps))));
         p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.8f, 1.3f);
         broadcast(color(plugin.msg().get("race.registration.player-joined", "player", p.getName(), "count", String.valueOf(registered.size()))));
@@ -434,6 +465,7 @@ public class RaceManager {
         if (!registering || running) return false;
         boolean removed = registered.remove(p.getUniqueId());
         if (removed) {
+            restoreFromLobbyIfNeeded(p, true);
             p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.left")));
             p.playSound(p.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.8f, 1.1f);
             broadcast(color(plugin.msg().get("race.registration.player-left", "player", p.getName(), "count", String.valueOf(registered.size()))));
@@ -443,23 +475,38 @@ public class RaceManager {
 
     public boolean forceStart() {
         if (running) return false;
-        if (registering) {
-            registering = false;
-            if (registrationTaskId != -1) { Bukkit.getScheduler().cancelTask(registrationTaskId); registrationTaskId = -1; }
-        }
+        closeRegistrationWindow();
         return startFromRegistered();
     }
 
+    public void closeRegistrationWindow() {
+        registering = false;
+        stopRegistrationTimer();
+    }
+
     private boolean startFromRegistered() {
+        if (running) return false;
         List<Player> participants = new ArrayList<>();
         for (UUID id : registered) {
             Player p = Bukkit.getPlayer(id);
             if (p != null && p.isOnline()) participants.add(p);
         }
-        if (participants.isEmpty()) { broadcast(color(plugin.msg().get("race.cancelled-no-participants"))); return false; }
+        if (participants.isEmpty()) {
+            restoreLobbyForRegistered(true);
+            preLobbyLocations.clear();
+            broadcast(color(plugin.msg().get("race.cancelled-no-participants")));
+            return false;
+        }
         List<Player> placed = placeAtStartsWithBoats(participants);
-        if (placed.isEmpty()) { broadcast(color(plugin.msg().get("race.cancelled-no-slots"))); return false; }
+        if (placed.isEmpty()) {
+            restoreLobbyForRegistered(true);
+            preLobbyLocations.clear();
+            broadcast(color(plugin.msg().get("race.cancelled-no-slots")));
+            return false;
+        }
         if (placed.size() < participants.size()) broadcast(color(plugin.msg().get("race.some-not-placed")));
+        // Race is starting; no need to restore old locations for participants.
+        preLobbyLocations.clear();
         startRaceWithCountdown(placed);
         return true;
     }
@@ -467,6 +514,7 @@ public class RaceManager {
     public boolean cancelRace() {
         if (!running) return false;
         running = false;
+        closeRegistrationWindow();
         states.clear();
         broadcast(color(plugin.msg().get("race.cancelled-general")));
         stopScoreboard();
@@ -475,12 +523,62 @@ public class RaceManager {
 
     public boolean cancelRegistration(boolean announce) {
         if (!registering) return false;
-        registering = false;
+        closeRegistrationWindow();
         int count = registered.size();
+        restoreLobbyForRegistered(true);
         registered.clear();
-        if (registrationTaskId != -1) { Bukkit.getScheduler().cancelTask(registrationTaskId); registrationTaskId = -1; }
+        preLobbyLocations.clear();
         if (announce) broadcast(color(plugin.msg().get("race.registration.cancelled", "count", String.valueOf(count))));
         return true;
+    }
+
+    private void stopRegistrationTimer() {
+        registrationSessionId++;
+        if (registrationTask != null) {
+            try { registrationTask.cancel(); } catch (Exception ignored) { plugin.getLogger().finer("Failed to cancel registration timer: " + ignored.getMessage()); }
+            registrationTask = null;
+        }
+    }
+
+    private Location getLobbyLocation() {
+        if (!lobbyEnabled) return null;
+        if (lobbyWorld == null || lobbyWorld.isEmpty()) return null;
+        org.bukkit.World world = Bukkit.getWorld(lobbyWorld);
+        if (world == null) return null;
+        return new Location(world, lobbyX, lobbyY, lobbyZ, lobbyYaw, lobbyPitch);
+    }
+
+    private void teleportToLobbyIfEnabled(Player p) {
+        if (p == null || !p.isOnline()) return;
+        Location lobby = getLobbyLocation();
+        if (lobby == null) return;
+        preLobbyLocations.putIfAbsent(p.getUniqueId(), p.getLocation().clone());
+        p.teleport(lobby);
+        p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-teleported")));
+    }
+
+    private void restoreFromLobbyIfNeeded(Player p, boolean onlyWhenLeaving) {
+        if (p == null || !p.isOnline()) return;
+        if (onlyWhenLeaving && !lobbyReturnOnLeave) return;
+        Location prev = preLobbyLocations.remove(p.getUniqueId());
+        if (prev != null && prev.getWorld() != null) {
+            p.teleport(prev);
+            p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-returned")));
+        }
+    }
+
+    private void restoreLobbyForRegistered(boolean onlyWhenLeaving) {
+        if (onlyWhenLeaving && !lobbyReturnOnLeave) return;
+        for (UUID id : new ArrayList<>(registered)) {
+            Player p = Bukkit.getPlayer(id);
+            if (p != null && p.isOnline()) {
+                Location prev = preLobbyLocations.get(id);
+                if (prev != null && prev.getWorld() != null) {
+                    p.teleport(prev);
+                    p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-returned")));
+                }
+            }
+        }
     }
 
     public List<Player> placeAtStartsWithBoats(List<Player> participants) {
@@ -557,7 +655,7 @@ public class RaceManager {
             // Try to set the boat wood type based on the player's selection. Do it next tick for reliability.
             if (matName != null) {
                 final String matNameFinal = matName;
-                Bukkit.getScheduler().runTask(plugin, () -> {
+                SchedulerCompat.runNow(plugin, () -> {
                     if (vehicleRef[0] != null) {
                         applyBoatVariantUniversal(vehicleRef[0], matNameFinal);
                     }
@@ -565,7 +663,7 @@ public class RaceManager {
             }
 
             if (!vehicleRef[0].addPassenger(p)) {
-                Bukkit.getScheduler().runTask(plugin, () -> {
+                SchedulerCompat.runNow(plugin, () -> {
                     if (vehicleRef[0] != null && vehicleRef[0].isValid()) vehicleRef[0].addPassenger(p);
                 });
             }
@@ -650,12 +748,12 @@ public class RaceManager {
         }
 
         final int[] idx = {0};
-        final org.bukkit.scheduler.BukkitTask[] taskRef = new org.bukkit.scheduler.BukkitTask[1];
-    final org.bukkit.scheduler.BukkitTask[] checkTaskRef = new org.bukkit.scheduler.BukkitTask[1];
+        final SchedulerCompat.TaskHandle[] taskRef = new SchedulerCompat.TaskHandle[1];
+    final SchedulerCompat.TaskHandle[] checkTaskRef = new SchedulerCompat.TaskHandle[1];
 
         // False start checker (every 2 ticks) until GO
     if (enableFalseStartPenalty) {
-            checkTaskRef[0] = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            checkTaskRef[0] = SchedulerCompat.runTimer(plugin, () -> {
                 if (idx[0] >= ls.size()) return; // stop after GO
                 for (Player p : participants) {
                     if (penalized.contains(p.getUniqueId()) || !p.isOnline()) continue;
@@ -679,13 +777,13 @@ public class RaceManager {
         }
 
         // Lights countdown (1 per second)
-        taskRef[0] = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+        taskRef[0] = SchedulerCompat.runTimer(plugin, () -> {
             if (idx[0] >= ls.size()) {
                 if (taskRef[0] != null) taskRef[0].cancel();
                 // Keep false-start checker running until actual GO
                 double jitter = lightsOutJitterSeconds > 0.0 ? Math.random() * lightsOutJitterSeconds : 0.0;
                 long delayTicks = Math.max(0L, Math.round((lightsOutDelaySeconds + jitter) * 20.0));
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                SchedulerCompat.runLater(plugin, () -> {
                     // Now turn all lights off and GO
                     for (var lp2 : ls) {
                         org.bukkit.block.Block b2 = lp2.getBlock();
@@ -726,16 +824,49 @@ public class RaceManager {
         try {
             ScoreboardManager sm = Bukkit.getScoreboardManager();
             if (sm == null) return;
+            UUID pid = p.getUniqueId();
             Scoreboard current = p.getScoreboard();
+            Scoreboard main = sm.getMainScoreboard();
+
+            // Hard compatibility mode: if player is already on an external/custom board,
+            // do not touch sidebar at all (ActionBar-only during race).
+            boolean externalBoard = current != null && current != main && !isBoatRacingBoard(current);
+            if (externalBoard) {
+                previousScoreboards.putIfAbsent(pid, current);
+                sidebarDisabledPlayers.add(pid);
+                scoreboards.remove(pid);
+                overlayPlayers.remove(pid);
+                previousSidebarObjectives.remove(pid);
+                return;
+            }
+
+            sidebarDisabledPlayers.remove(pid);
             // Preserve the player's active board so external plugins (e.g. SimpleScore) can be restored.
-            previousScoreboards.putIfAbsent(p.getUniqueId(), current);
-            Scoreboard sb = sm.getNewScoreboard();
+            // Never overwrite with our own board if setup gets called again during the race.
+            if (current != null && !isBoatRacingBoard(current)) {
+                previousScoreboards.put(pid, current);
+            }
+            Scoreboard sb = null;
+            boolean canOverlay = current != null && current != main && !isBoatRacingBoard(current);
+            if (canOverlay && current != null) {
+                sb = current;
+                overlayPlayers.add(pid);
+                previousSidebarObjectives.putIfAbsent(pid, current.getObjective(DisplaySlot.SIDEBAR));
+            } else {
+                sb = sm.getNewScoreboard();
+                if (sb == null) return;
+                overlayPlayers.remove(pid);
+                previousSidebarObjectives.remove(pid);
+            }
             String objName = "boatracing"; // constant name to play nice with external plugins (e.g., TAB)
-            Objective obj = sb.registerNewObjective(
-                objName,
-                Criteria.DUMMY,
-                Component.text("BoatRacing", NamedTextColor.GOLD)
-            );
+            Objective obj = sb.getObjective(objName);
+            if (obj == null) {
+                obj = sb.registerNewObjective(
+                    objName,
+                    Criteria.DUMMY,
+                    Component.text("BoatRacing", NamedTextColor.GOLD)
+                );
+            }
             obj.setDisplaySlot(DisplaySlot.SIDEBAR);
             // Prepare lines: spacer + header separator + up to 10 rows => 12 entries total
             String[] entries = new String[]{"\u00A70","\u00A71","\u00A72","\u00A73","\u00A74","\u00A75","\u00A76","\u00A77","\u00A78","\u00A79","\u00A7a","\u00A7b"};
@@ -745,14 +876,16 @@ public class RaceManager {
                 t.addEntry(entries[i]);
                 obj.getScore(entries[i]).setScore(entries.length - i);
             }
-            p.setScoreboard(sb);
-            scoreboards.put(p.getUniqueId(), sb);
+            if (!canOverlay) {
+                p.setScoreboard(sb);
+            }
+            scoreboards.put(pid, sb);
     } catch (Exception ignored) { BoatRacingPlugin.getInstance().getLogger().finer("setupPlayerBoard failed: " + ignored.getMessage()); }
     }
 
     private void startScoreboard() {
         if (scoreboardTask != null) return;
-        scoreboardTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+        scoreboardTask = SchedulerCompat.runTimer(plugin, () -> {
             // Build global ordering once per tick
             List<Map.Entry<UUID, RaceState>> ordered = new ArrayList<>(states.entrySet());
             ordered.sort((a, b) -> {
@@ -773,7 +906,7 @@ public class RaceManager {
                 RaceState viewerState = states.get(viewerId);
                 if (viewer == null || viewerState == null) continue;
                 Scoreboard sb = scoreboards.get(viewerId);
-                if (sb == null) {
+                if (sb == null && !sidebarDisabledPlayers.contains(viewerId)) {
                     setupPlayerBoard(viewer);
                     sb = scoreboards.get(viewerId);
                 }
@@ -965,13 +1098,24 @@ public class RaceManager {
             try { scoreboardTask.cancel(); } catch (Exception ignored) { plugin.getLogger().finer("Failed to cancel scoreboard task: " + ignored.getMessage()); }
             scoreboardTask = null;
         }
-        for (UUID id : new ArrayList<>(scoreboards.keySet())) {
+        java.util.Set<UUID> ids = new java.util.LinkedHashSet<>(scoreboards.keySet());
+        ids.addAll(previousScoreboards.keySet());
+        ids.addAll(sidebarDisabledPlayers);
+        ids.addAll(overlayPlayers);
+        ids.addAll(previousSidebarObjectives.keySet());
+        for (UUID id : ids) {
             Player pl = Bukkit.getPlayer(id);
             if (pl != null) {
                 Scoreboard our = scoreboards.get(id);
                 Scoreboard prev = previousScoreboards.get(id);
                 try {
-                    if (our != null && pl.getScoreboard() == our) {
+                    if (overlayPlayers.contains(id)) {
+                        restoreOverlaySidebar(pl, our, previousSidebarObjectives.get(id));
+                        continue;
+                    }
+                    Scoreboard current = pl.getScoreboard();
+                    boolean usingOurBoard = (our != null && current == our) || isBoatRacingBoard(current);
+                    if (usingOurBoard) {
                         restorePreviousScoreboard(pl, prev);
                     }
                 } catch (Exception ignored) {
@@ -981,26 +1125,123 @@ public class RaceManager {
         }
         scoreboards.clear();
         previousScoreboards.clear();
+        sidebarDisabledPlayers.clear();
+        overlayPlayers.clear();
+        previousSidebarObjectives.clear();
+        restoreSimpleScoreForAll();
+    }
+
+    private void restoreSimpleScoreForAll() {
+        if (simpleScoreHiddenByBoatRacing.isEmpty()) return;
+        for (UUID id : new ArrayList<>(simpleScoreHiddenByBoatRacing)) {
+            Player p = Bukkit.getPlayer(id);
+            if (p != null && p.isOnline()) {
+                trySimpleScoreShow(p);
+            }
+        }
+        simpleScoreHiddenByBoatRacing.clear();
+    }
+
+    private boolean trySimpleScoreHide(Player player) {
+        return trySimpleScoreToggle(player, true);
+    }
+
+    private boolean trySimpleScoreShow(Player player) {
+        return trySimpleScoreToggle(player, false);
+    }
+
+    private boolean trySimpleScoreToggle(Player player, boolean hide) {
+        if (player == null || !player.isOnline()) return false;
+        if (Bukkit.getPluginManager().getPlugin("SimpleScore") == null) return false;
+        try {
+            Class<?> managerClass = Class.forName("com.r4g3baby.simplescore.api.Manager");
+            Method getInstance = managerClass.getMethod("getInstance");
+            Object manager = getInstance.invoke(null);
+            if (manager == null) return false;
+
+            Method getViewer = managerClass.getMethod("getViewer", UUID.class);
+            Object viewer = getViewer.invoke(manager, player.getUniqueId());
+            if (viewer == null) return false;
+
+            Method getPlatform = managerClass.getMethod("getPlatform");
+            Object platform = getPlatform.invoke(manager);
+            if (platform == null) return false;
+
+            Method getProvider = platform.getClass().getMethod("getProvider");
+            Object provider = getProvider.invoke(platform);
+            if (provider == null) return false;
+
+            String methodName = hide ? "hideScoreboard" : "showScoreboard";
+            Method toggle = viewer.getClass().getMethod(methodName, provider.getClass());
+            Object result = toggle.invoke(viewer, provider);
+            if (result instanceof Boolean b) return b;
+            return true;
+        } catch (Throwable ignored) {
+            plugin.getLogger().finer("SimpleScore hook " + (hide ? "hide" : "show") + " failed for " + player.getName() + ": " + ignored.getMessage());
+            return false;
+        }
+    }
+
+    private void restoreOverlaySidebar(Player player, Scoreboard board, Objective previousSidebar) {
+        if (player == null || !player.isOnline() || board == null) return;
+        try {
+            Objective ours = board.getObjective("boatracing");
+            if (previousSidebar != null) {
+                previousSidebar.setDisplaySlot(DisplaySlot.SIDEBAR);
+            } else if (ours != null && ours.getDisplaySlot() == DisplaySlot.SIDEBAR) {
+                ours.setDisplaySlot(null);
+            }
+            if (ours != null) {
+                try { ours.unregister(); } catch (Exception ignored) { plugin.getLogger().finer("Failed to unregister temporary objective: " + ignored.getMessage()); }
+            }
+        } catch (Exception ignored) {
+            plugin.getLogger().finer("Failed to restore overlay sidebar for " + player.getName() + ": " + ignored.getMessage());
+        }
     }
 
     private void restorePreviousScoreboard(Player player, Scoreboard previous) {
         ScoreboardManager sm = Bukkit.getScoreboardManager();
-        Scoreboard fallback = sm != null ? sm.getMainScoreboard() : null;
+        if (sm == null) return;
+        Scoreboard fallback = sm.getMainScoreboard();
         Scoreboard target = previous != null ? previous : fallback;
+        if (target != null && isBoatRacingBoard(target)) target = fallback;
         if (target == null) return;
 
-        try { player.setScoreboard(target); } catch (Exception ignored) { plugin.getLogger().finer("Immediate scoreboard restore failed for " + player.getName() + ": " + ignored.getMessage()); }
+        // First break ownership by returning to the main board, then restore target.
+        try { player.setScoreboard(fallback); } catch (Exception ignored) { plugin.getLogger().finer("Scoreboard fallback handoff failed for " + player.getName() + ": " + ignored.getMessage()); }
 
-        // Some scoreboard plugins re-register/update asynchronously; retry a couple of times.
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            try { player.setScoreboard(target); } catch (Exception ignored) { plugin.getLogger().finer("Delayed scoreboard restore (1t) failed for " + player.getName() + ": " + ignored.getMessage()); }
-        });
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            try { player.setScoreboard(target); } catch (Exception ignored) { plugin.getLogger().finer("Delayed scoreboard restore (20t) failed for " + player.getName() + ": " + ignored.getMessage()); }
-        }, 20L);
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            try { player.setScoreboard(target); } catch (Exception ignored) { plugin.getLogger().finer("Delayed scoreboard restore (60t) failed for " + player.getName() + ": " + ignored.getMessage()); }
-        }, 60L);
+        restoreScoreboardAttempt(player, target, 1L);
+        restoreScoreboardAttempt(player, target, 20L);
+        restoreScoreboardAttempt(player, target, 60L);
+        restoreScoreboardAttempt(player, target, 120L);
+        restoreScoreboardAttempt(player, target, 200L);
+    }
+
+    private void restoreScoreboardAttempt(Player player, Scoreboard target, long delayTicks) {
+        SchedulerCompat.runLater(plugin, () -> {
+            if (player == null || !player.isOnline()) return;
+            ScoreboardManager sm = Bukkit.getScoreboardManager();
+            if (sm == null) return;
+            Scoreboard current = player.getScoreboard();
+            // If another plugin already restored a custom board, do not override it.
+            boolean safeToApply = isBoatRacingBoard(current) || current == sm.getMainScoreboard() || current == null;
+            if (!safeToApply || current == target) return;
+            try {
+                player.setScoreboard(target);
+            } catch (Exception ignored) {
+                plugin.getLogger().finer("Delayed scoreboard restore (" + delayTicks + "t) failed for " + player.getName() + ": " + ignored.getMessage());
+            }
+        }, Math.max(1L, delayTicks));
+    }
+
+    private boolean isBoatRacingBoard(Scoreboard sb) {
+        if (sb == null) return false;
+        try {
+            Objective obj = sb.getObjective("boatracing");
+            return obj != null && obj.getDisplaySlot() == DisplaySlot.SIDEBAR;
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     // Number hiding helpers removed by request

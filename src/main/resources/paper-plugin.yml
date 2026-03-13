@@ -7,4 +7,4 @@ authors:
   - Jaie55
 website: https://modrinth.com/plugin/boatracing
 # Optional flags for Paper/Folia
-#folia-supported: false
+folia-supported: true

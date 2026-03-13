@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import es.jaie55.boatracing.team.TeamManager;
 import es.jaie55.boatracing.ui.TeamGUI;
 import es.jaie55.boatracing.util.Text;
+import es.jaie55.boatracing.util.SchedulerCompat;
 import es.jaie55.boatracing.update.UpdateChecker;
 import es.jaie55.boatracing.update.UpdateNotifier;
 import es.jaie55.boatracing.track.TrackConfig;
@@ -148,7 +149,7 @@ public class BoatRacingPlugin extends JavaPlugin {
             updateChecker = new UpdateChecker(this, "boatracing", currentVersion);
             updateChecker.checkAsync();
             // Post-result console notice (delayed)
-            Bukkit.getScheduler().runTaskLater(this, () -> {
+            SchedulerCompat.runLater(this, () -> {
                 if (updateChecker.isChecked() && updateChecker.isOutdated()) {
                     int behind = updateChecker.getBehindCount();
                     String current = currentVersion;
@@ -169,12 +170,12 @@ public class BoatRacingPlugin extends JavaPlugin {
             // Periodic silent update checks every 5 minutes. If a NEW update is first detected here,
             // print a console WARN immediately (single time per version); hourly reminders handle repetition.
             long period = 20L * 60L * 5L; // 5 minutes
-            Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
+            SchedulerCompat.runAsyncTimer(this, () -> {
                     try {
                         if (!getConfig().getBoolean("updates.enabled", true)) return;
                         updateChecker.checkAsync();
                         // Evaluate result shortly after on the main thread to avoid race conditions
-                        Bukkit.getScheduler().runTaskLater(this, () -> {
+                        SchedulerCompat.runLater(this, () -> {
                             if (!getConfig().getBoolean("updates.enabled", true)) return;
                             if (!getConfig().getBoolean("updates.console-warn", true)) return;
                             if (updateChecker.isChecked() && updateChecker.isOutdated()) {
@@ -199,11 +200,11 @@ public class BoatRacingPlugin extends JavaPlugin {
             java.time.ZonedDateTime nextHour = now.withMinute(0).withSecond(0).withNano(0).plusHours(1);
             long delayTicks = Math.max(1L, java.time.Duration.between(now, nextHour).toMillis() / 50L);
             long hourly = 20L * 60L * 60L; // 1 hour
-            Bukkit.getScheduler().runTaskTimer(this, () -> {
+            SchedulerCompat.runTimer(this, () -> {
                 if (!getConfig().getBoolean("updates.enabled", true)) return;
                 if (!getConfig().getBoolean("updates.console-warn", true)) return;
                 try { updateChecker.checkAsync(); } catch (Exception ignored) { getLogger().finer("Update check failed: " + ignored.getMessage()); }
-                Bukkit.getScheduler().runTaskLater(this, () -> {
+                SchedulerCompat.runLater(this, () -> {
                     if (!getConfig().getBoolean("updates.enabled", true)) return;
                     if (!getConfig().getBoolean("updates.console-warn", true)) return;
                     if (updateChecker.isChecked() && updateChecker.isOutdated()) {
@@ -302,8 +303,8 @@ public class BoatRacingPlugin extends JavaPlugin {
                     p.sendMessage(Text.colorize(prefix + msg().get("update.checking")));
                     updateChecker.checkAsync();
                     // Poll a couple of times to deliver result to the user shortly after
-                    Bukkit.getScheduler().runTaskLater(this, () -> sendUpdateStatus(p), 40L);
-                    Bukkit.getScheduler().runTaskLater(this, () -> sendUpdateStatus(p), 100L);
+                    SchedulerCompat.runLater(this, () -> sendUpdateStatus(p), 40L);
+                    SchedulerCompat.runLater(this, () -> sendUpdateStatus(p), 100L);
                     return true;
                 }
                 // Already have a result
@@ -435,6 +436,8 @@ public class BoatRacingPlugin extends JavaPlugin {
                             return true;
                         }
                         if (raceManager.isRunning()) { p.sendMessage(Text.colorize(prefix + msg().get("race.already-running"))); return true; }
+                        // Prevent leftover registration timers from auto-restarting races later.
+                        raceManager.closeRegistrationWindow();
                         raceManager.loadSettings();
                         // Build participants: strictly registered participants only
                         java.util.List<org.bukkit.entity.Player> participants = new java.util.ArrayList<>();
@@ -532,6 +535,7 @@ public class BoatRacingPlugin extends JavaPlugin {
                     p.sendMessage(Text.colorize(msg().get("setup.usage.cmd-clearlights", "label", label)));
                     p.sendMessage(Text.colorize(msg().get("setup.usage.cmd-setlaps", "label", label)));
                     p.sendMessage(Text.colorize(msg().get("setup.usage.cmd-setpitstops", "label", label)));
+                    p.sendMessage(Text.colorize(msg().get("setup.usage.cmd-setlobby", "label", label)));
                     p.sendMessage(Text.colorize(msg().get("setup.usage.cmd-setpos", "label", label)));
                     p.sendMessage(Text.colorize(msg().get("setup.usage.cmd-clearpos", "label", label)));
                     p.sendMessage(Text.colorize(msg().get("setup.usage.cmd-clearcheckpoints", "label", label)));
@@ -684,6 +688,30 @@ public class BoatRacingPlugin extends JavaPlugin {
                         trackConfig.setRacingOverride("mandatory-pitstops", req);
                         String tlNamePit = trackLibrary.getCurrent();
                         p.sendMessage(Text.colorize(prefix + msg().get("setup.pitstops-set", "count", req, "track_info", (tlNamePit != null ? msg().get("setup.track-info", "track", tlNamePit) : ""))));
+                        p.playSound(p.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.9f, 1.2f);
+                        if (setupWizard != null) setupWizard.afterAction(p);
+                        return true;
+                    }
+                    case "setlobby" -> {
+                        org.bukkit.Location loc = p.getLocation();
+                        String worldName = (loc.getWorld() != null ? loc.getWorld().getName() : "world");
+                        FileConfiguration cfg = getConfig();
+                        cfg.set("racing.lobby.enabled", true);
+                        cfg.set("racing.lobby.world", worldName);
+                        cfg.set("racing.lobby.x", loc.getX());
+                        cfg.set("racing.lobby.y", loc.getY());
+                        cfg.set("racing.lobby.z", loc.getZ());
+                        cfg.set("racing.lobby.yaw", loc.getYaw());
+                        cfg.set("racing.lobby.pitch", loc.getPitch());
+                        saveConfig();
+                        raceManager.loadSettings();
+                        p.sendMessage(Text.colorize(prefix + msg().get(
+                                "setup.lobby-set",
+                                "x", loc.getBlockX(),
+                                "y", loc.getBlockY(),
+                                "z", loc.getBlockZ(),
+                                "world", worldName
+                        )));
                         p.playSound(p.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.9f, 1.2f);
                         if (setupWizard != null) setupWizard.afterAction(p);
                         return true;
@@ -1279,7 +1307,7 @@ public class BoatRacingPlugin extends JavaPlugin {
             }
             if (args.length >= 2 && args[0].equalsIgnoreCase("setup")) {
                 if (!sender.hasPermission("boatracing.setup")) return Collections.emptyList();
-                if (args.length == 2) return Arrays.asList("help","addstart","clearstarts","setfinish","setpit","addcheckpoint","clearcheckpoints","addlight","clearlights","setpos","clearpos","show","selinfo","wand","wizard");
+                if (args.length == 2) return Arrays.asList("help","addstart","clearstarts","setfinish","setpit","addcheckpoint","clearcheckpoints","addlight","clearlights","setlobby","setpos","clearpos","show","selinfo","wand","wizard");
                 if (args.length >= 3 && args[1].equalsIgnoreCase("setpit")) {
                     // Build current partial input (join tokens from index 2)
                     String partial = String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length)).toLowerCase();

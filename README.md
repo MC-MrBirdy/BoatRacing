@@ -8,17 +8,39 @@
 <a id="en"></a>
 # BoatRacing
 
-[![Modrinth](https://img.shields.io/modrinth/v/boatracing?logo=modrinth&label=Modrinth)](https://modrinth.com/plugin/boatracing) [![Downloads](https://img.shields.io/modrinth/dt/boatracing?logo=modrinth&label=Downloads)](https://modrinth.com/plugin/boatracing)
+[![Modrinth](https://img.shields.io/modrinth/v/boatracing?logo=modrinth&label=Modrinth)](https://modrinth.com/plugin/boatracing) [![Downloads](https://img.shields.io/modrinth/dt/boatracing?logo=modrinth&label=Downloads)](https://modrinth.com/plugin/boatracing) [![Minecraft](https://img.shields.io/badge/Minecraft-1.19--1.21.11-3b82f6)](https://modrinth.com/plugin/boatracing/versions) [![Java](https://img.shields.io/badge/Java-17%2B-22c55e)](https://adoptium.net/) [![Servers](https://img.shields.io/badge/Servers-Bukkit%20%7C%20Spigot%20%7C%20Paper%20%7C%20Purpur-f59e0b)](https://modrinth.com/plugin/boatracing)
+
+[![Compatible with SimpleScore](https://img.shields.io/badge/Compatible%20with-SimpleScore-3fb950)](https://github.com/RuiPereiraDev/SimpleScore) [![Compatible with TAB](https://img.shields.io/badge/Compatible%20with-TAB-3fb950)](https://github.com/NEZNAMY/TAB)
 
 [![bStats](https://bstats.org/signatures/bukkit/BoatRacing.svg)](https://bstats.org/plugin/bukkit/BoatRacing/26881)
 
 An F1‒style ice boat racing plugin for Bukkit/Spigot (compatible with Paper/Purpur) with a clean, vanilla‒like GUI. Manage teams, configure tracks with the built‒in BoatRacing selection tool, run timed races with checkpoints, pit area penalties, and a guided setup wizard.
 
-> Status: Public release (1.1.0)
+> Status: Public release (1.1.1)
 
 See the changelog in [CHANGELOG.md](https://github.com/Jaie55/BoatRacing/blob/main/CHANGELOG.md).
 
-This is how to test the plugin to validate its behavior after each update: see the QA checklist in [CHECKLIST.md](CHECKLIST.md)
+This is how we test the plugin to validate its behavior after each update: see the QA checklist in [CHECKLIST.md](CHECKLIST.md)
+
+## What's new (1.1.1)
+Lobby and stability updates:
+- **Optional registration lobby zone**: new `racing.lobby.*` config block. When enabled, players are teleported to a configurable lobby zone/location when they join registration.
+- **Quick lobby command**: new `/boatracing setup setlobby` command saves your current position as the registration lobby and enables it automatically.
+- **Return to previous location**: with `racing.lobby.return-on-leave: true`, players return to their original location when they leave registration or when registration is cancelled.
+- **Active track safety**: race commands no longer force a disk reload when the requested track is already active (notably `unsaved`), avoiding stale in-memory state issues.
+- **Track reload consistency**: `TrackConfig.load()` now clears all in-memory collections before reading from disk.
+- **SimpleScore compatibility hook**: when SimpleScore is installed, BoatRacing now integrates with its hide/show viewer flow during races to prevent sidebar ownership conflicts and restore the external scoreboard after stop/cancel.
+- **Registration restart-loop fix**: fixed a state/timer issue where an old `race open` countdown could survive `start/force/stop` paths and re-trigger race starts unexpectedly.
+- **Setup clickable UX**: setup wizard/admin tips now suggest commands in chat when arguments are needed, so players can tab-complete before execution.
+- **Lobby messages translated**: lobby teleport/return feedback added to EN/ES/zh_TW/ru message files.
+
+Explicit compatibility:
+- **SimpleScore**: BoatRacing includes explicit compatibility with SimpleScore.
+- GitHub: https://github.com/RuiPereiraDev/SimpleScore
+- Modrinth: https://modrinth.com/plugin/simplescore
+- **TAB**: BoatRacing includes explicit compatibility with TAB.
+- GitHub: https://github.com/NEZNAMY/TAB
+- Modrinth: https://modrinth.com/plugin/tab-was-taken
 
 ## What's new (1.1.0)
 Languages and player controls:
@@ -29,11 +51,11 @@ Languages and player controls:
 - **Complete i18n infrastructure**: all plugin messages (race, setup, team, admin) updated to use the new externalized message system with dynamic placeholder support.
 
 Previous versions:
-- **1.0.9**: Compatibility across 1.19–1.21.8; safe boat/raft materials; Bukkit/Spigot classification on Paper.
+- **1.0.9**: Compatibility across 1.19–1.21.11; safe boat/raft materials; Bukkit/Spigot classification on Paper.
 
 ## What’s new (1.0.9)
 Compatibility and fixes:
-- Official support: Bukkit/Spigot/Paper/Purpur 1.19 → 1.21.8. Requires Java 17+.
+- Official support: Bukkit/Spigot/Paper/Purpur 1.19 → 1.21.11. Requires Java 17+.
 - Safer boat types across versions: dynamic Material resolution for boats/rafts (including Bamboo Raft and Pale Oak variants) avoids NoSuchFieldError on older APIs and removes CraftLegacy warnings.
 - Classified as a Bukkit/Spigot plugin on Paper (paper-plugin.yml excluded from the JAR). Paper-only APIs replaced with Bukkit-safe calls.
 - Docs: README, CHANGELOG and QA checklist updated (EN/ES).
@@ -144,15 +166,20 @@ Fixes and polish:
  - Admin Race GUI: open/close registration, start/force/stop the race, adjust laps, and manage registrants.
 
 ## Requirements
-- Bukkit/Spigot/Paper/Purpur 1.19–1.21.8 (api-version: 1.19)
+- Bukkit/Spigot/Paper/Purpur 1.19–1.21.11 (api-version: 1.19)
 - Java 17+
 
 Supported servers
 - Purpur
 - Paper
+- Folia
 - Spigot
 - CraftBukkit
-Other Bukkit-compatible forks may work but aren’t officially tested. Not supported: Folia (regionized threading), Sponge, Forge hybrids (Mohist/Magma/Arclight).
+Other Bukkit-compatible forks may work but aren’t officially tested. Not supported in this jar: Sponge and Forge hybrids (Mohist/Magma/Arclight).
+
+Platform note:
+- Sponge support would require a separate Sponge-specific port/jar.
+- Velocity and BungeeCord are proxy platforms, so BoatRacing gameplay logic does not run there directly. A separate proxy companion plugin would be required for cross-server features.
  
 
 ## Install
@@ -175,6 +202,7 @@ Use the BoatRacing selection tool to make cuboid selections (left-click = mark C
 - `/boatracing setup wand` — gives you the BoatRacing selection tool
 - `/boatracing setup setfinish` — set the finish line region from your current selection
 - `/boatracing setup setpit [team]` — set the default pit area from your current selection, or the pit area for a specific team when a team is provided (tab‑complete team names)
+- `/boatracing setup setlobby` — set the registration lobby to your current location and enable it in config
 - `/boatracing setup addcheckpoint` — add a checkpoint in order (A → B → C …)
 - `/boatracing setup clearcheckpoints` — remove all checkpoints
 - `/boatracing setup addlight` — add the Redstone Lamp you’re looking at as a start light (exactly 5; order left→right)
@@ -225,7 +253,7 @@ Race logic highlights:
 ### Tab–completion
 - Root: `teams`, `race`, `setup`, `reload`, `version`, `admin` (filtered by permissions)
 - Teams: `create`, `rename`, `color`, `join`, `leave`, `boat`, `number`, `confirm`, `cancel` (rename/color are admin‑only via command; GUI for members can be enabled via config). Disband is not exposed as a player command; it’s a GUI action when enabled.
-- Setup: `help`, `wand`, `wizard`, `addstart`, `clearstarts`, `setfinish`, `setpit`, `addcheckpoint`, `clearcheckpoints`, `addlight`, `clearlights`, `setpos`, `clearpos`, `show`, `selinfo`
+- Setup: `help`, `wand`, `wizard`, `addstart`, `clearstarts`, `setfinish`, `setpit`, `setlobby`, `addcheckpoint`, `clearcheckpoints`, `addlight`, `clearlights`, `setpos`, `clearpos`, `show`, `selinfo`
  - `setpos` suggests player names, plus `auto` and slot numbers; `clearpos` suggests player names.
 - Race: non‑admins see `join`, `leave`, and `status`; admins also see `open`, `start`, `force`, `stop`. When a subcommand expects `<track>`, tab‑completion lists existing track names.
 - `color` lists all DyeColors
@@ -312,7 +340,7 @@ Players without `boatracing.setup` can use `/boatracing race join <track>`, `/bo
 Legacy migration: if a legacy `plugins/BoatRacing/track.yml` is found on startup, it is migrated to `plugins/BoatRacing/tracks/default.yml` (or `default_N.yml`) and the old file is removed when possible. Admins with `boatracing.setup` get an in‑game notice.
 
 ## Compatibility
-- Bukkit/Spigot/Paper/Purpur 1.19–1.21.8; Java 17+
+- Bukkit/Spigot/Paper/Purpur 1.19–1.21.11; Java 17+
 - English‑only messages with vanilla‑styled titles and lore
  
 

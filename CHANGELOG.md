@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.1.1 — 2026-03-13
+### Added
+- **Registration lobby mechanic (optional)**: new `racing.lobby.*` config block to send registered players to a lobby location while registration is open, with optional return to their previous location on leave/cancel.
+- **Lobby setup command**: added `/boatracing setup setlobby` to save the admin's current position as the registration lobby and enable it instantly.
+- **Lobby i18n messages**: added localized feedback when players are teleported to the race lobby and when they are returned.
+- **SimpleScore integration hook**: when SimpleScore is present, BoatRacing now uses its viewer hide/show flow during races to avoid sidebar ownership conflicts and restore the external scoreboard cleanly after stop/cancel.
+
+### Fixed
+- **Race track selection flow for active track**: `race open/join/leave/force/start/stop/status` no longer force a disk reload when the requested track is already the active one (notably `unsaved`), preventing stale-state issues.
+- **Track reload consistency**: `TrackConfig.load()` now clears all in-memory collections (`customStartSlots`, `bestTimes`, and others) before reading from disk.
+- **Registration timer race-loop bug**: fixed a state bug where `race open` timer callbacks could survive manual `start/force/stop` flows and re-trigger race starts (infinite restart behavior). Registration sessions are now invalidated/cancelled atomically.
+- **Manual start stale-callback guard**: `/boatracing race start <track>` now closes the registration window first to prevent old registration callbacks from restarting/overlapping race state.
+- **External sidebar handoff reliability**: improved race HUD/sidebar cleanup so external sidebar plugins (notably SimpleScore and TAB) recover cleanly after race stop/cancel without requiring relog.
+
+### Changed
+- **Setup click actions UX**: setup wizard and admin setup tips now use suggest-in-chat behavior for commands requiring arguments, so players can tab-complete before executing.
+- **Compatibility matrix clarified**: this plugin jar is intended for Bukkit-family servers (CraftBukkit/Spigot/Paper/Purpur) and now includes Folia-compatible scheduling paths.
+
+### Docs
+- **Platform scope documented**: README/CHECKLIST now explicitly state that Sponge requires a separate platform port and that Velocity/BungeeCord (proxy layer) cannot run gameplay logic from this plugin jar.
+- **Explicit SimpleScore compatibility note**: docs now explicitly list compatibility with SimpleScore (GitHub: https://github.com/RuiPereiraDev/SimpleScore, Modrinth: https://modrinth.com/plugin/simplescore).
+- **Explicit TAB compatibility note**: docs now explicitly list compatibility with TAB (GitHub: https://github.com/NEZNAMY/TAB, Modrinth: https://modrinth.com/plugin/tab-was-taken).
+
 ## 1.1.0 — 2026-03-12
 ### Added
 - **Multi-language support**: messages system now supports English (default) and Español (España). Configure the language in config.yml via the `language` setting ("en" or "es"). All user-facing text is externalized in messages_en.yml or messages_es.yml (stored in the plugin data folder after first run).
@@ -24,7 +47,7 @@
 
 ## 1.0.9 — 2025-08-19
 ### Added / Changed
-- Official support range declared: 1.19 → 1.21.8 (Bukkit/Spigot compatible; works on Paper/Purpur). Requires Java 17+; plugin.yml api-version set to 1.19.
+- Official support range declared: 1.19 → 1.21.11 (Bukkit/Spigot compatible; works on Paper/Purpur). Requires Java 17+; plugin.yml api-version set to 1.19.
 - Documented supported servers: Purpur, Paper, Spigot, CraftBukkit (Bukkit-compatible forks may work; Folia/Sponge/Forge hybrids not supported).
 - Classified as Bukkit/Spigot on Paper by excluding `paper-plugin.yml` from the jar and using only Bukkit-safe APIs for metadata.
 - Documentation updated: README, CHANGELOG and QA checklist in EN/ES.

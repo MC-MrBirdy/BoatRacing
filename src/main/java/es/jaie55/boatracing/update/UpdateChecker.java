@@ -1,6 +1,7 @@
 package es.jaie55.boatracing.update;
 
-import org.bukkit.Bukkit;
+import es.jaie55.boatracing.util.SchedulerCompat;
+
 import org.bukkit.plugin.Plugin;
 
 import java.io.IOException;
@@ -49,7 +50,7 @@ public class UpdateChecker {
     }
 
     public void checkAsync() {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        SchedulerCompat.runAsync(plugin, () -> {
             try {
                 checkNow();
             } catch (Exception ex) {

@@ -1,5 +1,43 @@
 README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 
+## What to verify for 1.1.1
+- Versioning and docs:
+	- Project version is 1.1.1 in `pom.xml`.
+	- `CHANGELOG.md` contains a 1.1.1 section with lobby/track-load/setup-click updates and compatibility scope clarifications.
+	- `CHECKLIST.md` includes this 1.1.1 validation block.
+	- `README.md` server matrix lists Folia as supported for this jar and clarifies Sponge/Velocity/BungeeCord scope.
+- Folia compatibility smoke checks:
+	- Open/join/start/force/stop/status race flows run without scheduler/threading errors on Folia.
+	- Registration countdown and race timers execute correctly under Folia scheduling.
+	- Update checks and periodic tasks run without errors under Folia.
+- Platform scope clarity:
+	- Documentation clearly states this artifact targets Bukkit-family servers.
+	- Documentation clearly states Sponge requires a separate port/jar.
+	- Documentation clearly states Velocity/BungeeCord are proxy platforms and cannot execute BoatRacing gameplay logic directly.
+- Registration lobby mechanic:
+	- With `racing.lobby.enabled: false` (default), registration behavior remains unchanged (no extra teleports).
+	- With `racing.lobby.enabled: true`, joining race registration teleports players to the configured lobby zone/location.
+	- With `racing.lobby.return-on-leave: true`, leaving registration teleports players back to their pre-lobby location.
+	- Cancelling registration (`race stop` or cancellation flow) returns registered players to their pre-lobby location.
+	- Starting a race does not return players to pre-lobby; players are placed on start slots as usual.
+- Scoreboard interoperability with SimpleScore:
+	- Documentation explicitly references SimpleScore compatibility and links to:
+		- https://github.com/RuiPereiraDev/SimpleScore
+		- https://modrinth.com/plugin/simplescore
+	- With SimpleScore installed and active, joining/playing a race does not permanently break the external sidebar.
+	- During race, BoatRacing and SimpleScore do not enter a sidebar ownership loop.
+	- After race stop/cancel/finish, SimpleScore sidebar is restored without requiring player relog.
+- Registration timer robustness:
+	- Run `race open unsaved`, register players, then use `race force` before the original open countdown ends.
+	- After race finish/stop, wait beyond the original registration timeout and verify the race does not auto-restart.
+	- Repeated `open -> force/start -> stop` cycles should not leave stale timers or restart loops.
+- Race active-track behavior:
+	- If the requested race track is already the active one (especially `unsaved`), `race open/join/leave/force/start/stop/status` should not lose in-memory setup state.
+	- A track with starts/finish configured in-memory should remain ready when opening registration on that active track.
+- Setup clickable command UX:
+	- Setup wizard buttons that need arguments (e.g., setpos/clearpos/setpit team) should suggest text in chat instead of executing incomplete commands.
+	- Buttons for actions like set finish, add light, and add checkpoint are clickable and insert/suggest the correct command flow.
+
 ## What to verify for 1.1.0
 - Multi-language support:
 	- With `language: "en"` (default), all messages appear in English; plugin loads messages_en.yml.
@@ -41,7 +79,7 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 
 ## What to verify for 1.0.9
 - Compatibility policy:
-	- Server range: 1.19, 1.20.1/1.20.4, 1.21/1.21.1/1.21.8 boot without errors. `/boatracing version` works.
+	- Server range: 1.19, 1.20.1/1.20.4, 1.21/1.21.1/1.21.11 boot without errors. `/boatracing version` works.
 	- Java 17+: starting on Java 17 passes; Java 21 also works. Documented minimum is 17.
 - Classification on Paper:
 	- On Paper/Purpur, plugin appears under Bukkit/Spigot plugins. No paper-plugin.yml inside the jar.
@@ -55,7 +93,7 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 	- Hourly reminder: console WARN aligned to 00:00, 01:00, 02:00… while outdated (config-gated).
 	- Admin join: always show chat notice to admins (if enabled), no console output on player join.
 - Docs:
-	- README shows Status 1.0.9 and Requirements: 1.19–1.21.8, Java 17+.
+	- README shows Status 1.0.9 and Requirements: 1.19–1.21.11, Java 17+.
 	- CHANGELOG.md has 1.0.9 entry. CHANGELOG.txt present.
 
 ## What to verify for 1.0.8
@@ -116,7 +154,7 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 
 ## Prerequisites
 
-- Paper server 1.21.8, Java 21.
+- Paper server 1.21.11, Java 21.
 - Plugin file: `plugins/BoatRacing.jar` (shaded).
 - Two online accounts: Player A and Player B.
 - Minimum permission: `boatracing.use` (default: true).
@@ -347,7 +385,7 @@ Neutral phrasing:
 - In-game messaging is English-only. This checklist is now in English.
 
 — Español (resumen 1.0.9) —
-- Rango soporte: 1.19–1.21.8; Java 17+.
+- Rango soporte: 1.19–1.21.11; Java 17+.
 - Clasificación Bukkit/Spigot en Paper (sin paper-plugin.yml).
 - Arreglo barcos/rafts (incluye Bamboo Raft y Pale Oak) sin errores ni avisos CraftLegacy.
 - README/CHANGELOG/CHECKLIST actualizados.

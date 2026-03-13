@@ -1,6 +1,7 @@
 package es.jaie55.boatracing.update;
 
 import es.jaie55.boatracing.BoatRacingPlugin;
+import es.jaie55.boatracing.util.SchedulerCompat;
 import es.jaie55.boatracing.util.Text;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -41,7 +42,7 @@ public class UpdateNotifier implements Listener {
             if (!checker.isChecked() || (now - lastJoinCheckMs) >= JOIN_CHECK_COOLDOWN_MS) {
                 lastJoinCheckMs = now;
                 try { checker.checkAsync(); } catch (Exception ignored) { plugin.getLogger().finer("Async update check failed on join: " + ignored.getMessage()); }
-                org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                SchedulerCompat.runLater(plugin, () -> {
                     if (checker.isChecked() && checker.isOutdated() && p.isOnline() && p.hasPermission("boatracing.update")) {
                         int behind = checker.getBehindCount();
                         String latest = checker.getLatestVersion() != null ? checker.getLatestVersion() : "latest";

@@ -3,6 +3,7 @@ package es.jaie55.boatracing.ui;
 import es.jaie55.boatracing.BoatRacingPlugin;
 import es.jaie55.boatracing.race.RaceManager;
 import es.jaie55.boatracing.track.TrackConfig;
+import es.jaie55.boatracing.util.SchedulerCompat;
 import es.jaie55.boatracing.util.Text;
 import net.kyori.adventure.text.Component;
 import net.wesjd.anvilgui.AnvilGUI;
@@ -137,7 +138,7 @@ public class AdminRaceGUI implements Listener {
         handle(p, action, im);
         if (!skipRefresh) {
             // Refresh UI after action
-            Bukkit.getScheduler().runTask(plugin, () -> open(p));
+            SchedulerCompat.runNow(plugin, () -> open(p));
         }
     }
 

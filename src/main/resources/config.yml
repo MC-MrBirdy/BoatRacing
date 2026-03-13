@@ -33,6 +33,18 @@ racing:
   mandatory-pitstops: 0  # Number of mandatory pit stops per racer per race; 0 to disable
   pit-penalty-seconds: 5.0
   registration-seconds: 300
+  # Optional lobby while registration is open.
+  # When enabled, players are teleported to this location when they join registration.
+  # If they leave registration or the registration is cancelled, they are teleported back.
+  lobby:
+    enabled: false
+    return-on-leave: true
+    world: "world"
+    x: 0.0
+    y: 80.0
+    z: 0.0
+    yaw: 0.0
+    pitch: 0.0
   # Time penalty applied if a racer moves forward before the countdown ends (in seconds)
   false-start-penalty-seconds: 3.0
   # Enable/disable time penalty when entering the pit area during the race
