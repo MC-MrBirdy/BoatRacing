@@ -69,6 +69,18 @@ public class BoatRacingPlugin extends JavaPlugin {
         boolean global = getConfig().getBoolean("player-actions.allow-player-race-start", false);
         return trackConfig.getRacingBoolean("allow-player-start", global);
     }
+
+    private boolean isActiveTrackRequest(String name) {
+        if (name == null) return false;
+        String current = trackLibrary != null ? trackLibrary.getCurrent() : null;
+        if (current == null) return name.equalsIgnoreCase("unsaved");
+        return current.equalsIgnoreCase(name);
+    }
+
+    private boolean ensureRaceTrackLoaded(String name) {
+        if (isActiveTrackRequest(name)) return true;
+        return trackLibrary != null && trackLibrary.exists(name) && trackLibrary.select(name);
+    }
     
 
     @Override
@@ -335,8 +347,8 @@ public class BoatRacingPlugin extends JavaPlugin {
                     case "open" -> {
                         if (args.length < 3) { p.sendMessage(Text.colorize(prefix + msg().get("race.usage.open", "label", label))); return true; }
                         String tname = args[2];
-                        if (!trackLibrary.exists(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
-                        if (!trackLibrary.select(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
+                        if (!isActiveTrackRequest(tname) && !trackLibrary.exists(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
+                        if (!ensureRaceTrackLoaded(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
                         if (!canManageRace(p)) {
                             p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
@@ -356,8 +368,8 @@ public class BoatRacingPlugin extends JavaPlugin {
                     case "join" -> {
                         if (args.length < 3) { p.sendMessage(Text.colorize(prefix + msg().get("race.usage.join", "label", label))); return true; }
                         String tname = args[2];
-                        if (!trackLibrary.exists(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
-                        if (!trackLibrary.select(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
+                        if (!isActiveTrackRequest(tname) && !trackLibrary.exists(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
+                        if (!ensureRaceTrackLoaded(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
                         if (!trackConfig.isReady()) {
                             p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-ready", "requirements", String.join(", ", trackConfig.missingRequirements()))));
                             return true;
@@ -376,8 +388,8 @@ public class BoatRacingPlugin extends JavaPlugin {
                     case "leave" -> {
                         if (args.length < 3) { p.sendMessage(Text.colorize(prefix + msg().get("race.usage.leave", "label", label))); return true; }
                         String tname = args[2];
-                        if (!trackLibrary.exists(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
-                        if (!trackLibrary.select(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
+                        if (!isActiveTrackRequest(tname) && !trackLibrary.exists(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
+                        if (!ensureRaceTrackLoaded(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
                         boolean removed = raceManager.leave(p);
                         if (!removed) {
                             if (!raceManager.isRegistering()) {
@@ -391,8 +403,8 @@ public class BoatRacingPlugin extends JavaPlugin {
                     case "force" -> {
                         if (args.length < 3) { p.sendMessage(Text.colorize(prefix + msg().get("race.usage.force", "label", label))); return true; }
                         String tname = args[2];
-                        if (!trackLibrary.exists(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
-                        if (!trackLibrary.select(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
+                        if (!isActiveTrackRequest(tname) && !trackLibrary.exists(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
+                        if (!ensureRaceTrackLoaded(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
                         if (!canManageRace(p)) {
                             p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
@@ -410,8 +422,8 @@ public class BoatRacingPlugin extends JavaPlugin {
                     case "start" -> {
                         if (args.length < 3) { p.sendMessage(Text.colorize(prefix + msg().get("race.usage.start", "label", label))); return true; }
                         String tname = args[2];
-                        if (!trackLibrary.exists(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
-                        if (!trackLibrary.select(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
+                        if (!isActiveTrackRequest(tname) && !trackLibrary.exists(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
+                        if (!ensureRaceTrackLoaded(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
                         if (!canManageRace(p)) {
                             p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
@@ -446,8 +458,8 @@ public class BoatRacingPlugin extends JavaPlugin {
                     case "stop" -> {
                         if (args.length < 3) { p.sendMessage(Text.colorize(prefix + msg().get("race.usage.stop", "label", label))); return true; }
                         String tname = args[2];
-                        if (!trackLibrary.exists(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
-                        if (!trackLibrary.select(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
+                        if (!isActiveTrackRequest(tname) && !trackLibrary.exists(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
+                        if (!ensureRaceTrackLoaded(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
                         if (!canManageRace(p)) {
                             p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
@@ -468,8 +480,8 @@ public class BoatRacingPlugin extends JavaPlugin {
                     case "status" -> {
                         if (args.length < 3) { p.sendMessage(Text.colorize(prefix + msg().get("race.usage.status", "label", label))); return true; }
                         String tname = args[2];
-                        if (!trackLibrary.exists(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
-                        if (!trackLibrary.select(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
+                        if (!isActiveTrackRequest(tname) && !trackLibrary.exists(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
+                        if (!ensureRaceTrackLoaded(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
                         String cur = (getTrackLibrary() != null && getTrackLibrary().getCurrent() != null) ? getTrackLibrary().getCurrent() : msg().get("general.unsaved");
                         boolean running = raceManager.isRunning();
                         boolean registering = raceManager.isRegistering();

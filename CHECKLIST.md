@@ -24,6 +24,9 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 - PlayerMoveEvent throttle:
 	- During a race, checkpoint detection no longer triggers on every sub-meter movement within the same block; only when entering a new block.
 	- Performance should improve on high-player-count servers.
+- Scoreboard interoperability:
+	- With external sidebar plugins (e.g., SimpleScore), BoatRacing race sidebar must not permanently break or replace the external scoreboard.
+	- After race stop/cancel/reset, each player gets their previous scoreboard back.
 - i18n system:
 	- All user-facing text (race, setup, team, admin, plugin messages) is loaded from external files (messages_en.yml or messages_es.yml).
 	- `/boatracing reload` reloads messages without restart. New message keys in future versions merge automatically without overwriting custom values.

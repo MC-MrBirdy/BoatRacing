@@ -58,4 +58,14 @@ public final class Text {
             .clickEvent(ClickEvent.runCommand(command))
             .hoverEvent(HoverEvent.showText(c("&b" + command)));
     }
+
+    // Clickable helper that suggests a command in chat (does not execute it immediately).
+    public static Component suggest(String labelLegacy, String command) {
+        if (labelLegacy == null) labelLegacy = "";
+        if (command == null) command = "";
+        Component base = c(labelLegacy).decoration(TextDecoration.ITALIC, false);
+        return base
+            .clickEvent(ClickEvent.suggestCommand(command))
+            .hoverEvent(HoverEvent.showText(c("&b" + command)));
+    }
 }

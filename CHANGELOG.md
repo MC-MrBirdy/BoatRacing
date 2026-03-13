@@ -16,6 +16,7 @@
 
 ### Fixed
 - **Setup Wizard i18n key mapping**: fixed wrong translation key paths in wizard navigation/summary prompts that could show raw keys (for example `setup.wizard.nav-label`) instead of localized text.
+- **Scoreboard compatibility with external plugins**: race sidebar now preserves and restores each player's previous scoreboard instead of forcing the main scoreboard, preventing conflicts with plugins such as SimpleScore.
 
 ### Docs
 - CHANGELOG and CHECKLIST updated for 1.1.0 with full feature list and verification steps.

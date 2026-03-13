@@ -12,6 +12,15 @@
 # Allow source code
 !/src/**
 
+# Explicitly allow source/resource parent directories so nested new files are visible to Git
+!/src/
+!/src/main/
+!/src/main/java/
+!/src/main/java/**
+!/src/main/resources/
+!/src/main/resources/**
+!/src/main/resources/messages_*.yml
+
 # Ignore Maven wrapper (incl. properties)
 
 # Allow GitHub meta if present
