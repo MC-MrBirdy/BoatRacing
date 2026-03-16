@@ -1292,7 +1292,7 @@ public class BoatRacingPlugin extends JavaPlugin {
             }
             if (args.length >= 2 && args[0].equalsIgnoreCase("admin")) {
                 if (!sender.hasPermission("boatracing.admin")) return java.util.Collections.emptyList();
-                if (args.length == 2) return java.util.Arrays.asList("help","team","player");
+                if (args.length == 2) return java.util.Arrays.asList("help","team","player","tracks");
                 if (args.length == 3 && args[1].equalsIgnoreCase("team")) return java.util.Arrays.asList("create","delete","rename","color","add","remove");
                 if (args.length == 3 && args[1].equalsIgnoreCase("player")) return java.util.Arrays.asList("setteam","setnumber","setboat");
                 if (args.length == 5 && args[2].equalsIgnoreCase("setboat")) {
@@ -1329,7 +1329,7 @@ public class BoatRacingPlugin extends JavaPlugin {
             }
             if (args.length >= 2 && args[0].equalsIgnoreCase("setup")) {
                 if (!sender.hasPermission("boatracing.setup")) return Collections.emptyList();
-                if (args.length == 2) return Arrays.asList("help","addstart","clearstarts","setfinish","setpit","addcheckpoint","clearcheckpoints","addlight","clearlights","setlobby","setpos","clearpos","show","selinfo","wand","wizard");
+                if (args.length == 2) return Arrays.asList("help","addstart","clearstarts","setfinish","setpit","addcheckpoint","clearcheckpoints","addlight","clearlights","setlaps","setpitstops","setlobby","setpos","clearpos","show","selinfo","wand","wizard");
                 if (args.length >= 3 && args[1].equalsIgnoreCase("setpit")) {
                     // Build current partial input (join tokens from index 2)
                     String partial = String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length)).toLowerCase();

@@ -89,6 +89,13 @@ public class TeamManager {
         return ok;
     }
 
+    public boolean setLeader(Team team, UUID playerId) {
+        if (team == null || playerId == null || !team.isMember(playerId)) return false;
+        team.setLeader(playerId);
+        save();
+        return true;
+    }
+
     public void deleteTeam(Team team) {
         teams.remove(team.getId());
         save();
@@ -101,6 +108,7 @@ public class TeamManager {
             String path = "teams." + t.getId();
             teamsCfg.set(path + ".name", t.getName());
             teamsCfg.set(path + ".color", t.getColor().name());
+            teamsCfg.set(path + ".leader", t.getLeader() != null ? t.getLeader().toString() : null);
             java.util.List<String> mems = t.getMembers().stream().map(UUID::toString).collect(Collectors.toList());
             teamsCfg.set(path + ".members", mems);
         }
@@ -168,12 +176,14 @@ public class TeamManager {
             String name = teamsCfg.getString(path + ".name", "Team");
             DyeColor color = DyeColor.valueOf(teamsCfg.getString(path + ".color", DyeColor.WHITE.name()));
             UUID id = UUID.fromString(key);
-            // New format: no leader; just members list
+            UUID leader = null;
+            try { String l = teamsCfg.getString(path + ".leader"); if (l != null) leader = UUID.fromString(l); } catch (Exception ignored) {}
             Team t = new Team(id, name, color, null);
             java.util.List<String> mems = teamsCfg.getStringList(path + ".members");
                 for (String s : mems) {
                     try { t.addMemberUnchecked(UUID.fromString(s)); } catch (Exception ignored) {}
                 }
+            if (leader != null && t.isMember(leader)) t.setLeader(leader);
             teams.put(id, t);
         }
         // Load racers from racers.yml

@@ -133,6 +133,18 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
             Team t = plugin.getTeamManager().getTeamByMember(target).orElse(null);
             return t == null ? "-" : t.getColor().name();
         }
+        if (key.startsWith("player_team_leader_name_")) {
+            UUID target = resolvePlayerId(params.substring("player_team_leader_name_".length()));
+            if (target == null) return "-";
+            Team t = plugin.getTeamManager().getTeamByMember(target).orElse(null);
+            return t == null || t.getLeader() == null ? "-" : safePlayerName(t.getLeader());
+        }
+        if (key.startsWith("player_team_leader_id_")) {
+            UUID target = resolvePlayerId(params.substring("player_team_leader_id_".length()));
+            if (target == null) return "-";
+            Team t = plugin.getTeamManager().getTeamByMember(target).orElse(null);
+            return t == null || t.getLeader() == null ? "-" : t.getLeader().toString();
+        }
         if (key.startsWith("player_team_wins_")) {
             UUID target = resolvePlayerId(params.substring("player_team_wins_".length()));
             if (target == null) return "0";
@@ -163,6 +175,16 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
             Team t = resolveTeam(token);
             return t == null ? "0" : String.valueOf(t.getMembers().size());
         }
+        if (key.startsWith("team_leader_name_")) {
+            String token = params.substring("team_leader_name_".length());
+            Team t = resolveTeam(token);
+            return t == null || t.getLeader() == null ? "-" : safePlayerName(t.getLeader());
+        }
+        if (key.startsWith("team_leader_id_")) {
+            String token = params.substring("team_leader_id_".length());
+            Team t = resolveTeam(token);
+            return t == null || t.getLeader() == null ? "-" : t.getLeader().toString();
+        }
         if (key.startsWith("team_wins_")) {
             String token = params.substring("team_wins_".length());
             Team t = resolveTeam(token);
@@ -177,6 +199,8 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         if (key.equals("player_team_name")) return team != null ? team.getName() : "-";
         if (key.equals("player_team_id")) return team != null ? team.getId().toString() : "-";
         if (key.equals("player_team_color")) return team != null ? team.getColor().name() : "-";
+        if (key.equals("player_team_leader_name")) return team != null && team.getLeader() != null ? safePlayerName(team.getLeader()) : "-";
+        if (key.equals("player_team_leader_id")) return team != null && team.getLeader() != null ? team.getLeader().toString() : "-";
         if (key.equals("player_team_players")) return team != null ? team.getMembers().stream().map(this::safePlayerName).collect(Collectors.joining(", ")) : "";
         if (key.equals("player_team_player_count")) return team != null ? String.valueOf(team.getMembers().size()) : "0";
         if (key.equals("player_number")) return team != null ? String.valueOf(team.getRacerNumber(pid)) : "0";

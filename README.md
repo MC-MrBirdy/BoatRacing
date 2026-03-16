@@ -22,14 +22,20 @@ See the changelog in [CHANGELOG.md](https://github.com/Jaie55/BoatRacing/blob/ma
 
 This is how we test the plugin to validate its behavior after each update: see the QA checklist in [CHECKLIST.md](CHECKLIST.md)
 
-## What's new (1.1.2)
+<details>
+<summary><strong>What's new (1.1.2)</strong></summary>
+
 Placeholders, wizard UX and i18n refinements:
 - **PlaceholderAPI integration**: BoatRacing now registers `%boatracing_*%` placeholders for holograms/scoreboards (player/team data, live race values, records, wins and top rankings).
 - **Persistent race stats**: new aggregated stats storage (`stats.yml`) for player wins, team wins, best race and best lap.
 - **Wizard readability pass**: setup wizard prompts are now more compact and step-focused to reduce chat noise.
 - **Registration announce fully i18n-based**: registration broadcast template now lives in `messages_<lang>.yml` (`race.registration.announce`) instead of `config.yml`.
 
-## What's new (1.1.1)
+</details>
+
+<details>
+<summary><strong>What's new (1.1.1)</strong></summary>
+
 Lobby and stability updates:
 - **Optional registration lobby zone**: new `racing.lobby.*` config block. When enabled, players are teleported to a configurable lobby zone/location when they join registration.
 - **Quick lobby command**: new `/boatracing setup setlobby` command saves your current position as the registration lobby and enables it automatically.
@@ -49,7 +55,11 @@ Explicit compatibility:
 - GitHub: https://github.com/NEZNAMY/TAB
 - Modrinth: https://modrinth.com/plugin/tab-was-taken
 
-## What's new (1.1.0)
+</details>
+
+<details>
+<summary><strong>What's new (1.1.0)</strong></summary>
+
 Languages and player controls:
 - **Multi-language support**: messages are now fully translatable. Configure language in config.yml: `language: "en"` (English, default) or `language: "es"` (Español — Spain). Language files are automatically extracted to the plugin folder. Reload with `/boatracing reload` to switch languages without restart.
 - **Player-controlled race management**: new config option `player-actions.allow-player-race-start` (default: false) lets non-admin players open, start, force-start and stop races. Can be overridden per-track via `racing.allow-player-start: true` in individual track configs.
@@ -60,7 +70,11 @@ Languages and player controls:
 Previous versions:
 - **1.0.9**: Compatibility across 1.19–1.21.11; safe boat/raft materials; Bukkit/Spigot classification on Paper.
 
-## What’s new (1.0.9)
+</details>
+
+<details>
+<summary><strong>What’s new (1.0.9)</strong></summary>
+
 Compatibility and fixes:
 - Official support: Bukkit/Spigot/Paper/Purpur 1.19 → 1.21.11. Requires Java 17+.
 - Safer boat types across versions: dynamic Material resolution for boats/rafts (including Bamboo Raft and Pale Oak variants) avoids NoSuchFieldError on older APIs and removes CraftLegacy warnings.
@@ -72,7 +86,11 @@ Updater cadence:
 - Hourly reminder aligned to the top of each hour (00:00, 01:00, …) while outdated (respects `updates.console-warn`).
 - Admin join: always notifies in chat (if enabled), never prints to console on player join.
 
-## What’s new (1.0.8)
+</details>
+
+<details>
+<summary><strong>What’s new (1.0.8)</strong></summary>
+
 Improvements and toggles:
  - Customizable HUD: new config flags to show/hide parts of the sidebar and ActionBar.
 	 - `racing.ui.scoreboard.show-position|show-lap|show-checkpoints|show-pitstops|show-name`
@@ -92,7 +110,11 @@ Updater:
  - Console notice restored: a single WARN shortly after startup when outdated, plus an hourly reminder while still outdated (respects `updates.console-warn`).
  - Admin join: when an admin joins, a quick check runs (throttled) and notifies them within seconds if a new update was just published.
 
-## What’s new (1.0.7)
+</details>
+
+<details>
+<summary><strong>What’s new (1.0.7)</strong></summary>
+
 Bugfixes and quality-of-life:
  - Console update check noise removed: only a single WARN shortly after startup when you are outdated (respecting `updates.console-warn`). Periodic 5‑minute checks remain but are silent.
  
@@ -104,7 +126,11 @@ Bugfixes and quality-of-life:
  UI:
  - Scoreboard redesigned: centered rows, compact “Name - L X/Y CP A/B” layout, rank colors (1=gold, 2=silver-ish, 3=bronze-ish), and your own name in green.
 
-## What’s new (1.0.6)
+</details>
+
+<details>
+<summary><strong>What’s new (1.0.6)</strong></summary>
+
 Improvements and tweaks:
  - New sidebar leaderboard: the sidebar now shows the top‑10 positions in real time. Personal stats moved to the ActionBar.
  - Personal HUD: your Lap, CP and Elapsed Time now appear in the ActionBar, updated every 0.5s.
@@ -115,14 +141,23 @@ Improvements and tweaks:
  - Layout polish: names are left‑aligned and the whole " - Lap X/Y [CP]" block is centered. Removed the decorative separator and arrow prefix, compact/dynamic padding based on the longest visible name. Long names are truncated with "..." and no extra padding is added after the ellipsis. Your own name is highlighted in green (no bold).
  - FIN label: standardized to “FINISHED”.
  - Display names: supports EssentialsX displayName and strips common rank wrappers like [Admin]/(Rank) at the start for cleaner alignment.
-## What’s new (1.0.5)
+
+</details>
+
+<details>
+<summary><strong>What’s new (1.0.5)</strong></summary>
+
 Fixes and polish:
  - Team member persistence: team members are preserved across updates/reloads/startup; loading restores teams without re‑applying capacity limits.
  - Setup pit command: `/boatracing setup setpit [team]` accepts team names with spaces when quoted (e.g., "/boatracing setup setpit \"Toast Peace\""); tab‑completion suggests quoted names when the input starts with a quote.
  - Config defaults: on plugin update or `/boatracing reload`, new default keys are merged into your existing `config.yml` without overwriting your changes.
  - Boat/Raft type: racers are mounted in their selected wood variant (including chest variants and rafts) instead of always OAK; works across API versions with a safe fallback.
 
-## What’s new (1.0.4)
+</details>
+
+<details>
+<summary><strong>What’s new (1.0.4)</strong></summary>
+
 - Team-specific pit areas: new unified command `/boatracing setup setpit [team]` sets the default pit when no team is provided, or the pit for a specific team when a team name is given. Tab‑completion suggests team names.
 - Mandatory pitstops: new `racing.mandatory-pitstops` config (default 0). When > 0, racers must complete at least that many pit exits before they are allowed to finish; pitstops are counted on exiting the pit area and persist for the whole race.
 - Wizard: Pit step updated to mention default pit vs per‑team pits and to guide the flow with clickable tips.
@@ -134,7 +169,11 @@ Fixes and polish:
 - Setup show: now also displays the presence of team‑specific pits and the number of custom start positions configured.
  - Wizard (Starts): shows optional buttons for per‑player custom slots — setpos/clearpos/auto — and displays the number of custom slots configured.
 
-## What’s new (1.0.3)
+</details>
+
+<details>
+<summary><strong>What’s new (1.0.3)</strong></summary>
+
 - Admin Tracks GUI: manage multiple named tracks — Create and select, Delete (with confirmation), and Reapply selected. Requires `boatracing.setup`.
 - Admin Race GUI: manage race lifecycle from a GUI — open/close registration, start/force/stop, quick-set laps, remove registrants, and handy setup tips.
 - Terminology: “loaded” → “selected”; “pit lane” → “pit area”.
@@ -155,278 +194,383 @@ Fixes and polish:
  - New: live in‑race scoreboard per participant showing Lap, Checkpoints, and Elapsed Time.
  - New: crossing the pit area counts as finish for lap counting once all lap checkpoints are completed (still applies pit penalty when enabled).
 
+</details>
+
 ## Features
-- Teams GUI: list, view, member profile, leave confirmations; optional member Rename/Change color/Disband (config‑gated) with team notifications
-- Member profile: boat type picker, racer number (1–99)
-- Inventory-based UI with drag blocking and sound feedback
-- Text input via AnvilGUI where needed (team names, racer number)
-- Track setup: per‑racer start slots, finish line region, pit area region (optional), ordered checkpoints (optional)
- - Grid order: custom start slots take priority; remaining racers are placed by best recorded time (fastest first), then racers with no time.
-- Racing: lap counting with ordered checkpoints when configured, F1‑style pit area time penalty when configured, results by total time (race time + penalties)
- - Live scoreboard: per-player sidebar tracking Lap, CP and Time (auto‑created on race start and cleaned up on stop/reset).
-- Registration: admin opens a timed registration window; players join via command (must be in a team); force‑start supported
-- Persistent storage: teams.yml, racers.yml, and per‑track files under `plugins/BoatRacing/tracks/` (no central `track.yml`).
-- Update notifications and bStats metrics (enabled by default)
- - Admin GUI: manage teams (create/rename/color/add/remove/delete) and players (assign team, set racer number, set boat)
- - Tracks GUI: manage named tracks (Create now auto-loads the new track and suggests starting the setup wizard).
- - Race GUI: one-click controls for registration and race state, plus laps.
- - Admin Race GUI: open/close registration, start/force/stop the race, adjust laps, and manage registrants.
+- Team GUI for players: browse teams, open team view, join/leave, manage your racer number and boat type, and optionally rename/change color/disband from the GUI when enabled in config.
+- Admin tooling: dedicated GUIs for teams, players, race control, and named tracks, plus command equivalents for scripting or console-style workflows.
+- Named tracks: each track lives in its own YAML file and can override core race settings such as laps, mandatory pit stops, registration time, penalties, and player race-start permissions.
+- Built-in setup flow: Blaze Rod selection wand, cuboid region tools, clickable setup tips, and a compact guided wizard with auto-advance where possible.
+- Grid control: custom per-player start slots, auto placement for the rest, and fallback ordering by best recorded track time.
+- Race systems: ordered checkpoints, optional pit area, optional mandatory pit stops, false-start penalties, registration lobby teleport/return, 5-light countdown, and live results broadcasting.
+- HUD and scoreboard: in-race sidebar plus ActionBar with per-section config toggles, safe scoreboard restoration after races, and compatibility flow for external scoreboards.
+- Persistent stats: `stats.yml` stores wins, best race and best lap so PlaceholderAPI, holograms, scoreboards, and NPCs can show live and historical data.
+- i18n: bundled message packs for `en`, `es`, `zh_TW`, and `ru`, all hot-reloadable with `/boatracing reload`.
+- Rewards, updates, and metrics: per-position race rewards, Modrinth update checks, and optional bStats metrics.
 
 ## Requirements
-- Bukkit/Spigot/Paper/Purpur 1.19–1.21.11 (api-version: 1.19)
 - Java 17+
+- A Bukkit-compatible server running Minecraft 1.19 to 1.21.11
 
-Supported servers
-- Purpur
-- Paper
-- Folia
-- Spigot
+## Supported Servers
 - CraftBukkit
-Other Bukkit-compatible forks may work but aren’t officially tested. Not supported in this jar: Sponge and Forge hybrids (Mohist/Magma/Arclight).
+- Spigot
+- Paper
+- Purpur
+- Folia
 
-Platform note:
-- Sponge support would require a separate Sponge-specific port/jar.
-- Velocity and BungeeCord are proxy platforms, so BoatRacing gameplay logic does not run there directly. A separate proxy companion plugin would be required for cross-server features.
- 
+Other Bukkit-compatible forks may work, but they are not officially verified in this repository.
+
+## Platform Notes
+- Single plugin jar for the Bukkit family. `plugin.yml` targets the Bukkit API, and the Paper metadata also marks the plugin as Folia-supported.
+- Proxies such as Velocity and BungeeCord are not execution targets for BoatRacing gameplay logic.
+- Sponge and Forge hybrid servers such as Mohist, Magma, or Arclight are not supported by this jar.
 
 ## Install
-1. Download the latest BoatRacing.jar from Modrinth: https://modrinth.com/plugin/boatracing
-2. Drop the jar into your `plugins/` folder.
-3. Start the server to generate config and data files.
+1. Download the latest BoatRacing jar from Modrinth: https://modrinth.com/plugin/boatracing
+2. Put it in your `plugins/` folder.
+3. Start the server once to generate config, messages, teams, racers, stats, and track files.
+4. Optionally install PlaceholderAPI if you want `%boatracing_*%` placeholders.
 
-## Usage (overview)
-- Use `/boatracing teams` to open the main GUI.
-- Create a team and set your racer number and boat type (normal boats listed before chest variants).
-- Admins can create teams, rename teams, change team color, and delete teams. Optionally, members can rename and change color from the Team GUI if enabled by config.
-- Optionally, members can also disband their own team from the Team GUI if enabled by config.
-- Configure a track (finish, starts, and optionally pit area and checkpoints) with the BoatRacing selection tool. Use the Tracks GUI to create/select the active track.
-- Run a race with a public registration window or start immediately.
+## Usage
+Quick flow:
+1. Run `/boatracing teams` and create or join a team.
+2. Set your racer number and boat type.
+3. Create or select a track from the Admin Tracks GUI, or start directly with the setup wand on the active track.
+4. Configure starts, finish, lights, and optional pit/checkpoints.
+5. Open registration with `/boatracing race open <track>`.
+6. Let players join, then start or force-start the race.
 
-## Track setup (built-in)
-Use the BoatRacing selection tool to make cuboid selections (left-click = mark Corner A, right-click = mark Corner B). The tool item is a Blaze Rod named "BoatRacing Selection Tool".
+Root command groups:
+- `/boatracing teams` opens the player team GUI.
+- `/boatracing race ...` manages registration and race lifecycle.
+- `/boatracing setup ...` configures the active track.
+- `/boatracing admin` opens the admin GUI.
+- `/boatracing reload` reloads config, messages, teams, racers, and stats.
+- `/boatracing version` shows plugin version and update status.
 
-- `/boatracing setup help` — lists setup commands
-- `/boatracing setup wand` — gives you the BoatRacing selection tool
-- `/boatracing setup setfinish` — set the finish line region from your current selection
-- `/boatracing setup setpit [team]` — set the default pit area from your current selection, or the pit area for a specific team when a team is provided (tab‑complete team names)
-- `/boatracing setup setlobby` — set the registration lobby to your current location and enable it in config
-- `/boatracing setup addcheckpoint` — add a checkpoint in order (A → B → C …)
-- `/boatracing setup clearcheckpoints` — remove all checkpoints
-- `/boatracing setup addlight` — add the Redstone Lamp you’re looking at as a start light (exactly 5; order left→right)
-- `/boatracing setup clearlights` — remove all start lights
-- `/boatracing setup addstart` — add your current position as a start slot (order matters)
-- `/boatracing setup clearstarts` — remove all start slots
-- `/boatracing setup setpos <player> <slot|auto>` — bind a player to a specific start slot (1‑based) or use `auto` to remove the binding
-- `/boatracing setup clearpos <player>` — remove a player’s custom start slot
-- `/boatracing setup setpitstops <n>` — set the number of mandatory pitstops (0 disables the requirement)
-- `/boatracing setup show` — show a summary of the current track config (includes team‑specific pits and count of custom start positions)
-	(includes the active track name if saved/loaded from Admin Tracks GUI)
- - `/boatracing setup selinfo` — debug info about your current selection
+## Track Setup
+Use the built-in BoatRacing selection wand to define cuboid regions.
 
-### Guided setup (wizard)
-- Start: `/boatracing setup wizard` (single entrypoint)
-- Auto‑advance when possible. Navigation appears as clickable emojis on every step: ⟵ Back, ℹ Status, ✖ Cancel.
+- Left-click a block with the wand: set Corner A.
+- Right-click a block with the wand: set Corner B.
+- Wand item: Blaze Rod named `BoatRacing Selection Tool`.
 
-The wizard provides concise, colorized instructions with clickable actions. Steps: Starts → Finish → Start lights (5 required) → Pit area (optional) → Checkpoints (optional) → Mandatory pit stops (optional) → Laps → Done. The Starts step also includes optional buttons to set per‑player custom start slots (setpos/clearpos/auto) and shows the count of custom slots configured. The new “Mandatory pit stops” step shows your current value and quick options [0] [1] [2] [3]. On completion, the wizard prints a Summary that includes “Custom slots N”. It does not auto‑start races; the final prompt suggests opening registration for the currently selected track. Use `/boatracing setup wand` to get the selection tool.
+Setup commands:
+- `/boatracing setup help` shows the setup command list.
+- `/boatracing setup wand` gives the selection wand.
+- `/boatracing setup addstart` adds your current position as a start slot.
+- `/boatracing setup clearstarts` removes all start slots.
+- `/boatracing setup setfinish` saves the current selection as the finish region.
+- `/boatracing setup setpit [team]` saves the current selection as the default pit or a team-specific pit.
+- `/boatracing setup addcheckpoint` appends a checkpoint in order.
+- `/boatracing setup clearcheckpoints` removes all checkpoints.
+- `/boatracing setup addlight` adds the Redstone Lamp you are looking at as a start light.
+- `/boatracing setup clearlights` removes all start lights.
+- `/boatracing setup setlaps <n>` saves the lap count for the active track.
+- `/boatracing setup setpitstops <n>` saves mandatory pit stops for the active track.
+- `/boatracing setup setlobby` stores your current location as the registration lobby and enables it.
+- `/boatracing setup setpos <player> <slot|auto>` binds a player to a custom start slot or clears the binding with `auto`.
+- `/boatracing setup clearpos <player>` removes a custom start slot binding.
+- `/boatracing setup show` prints a summary of starts, lights, finish, pit, team pits, checkpoints, custom slots, pit stops, and active per-track overrides.
+- `/boatracing setup selinfo` prints selection debug information.
 
-Notes:
-- Checkpoints (if configured) must be passed in order every lap before crossing finish; when none are configured, crossing finish counts the lap directly.
-- Pit area (if configured) applies a time penalty when entered (configurable).
-- Starts are used to place racers before the race (first N registered participants get the first N slots).
+Setup rules:
+- A track is race-ready when it has at least one start slot and a finish region.
+- Pit area is optional.
+- Checkpoints are optional.
+- Start lights are optional for track validity, but if used the system expects exactly 5.
+- Team-specific pit regions are supported alongside the default pit region.
 
-## Racing and registration
-- `/boatracing race help` — lists race commands
-- `/boatracing race open <track>` — open a registration window on the selected track and broadcast it
-- `/boatracing race join <track>` — join the registration (you must be in a team)
-- `/boatracing race leave <track>` — leave the registration
-- `/boatracing race force <track>` — force start immediately with the registered participants (requires at least one registered)
-- `/boatracing race start <track>` — start now with the registered participants (requires registration)
-- `/boatracing race stop <track>` — stop and announce results; also cancels registration if still open
-- `/boatracing race status <track>` — current race/registration status for that track
+### Guided Setup Wizard
+Start it with `/boatracing setup wizard`.
 
-Race logic highlights:
-- With checkpoints configured, laps count only after collecting all checkpoints in order; if no checkpoints are set, crossing finish counts the lap.
- - Entering the pit area (when configured) adds a fixed time penalty to the racer’s total time, and also counts as finish for lap progression when the lap’s checkpoints are done.
- - Mandatory pitstops: when `racing.mandatory-pitstops > 0`, racers must complete at least that many pit exits during the race before they are allowed to finish.
- - If a racer attempts to finish without the required checkpoints for the lap, a clear message is sent (denial sound also plays).
- - Moving forward before the countdown ends (false start) adds a fixed time penalty.
-	- You can disable pit and false-start penalties via config flags.
-- Results are broadcast sorted by total time = elapsed + penalties.
- - The broadcast highlights the podium with 🥇/🥈/🥉 and rank colors for the top‑3.
-- On start, racers are placed on unique start slots facing forward (pitch 0) and auto‑mounted into their selected boat type. Grid priority: custom slot bindings first; then by best recorded time on the track (fastest first); racers without a recorded time go last.
-- If 5 start lights are configured, a left-to-right lamp countdown runs (1 per second) before the race starts; lamps are lit via block data (no redstone power required).
-- Total laps come from configuration (`racing.laps`) and/or the track’s saved setting; `open` and `start` don’t accept a laps argument.
+Wizard flow:
+- Starts
+- Finish
+- Start lights
+- Pit area
+- Checkpoints
+- Mandatory pit stops
+- Laps
 
-### Tab–completion
-- Root: `teams`, `race`, `setup`, `reload`, `version`, `admin` (filtered by permissions)
-- Teams: `create`, `rename`, `color`, `join`, `leave`, `boat`, `number`, `confirm`, `cancel` (rename/color are admin‑only via command; GUI for members can be enabled via config). Disband is not exposed as a player command; it’s a GUI action when enabled.
-- Setup: `help`, `wand`, `wizard`, `addstart`, `clearstarts`, `setfinish`, `setpit`, `setlobby`, `addcheckpoint`, `clearcheckpoints`, `addlight`, `clearlights`, `setpos`, `clearpos`, `show`, `selinfo`
- - `setpos` suggests player names, plus `auto` and slot numbers; `clearpos` suggests player names.
-- Race: non‑admins see `join`, `leave`, and `status`; admins also see `open`, `start`, `force`, `stop`. When a subcommand expects `<track>`, tab‑completion lists existing track names.
-- `color` lists all DyeColors
-- `boat` lists allowed boat types (normal first, then chest variants)
-- `join` suggests existing team names
+Wizard behavior:
+- The wizard is chat-driven and uses clickable buttons for the next action.
+- It auto-advances when a step becomes valid.
+- Optional steps support skip.
+- Sub-actions like `back`, `status`, `cancel`, `skip`, `next`, and `finish` exist, but are intentionally not shown in tab-completion to keep the entrypoint simple.
+- The Starts step also exposes quick buttons for custom start-slot management.
 
-### Admin commands and GUI
+## Racing And Registration
+Race commands:
+- `/boatracing race help`
+- `/boatracing race open <track>`
+- `/boatracing race join <track>`
+- `/boatracing race leave <track>`
+- `/boatracing race start <track>`
+- `/boatracing race force <track>`
+- `/boatracing race stop <track>`
+- `/boatracing race status <track>`
 
-Admins (permission `boatracing.admin`) can:
+Race behavior:
+- Players must belong to a team before joining registration.
+- Registration loads track settings before opening, including any per-track `racing.*` overrides.
+- `start` and `force` use registered players only.
+- Grid order is: custom start slot bindings first, then best recorded track times, then players without a recorded time.
+- Boats are spawned using each player’s selected boat type with cross-version-safe material resolution.
+- If checkpoints exist, a lap only counts once all checkpoints have been collected in order.
+- Pit entry can apply a time penalty and pit exits count toward mandatory pit-stop requirements.
+- False starts can apply an additional penalty during the light countdown.
+- If registration lobby is enabled, joining registration teleports players there and optionally returns them when they leave or when registration is cancelled.
+- Results are sorted by elapsed time plus penalties and broadcast to online players.
+- The winner updates persistent player/team stats used by placeholders.
 
-- Open Admin GUI: `/boatracing admin`
-	- Teams view: list and open teams, and “Create team” button (Anvil input for name; creates a team without initial members).
-	- Team view: Rename, Change color (click any dye to open picker), Add member (by name), Remove member (click head), Delete team.
- 	- If enabled by config, team members will also see a Disband button in their Team view; otherwise it’s hidden.
-	- Players view: Assign team / remove from team, Set racer number (1–99), Set boat type.
-		- Tracks view (requires `boatracing.setup`): create named tracks (Create auto‑loads and suggests the setup wizard), load an existing track, delete with confirmation, and reapply selected.
-		- Race view: open/close registration, start/force/stop, quick‑set laps (including custom), and remove registrants.
+Player-managed races:
+- By default, race control is admin-only.
+- Non-admin players can also open/start/force/stop races when `player-actions.allow-player-race-start: true` is enabled globally.
+- A track can override that via `tracks/<name>.yml` with `racing.allow-player-start: true|false`.
 
-- Command alternatives:
-	- `/boatracing admin team create <name> [color] [firstMember]`
-	- `/boatracing admin team delete <name>`
-	- `/boatracing admin team rename <old> <new>`
-	- `/boatracing admin team color <name> <DyeColor>`
-	- `/boatracing admin team add <name> <player>`
-	- `/boatracing admin team remove <name> <player>`
-	- `/boatracing admin player setteam <player> <team|none>`
-	- `/boatracing admin player setnumber <player> <1-99>`
-	- `/boatracing admin player setboat <player> <BoatType>`
+## Tab Completion
+Root suggestions:
+- `teams`, `race`, `setup`, `admin`, `reload`, `version` depending on permissions.
+
+Teams suggestions:
+- `create`, `rename`, `color`, `join`, `leave`, `boat`, `number`, `confirm`, `cancel`
+- `join` suggests team names.
+- `color` suggests all dye colors.
+- `boat` suggests supported boat and chest-boat variants, plus bamboo rafts.
+
+Race suggestions:
+- Everyone sees `help`, `join`, `leave`, `status`.
+- Admin-capable users also see `open`, `start`, `force`, `stop`.
+- Track-taking subcommands suggest existing named tracks.
+
+Setup suggestions:
+- `help`, `addstart`, `clearstarts`, `setfinish`, `setpit`, `addcheckpoint`, `clearcheckpoints`, `addlight`, `clearlights`, `setlaps`, `setpitstops`, `setlobby`, `setpos`, `clearpos`, `show`, `selinfo`, `wand`, `wizard`
+- `setpit` suggests team names, quoting names with spaces when needed.
+- `setpos` and `clearpos` suggest online and known offline player names.
+- `setpos` also suggests `auto` and available slot numbers.
+
+Admin suggestions:
+- `help`, `team`, `player`, `tracks`
+- `team` suggests `create`, `delete`, `rename`, `color`, `add`, `remove`
+- `player` suggests `setteam`, `setnumber`, `setboat`
+
+## Admin Commands And GUI
+`/boatracing admin` opens the admin hub.
+
+Admin GUI sections:
+- Teams: create teams, open team view, rename, recolor, add/remove members, delete teams.
+- Players: assign/remove team, set racer number, set boat type.
+- Race: open/close registration, start/force/stop, quick-set laps, custom laps, and remove registrants.
+- Tracks: create/select/delete named tracks and reapply the selected track from disk.
+
+Command equivalents:
+- `/boatracing admin team create <name> [color] [firstMember]`
+- `/boatracing admin team delete <name>`
+- `/boatracing admin team rename <old> <new>`
+- `/boatracing admin team color <name> <DyeColor>`
+- `/boatracing admin team add <name> <player>`
+- `/boatracing admin team remove <name> <player>`
+- `/boatracing admin player setteam <player> <team|none>`
+- `/boatracing admin player setnumber <player> <1-99>`
+- `/boatracing admin player setboat <player> <BoatType>`
+- `/boatracing admin tracks`
 
 ## Permissions
-- `boatracing.*` (default: false) — wildcard that grants ALL BoatRacing permissions
-- `boatracing.use` (default: true) — meta permission; grants `boatracing.teams` and `boatracing.version`
-- `boatracing.teams` (default: true) — access to `/boatracing teams`
-- `boatracing.version` (default: true) — access to `/boatracing version`
-- `boatracing.reload` (default: op) — access to `/boatracing reload`
-- `boatracing.update` (default: op) — receive in‑game update notices
-- `boatracing.setup` (default: op) — configure tracks and selections (wizard, lights, starts, finish, pit, checkpoints)
-- `boatracing.admin` (default: op) — admin GUI and commands (manage teams and players). Grants all plugin permissions via explicit children (no circular wildcard). Also enables root tab‑completion for `admin`.
-	- Admin Tracks GUI requires `boatracing.setup` to open from the Admin panel.
+- `boatracing.*` (default: false): wildcard for the full plugin.
+- `boatracing.use` (default: true): base meta permission.
+- `boatracing.teams` (default: true): access to `/boatracing teams`.
+- `boatracing.version` (default: true): access to `/boatracing version`.
+- `boatracing.reload` (default: op): access to `/boatracing reload`.
+- `boatracing.update` (default: op): receive in-game update notices.
+- `boatracing.setup` (default: op): access to track setup, wizard, selection, and setup GUIs.
+- `boatracing.admin` (default: op): access to the admin hub and admin management features.
+- `boatracing.race.join` (default: true): join registration.
+- `boatracing.race.leave` (default: true): leave registration.
+- `boatracing.race.status` (default: true): check track race status.
+- `boatracing.race.admin` (default: op): manage races with `open`, `start`, `force`, and `stop`.
 
-Race‑specific permissions:
-- `boatracing.race.join` (default: true) — join a registration
-- `boatracing.race.leave` (default: true) — leave a registration
-- `boatracing.race.status` (default: true) — view race status for a track
-- `boatracing.race.admin` (default: op) — manage races: `/boatracing race open|start|force|stop <track>`
+Permission notes:
+- `boatracing.admin` grants the other plugin permissions through explicit children.
+- Players can always see the `race` root suggestion, but actual subcommands remain permission/config-gated.
+- Non-admin race management is controlled by config and per-track overrides, not by a separate extra permission node.
 
-Players without `boatracing.setup` can use `/boatracing race join <track>`, `/boatracing race leave <track>`, and `/boatracing race status <track>` during an open registration (granted by the default‑true permissions above).
+## Configuration
+Core:
+- `prefix`: chat prefix.
+- `language`: bundled values are `en`, `es`, `zh_TW`, and `ru`.
+- `max-members-per-team`: team size limit.
 
-## Configuration (config.yml)
-- `prefix`: message prefix
-- `max-members-per-team`: maximum players in a team
-- `player-actions.*`: flags to allow/deny non‑admin players to:
-	- `allow-team-create` (default true)
-	- `allow-team-rename` (default false) — when true, members can rename their team from the Team GUI (commands remain admin‑only)
-	- `allow-team-color` (default false) — when true, members can change their team color from the Team GUI (commands remain admin‑only)
- 	- `allow-team-disband` (default false) — when true, members can disband their own team from the Team GUI. The Disband icon is hidden when not allowed.
-	- `allow-set-boat` (default true)
-	- `allow-set-number` (default true)
-	Denial messages are hardcoded in English; they are not configurable.
-- `bstats.enabled`: true|false (bStats plugin-id is fixed)
-- `updates.enabled`: enable update checks
-- `updates.console-warn`: WARN in console when outdated
-- `updates.notify-admins`: in‑game update notices for admins (`boatracing.update`)
-- `racing.laps`: default race laps (int, default 3)
-- `racing.mandatory-pitstops`: required pit exits to be allowed to finish (int, default 0 = disabled)
-- `racing.pit-penalty-seconds`: time penalty applied on pit entry (double, default 5.0)
-- `racing.registration-seconds`: registration window length (seconds, default 300)
- - Registration announce text is language-specific in `messages_<lang>.yml` at `race.registration.announce` (placeholders: `{track}`, `{laps}`, `{cmd}`, `{label}`)
- - `racing.false-start-penalty-seconds`: time penalty applied for a false start during the light countdown (double, default 3.0)
- - `racing.enable-pit-penalty`: enable/disable pit area time penalty (boolean, default true)
- - `racing.enable-false-start-penalty`: enable/disable false start penalty (boolean, default true)
- - `racing.lights-out-delay-seconds` (since 1.0.6): delay between all 5 start lights lit and “lights out”/GO (seconds, default 1.0)
- 
+Player actions:
+- `player-actions.allow-team-create`
+- `player-actions.allow-team-rename`
+- `player-actions.allow-team-color`
+- `player-actions.allow-team-disband`
+- `player-actions.allow-set-boat`
+- `player-actions.allow-set-number`
+- `player-actions.allow-player-race-start`
 
-## Updates & Metrics
-- Update checks: Modrinth project. A console WARN is printed on first detection (startup or when a new version appears during runtime) and an hourly reminder at 00:00, 01:00, … while outdated (respects `updates.console-warn`). Admin join shows an in‑game chat notice (if enabled) and does not print to console.
-- Background: checks every 5 minutes; if a new version is detected mid‑run, the console WARN prints immediately (once per version).
-- bStats: enabled by default; opt‑out via the global bStats config (plugin id hardcoded)
+Updates and metrics:
+- `updates.enabled`
+- `updates.console-warn`
+- `updates.notify-admins`
+- `bstats.enabled`
+
+Global racing defaults:
+- `racing.laps`
+- `racing.mandatory-pitstops`
+- `racing.pit-penalty-seconds`
+- `racing.registration-seconds`
+- `racing.false-start-penalty-seconds`
+- `racing.enable-pit-penalty`
+- `racing.enable-false-start-penalty`
+- `racing.lights-out-delay-seconds`
+- `racing.lights-out-jitter-seconds`
+
+Registration lobby:
+- `racing.lobby.enabled`
+- `racing.lobby.return-on-leave`
+- `racing.lobby.world`
+- `racing.lobby.x`
+- `racing.lobby.y`
+- `racing.lobby.z`
+- `racing.lobby.yaw`
+- `racing.lobby.pitch`
+
+HUD toggles:
+- `racing.ui.scoreboard.show-position`
+- `racing.ui.scoreboard.show-lap`
+- `racing.ui.scoreboard.show-checkpoints`
+- `racing.ui.scoreboard.show-pitstops`
+- `racing.ui.scoreboard.show-name`
+- `racing.ui.actionbar.show-lap`
+- `racing.ui.actionbar.show-checkpoints`
+- `racing.ui.actionbar.show-pitstops`
+- `racing.ui.actionbar.show-time`
+
+Rewards:
+- `racing.rewards.enabled`
+- `racing.rewards.positions.<place>.commands`
+- `racing.rewards.positions.<place>.messages`
+- `racing.rewards.positions.<place>.broadcast`
+- Supported reward placeholders: `{player}`, `{position}`, `{time}`, `{track}`, `{laps}`
+
+Message templates:
+- Registration announce text is language-specific and lives in `messages_<lang>.yml` under `race.registration.announce`.
+- That template supports `{track}`, `{laps}`, `{cmd}`, and `{label}`.
+
+Per-track overrides:
+- Track files under `plugins/BoatRacing/tracks/<name>.yml` can override `racing.*` values.
+- `setup show` prints the active override set for the current track.
+
+## Updates And Metrics
+- Update source: Modrinth.
+- Startup can print a WARN if the plugin is outdated.
+- Silent background checks run every 5 minutes.
+- A newly detected version during runtime triggers a one-time console WARN for that version.
+- Hourly reminder warnings remain active while outdated if `updates.console-warn` is enabled.
+- Admin players with `boatracing.update` can receive in-game notices on join.
+- bStats is enabled by default and can be disabled with `bstats.enabled`.
 
 ## Storage
-- `plugins/BoatRacing/teams.yml`
-- `plugins/BoatRacing/racers.yml`
-- Per‑track files: `plugins/BoatRacing/tracks/<name>.yml` (managed via Admin Tracks GUI). Includes: starts, finish, pitlane, teamPits, checkpoints, start lights, and now `customStartSlots` and `bestTimes` (per‑player).
+- `plugins/BoatRacing/teams.yml`: team membership, colors, names, and current team leader.
+- `plugins/BoatRacing/racers.yml`: per-player racer numbers and boat types.
+- `plugins/BoatRacing/stats.yml`: player wins, team wins, best race, and best lap.
+- `plugins/BoatRacing/tracks/<name>.yml`: one file per track containing starts, finish, pit areas, team pits, checkpoints, lights, custom slots, best times, and per-track racing overrides.
 
-Legacy migration: if a legacy `plugins/BoatRacing/track.yml` is found on startup, it is migrated to `plugins/BoatRacing/tracks/default.yml` (or `default_N.yml`) and the old file is removed when possible. Admins with `boatracing.setup` get an in‑game notice.
+Legacy migration:
+- If an old `plugins/BoatRacing/track.yml` is found, it is migrated to `plugins/BoatRacing/tracks/default.yml` (or `default_N.yml` if needed).
 
 ## Compatibility
-- Bukkit/Spigot/Paper/Purpur 1.19–1.21.11; Java 17+
-- English‑only messages with vanilla‑styled titles and lore
+- Minecraft: 1.19 to 1.21.11
+- Java: 17+
+- Server families: CraftBukkit, Spigot, Paper, Purpur, Folia
+- Optional PlaceholderAPI support through a soft dependency
+- SimpleScore compatibility hook for hiding/restoring external sidebars during races
+- Compatible with TAB environments for scoreboard usage, without requiring a TAB-specific dependency
+- Bundled languages: English, Spanish, Traditional Chinese, Russian
 
 ## Placeholders (PlaceholderAPI)
-If PlaceholderAPI is installed, BoatRacing registers `%boatracing_*%` placeholders for holograms/scoreboards.
+If PlaceholderAPI is installed, BoatRacing registers `%boatracing_*%` placeholders for scoreboards, holograms, NPCs, and static displays.
 
-### Category: Player and Team (viewer context)
-These placeholders resolve using the player who is looking at the hologram/scoreboard.
+Resolution rules:
+- Missing text-like data usually resolves to `-`.
+- Missing numeric data usually resolves to `0` or `-1` depending on the placeholder.
+- `%boatracing_player_*%` uses the viewer as context.
+- `%boatracing_player_*_<player>%` uses an explicit player name or UUID and is ideal for NPCs and static holograms.
+- Team leader placeholders always resolve the current saved leader of that team.
 
-| Placeholder | What it does | Example resolved value | Visibility |
+### Category: Viewer Player And Team
+
+| Placeholder(s) | What it shows | Example text on screen | Visibility |
 |---|---|---|---|
-| `%boatracing_player_name%` | Player name | `jaie55` | Viewer-only (`jaie55` sees `jaie55`) |
-| `%boatracing_player_team_name%` / `%boatracing_player_team_id%` / `%boatracing_player_team_color%` | Team info of the viewer | `Sharks` / `sharks` / `AQUA` | Viewer-only |
-| `%boatracing_player_team_players%` / `%boatracing_player_team_player_count%` | Team roster and team size of the viewer | `jaie55, KiluGod` / `2` | Viewer-only |
-| `%boatracing_player_number%` / `%boatracing_player_boat%` | Assigned racer number and boat type | `#07` / `OAK_BOAT` | Viewer-only |
+| `%boatracing_player_name%` | Viewer player name | `Driver: jaie55` | Only the viewer sees their own value |
+| `%boatracing_player_team_name%` / `%boatracing_player_team_id%` / `%boatracing_player_team_color%` | Viewer team identity | `Team: Sharks` / `Team ID: sharks` / `Color: AQUA` | Viewer context |
+| `%boatracing_player_team_leader_name%` / `%boatracing_player_team_leader_id%` | Current leader of the viewer's team | `Leader: jaie55` | Viewer context |
+| `%boatracing_player_team_players%` / `%boatracing_player_team_player_count%` | Viewer team roster and size | `Members: jaie55, KiluGod` / `Members: 2` | Viewer context |
+| `%boatracing_player_number%` / `%boatracing_player_boat%` | Viewer racer number and selected boat | `Number: 7` / `Boat: OAK_BOAT` | Viewer context |
 
-### Category: Live Race State (viewer context)
-These are dynamic values during registration/race.
+### Category: Viewer Live Race State
 
-| Placeholder | What it does | Example resolved value | Visibility |
+| Placeholder(s) | What it shows | Example text on screen | Visibility |
 |---|---|---|---|
-| `%boatracing_player_race_running%` / `%boatracing_player_race_registering%` | Race status flags | `true` / `false` | Viewer-only |
-| `%boatracing_player_current_time%` / `%boatracing_player_current_time_ms%` | Current race time for viewer | `01:42.355` / `102355` | Viewer-only |
-| `%boatracing_player_current_lap%` / `%boatracing_player_current_checkpoint%` | Current lap/checkpoint for viewer | `2` / `5` | Viewer-only |
-| `%boatracing_player_current_position%` / `%boatracing_player_current_pitstops%` / `%boatracing_player_finished%` | Position, pitstops and finish state | `1` / `0` / `false` | Viewer-only |
+| `%boatracing_player_race_running%` / `%boatracing_player_race_registering%` | Whether a race is running or registering | `Running: true` / `Registering: false` | Viewer context |
+| `%boatracing_player_current_time%` / `%boatracing_player_current_time_ms%` | Live timer for the viewer | `Time: 1:42.355` / `TimeMs: 102355` | Viewer context |
+| `%boatracing_player_current_lap%` / `%boatracing_player_current_checkpoint%` | Viewer lap and next checkpoint progression | `Lap: 2` / `Checkpoint: 5` | Viewer context |
+| `%boatracing_player_current_position%` / `%boatracing_player_current_pitstops%` / `%boatracing_player_finished%` | Viewer live position, pit count, and finish state | `Pos: 1` / `Pit stops: 0` / `Finished: false` | Viewer context |
 
-### Category: Records and Wins (viewer context)
+### Category: Viewer Records And Wins
 
-| Placeholder | What it does | Example resolved value | Visibility |
+| Placeholder(s) | What it shows | Example text on screen | Visibility |
 |---|---|---|---|
-| `%boatracing_player_track_best%` / `%boatracing_player_track_best_ms%` | Viewer best time on current track | `00:59.443` / `59443` | Viewer-only |
-| `%boatracing_player_best_race%` / `%boatracing_player_best_race_ms%` | Viewer best race overall | `01:40.010` / `100010` | Viewer-only |
-| `%boatracing_player_best_lap%` / `%boatracing_player_best_lap_ms%` | Viewer best lap overall | `00:28.911` / `28911` | Viewer-only |
-| `%boatracing_player_wins%` / `%boatracing_player_team_wins%` | Viewer wins and viewer team wins | `12` / `18` | Viewer-only |
+| `%boatracing_player_track_best%` / `%boatracing_player_track_best_ms%` | Viewer best time on the current track | `Track PB: 0:59.443` | Viewer context |
+| `%boatracing_player_best_race%` / `%boatracing_player_best_race_ms%` | Viewer best race overall | `Best race: 1:40.010` | Viewer context |
+| `%boatracing_player_best_lap%` / `%boatracing_player_best_lap_ms%` | Viewer best lap overall | `Best lap: 0:28.911` | Viewer context |
+| `%boatracing_player_wins%` / `%boatracing_player_team_wins%` | Viewer wins and viewer team wins | `Wins: 12` / `Team wins: 18` | Viewer context |
 
-### Category: Global and Top Stats
-These are global values and look the same for everyone.
+### Category: Global And Top Stats
 
-| Placeholder | What it does | Example resolved value | Visibility |
+| Placeholder(s) | What it shows | Example text on screen | Visibility |
 |---|---|---|---|
-| `%boatracing_teams_count%` / `%boatracing_teams_list%` | Number of teams and team list | `4` / `Sharks, Rockets, Drift, Wave` | Global (same for all players) |
-| `%boatracing_track_name%` / `%boatracing_track_best_player%` / `%boatracing_track_best_time%` | Current track and best record holder/time | `harbor` / `jaie55` / `00:58.772` | Global |
-| `%boatracing_top_player_wins_name%` / `%boatracing_top_player_wins%` | Top player by wins | `jaie55` / `29` | Global |
-| `%boatracing_top_team_wins_name%` / `%boatracing_top_team_wins%` | Top team by wins | `Sharks` / `77` | Global |
-| `%boatracing_top_player_best_race_name%` / `%boatracing_top_player_best_race%` | Best race holder/time | `KiluGod` / `01:38.404` | Global |
-| `%boatracing_top_player_best_lap_name%` / `%boatracing_top_player_best_lap%` | Best lap holder/time | `jaie55` / `00:27.950` | Global |
+| `%boatracing_teams_count%` / `%boatracing_teams_list%` | Total number of teams and the team list | `Teams: 4` / `Teams: Sharks, Rockets, Drift, Wave` | Same for every viewer |
+| `%boatracing_track_name%` / `%boatracing_track_best_player%` / `%boatracing_track_best_time%` | Current track name and its best record | `Track: harbor` / `Track record: jaie55 - 0:58.772` | Same for every viewer |
+| `%boatracing_top_player_wins_name%` / `%boatracing_top_player_wins%` | Player with most wins | `Top wins: jaie55 (29)` | Same for every viewer |
+| `%boatracing_top_team_wins_name%` / `%boatracing_top_team_wins%` | Team with most wins | `Top team: Sharks (77)` | Same for every viewer |
+| `%boatracing_top_player_best_race_name%` / `%boatracing_top_player_best_race%` | Best race holder and time | `Best race: KiluGod - 1:38.404` | Same for every viewer |
+| `%boatracing_top_player_best_lap_name%` / `%boatracing_top_player_best_lap%` | Best lap holder and time | `Best lap: jaie55 - 0:27.950` | Same for every viewer |
 
-### Category: Team Lookup by Name
-Use a team token in `<team>` (spaces can be written as `_`).
+### Category: Team Lookup By Name
+Use `<team>` with the team token. Team names with spaces can be addressed using underscores in docs/examples.
 
-| Placeholder | What it does | Example resolved value | Visibility |
+| Placeholder(s) | What it shows | Example text on screen | Visibility |
 |---|---|---|---|
-| `%boatracing_team_players_<team>%` | Team players for a specific team | `%boatracing_team_players_sharks%` -> `jaie55, KiluGod` | Targeted by team token (same for all viewers) |
-| `%boatracing_team_player_count_<team>%` | Player count for a specific team | `%boatracing_team_player_count_sharks%` -> `2` | Targeted by team token |
-| `%boatracing_team_wins_<team>%` | Wins for a specific team | `%boatracing_team_wins_sharks%` -> `77` | Targeted by team token |
+| `%boatracing_team_leader_name_<team>%` / `%boatracing_team_leader_id_<team>%` | Current leader of a specific team | `%boatracing_team_leader_name_sharks%` -> `Leader: jaie55` | Same for every viewer |
+| `%boatracing_team_players_<team>%` | Player list of a specific team | `%boatracing_team_players_sharks%` -> `Members: jaie55, KiluGod` | Same for every viewer |
+| `%boatracing_team_player_count_<team>%` | Member count of a specific team | `%boatracing_team_player_count_sharks%` -> `Members: 2` | Same for every viewer |
+| `%boatracing_team_wins_<team>%` | Wins of a specific team | `%boatracing_team_wins_sharks%` -> `Wins: 77` | Same for every viewer |
 
-### Category: Player Lookup by Name/UUID (NPC/static holograms)
-Use a player identifier in `<player>` (name or UUID). This is the category for fixed labels such as "Top NPC Juanjo".
+### Category: Player Lookup By Name Or UUID
+Use `<player>` with an exact player name or UUID. These are the placeholders for NPCs, statue labels, fixed holograms, and leaderboard walls.
 
-| Placeholder | What it does | Example resolved value | Visibility |
+| Placeholder(s) | What it shows | Example text on screen | Visibility |
 |---|---|---|---|
-| `%boatracing_player_name_<player>%` | Target player name | `%boatracing_player_name_jaie55%` -> `jaie55` | Targeted player (same for all viewers) |
-| `%boatracing_player_wins_<player>%` | Target player wins | `%boatracing_player_wins_jaie55%` -> `12` | `jaie55` and `KiluGod` both see stats of `jaie55` |
-| `%boatracing_player_best_race_<player>%` / `%boatracing_player_best_race_ms_<player>%` | Target best race | `%boatracing_player_best_race_jaie55%` -> `01:40.010` | Targeted player |
-| `%boatracing_player_best_lap_<player>%` / `%boatracing_player_best_lap_ms_<player>%` | Target best lap | `%boatracing_player_best_lap_jaie55%` -> `00:28.911` | Targeted player |
-| `%boatracing_player_track_best_<player>%` / `%boatracing_player_track_best_ms_<player>%` | Target best track time | `%boatracing_player_track_best_jaie55%` -> `00:59.443` | Targeted player |
-| `%boatracing_player_team_name_<player>%` / `%boatracing_player_team_id_<player>%` / `%boatracing_player_team_color_<player>%` | Team info of target player | `Sharks` / `sharks` / `AQUA` | Targeted player |
-| `%boatracing_player_team_wins_<player>%` | Team wins of target player team | `%boatracing_player_team_wins_jaie55%` -> `18` | Targeted player |
-| `%boatracing_player_number_<player>%` / `%boatracing_player_boat_<player>%` | Number and boat of target player | `#07` / `OAK_BOAT` | Targeted player |
-
-Quick rule:
-- `%boatracing_player_*%` (without `<player>`) = viewer-context.
-- `%boatracing_player_*_<player>%` = explicit player-context (ideal for NPC/static holograms).
+| `%boatracing_player_name_<player>%` | Target player name | `%boatracing_player_name_jaie55%` -> `Driver: jaie55` | Everyone sees the target player's data |
+| `%boatracing_player_wins_<player>%` | Target player wins | `%boatracing_player_wins_jaie55%` -> `Wins: 12` | `jaie55` and `KiluGod` both see Jaie55's wins |
+| `%boatracing_player_best_race_<player>%` / `%boatracing_player_best_race_ms_<player>%` | Target player best race | `%boatracing_player_best_race_jaie55%` -> `Best race: 1:40.010` | Everyone sees the target player's data |
+| `%boatracing_player_best_lap_<player>%` / `%boatracing_player_best_lap_ms_<player>%` | Target player best lap | `%boatracing_player_best_lap_jaie55%` -> `Best lap: 0:28.911` | Everyone sees the target player's data |
+| `%boatracing_player_track_best_<player>%` / `%boatracing_player_track_best_ms_<player>%` | Target player best time on the current track | `%boatracing_player_track_best_jaie55%` -> `Track PB: 0:59.443` | Everyone sees the target player's data |
+| `%boatracing_player_team_name_<player>%` / `%boatracing_player_team_id_<player>%` / `%boatracing_player_team_color_<player>%` | Team info of the target player | `Team: Sharks` / `Team ID: sharks` / `Color: AQUA` | Everyone sees the target player's data |
+| `%boatracing_player_team_leader_name_<player>%` / `%boatracing_player_team_leader_id_<player>%` | Current leader of the target player's team | `%boatracing_player_team_leader_name_jaie55%` -> `Leader: jaie55` | Everyone sees the target player's data |
+| `%boatracing_player_team_wins_<player>%` | Wins of the target player's team | `%boatracing_player_team_wins_jaie55%` -> `Team wins: 18` | Everyone sees the target player's data |
+| `%boatracing_player_number_<player>%` / `%boatracing_player_boat_<player>%` | Racer number and selected boat of the target player | `Number: 7` / `Boat: OAK_BOAT` | Everyone sees the target player's data |
 
 
 ## Notes
-- Leaderless teams: players can create and leave teams; admins handle deletion and member management. Team rename/color can optionally be enabled for members via config (GUI only).
+- Teams can have multiple members and a current saved leader. Leader placeholders always reflect the current leader, not a historical creator value.
+- If the current leader leaves the team, leadership falls back to the next stored member automatically.
 - Leaving a team as the last member deletes the team automatically.
-- Denial messages for protected actions are hardcoded in English.
+- User-facing text is message-bundle based and can be customized in `messages_<lang>.yml`, then reloaded with `/boatracing reload`.
 
 ## Build (developers)
 - Maven project; produces `BoatRacing.jar` shaded. Run `mvn -DskipTests clean package`.
