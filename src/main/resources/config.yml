@@ -70,9 +70,9 @@ racing:
       show-pitstops: true
       show-time: true
 
-  # Registration announce message template
-  # Placeholders: {track} = track name, {laps} = total laps, {cmd} = suggested join command
-  registration-announce: "&6[BoatRacing] &eNew race on &f{track}&e (&f{laps}&e laps). &7Join with &f{cmd}"
+  # Registration announce message is language-specific and defined in:
+  # messages_<lang>.yml -> race.registration.announce
+  # Placeholders available there: {track}, {laps}, {cmd}, {label}
 
   # Rewards given to players when a race ends.
   # Fully customizable per finishing position.

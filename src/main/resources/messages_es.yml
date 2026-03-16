@@ -45,7 +45,7 @@ race:
   unknown-subcommand: "&cSubcomando de carrera desconocido. Usa /{label} race help"
 
   registration:
-    announce: "&eUna nueva carrera ha sido programada en &f{track}&e (&f{laps}&e vueltas). &7Únete con &f/{label} race join {track}"
+    announce: "&eUna nueva carrera ha sido programada en &f{track}&e (&f{laps}&e vueltas). &7Únete con &f{cmd}"
     closes-in: "&7El registro cierra en &f{seconds}s"
     countdown: "&7El registro termina en &f{remain}s&7. Registrados: &f{count}"
     joined: "&aHas registrado para la carrera. &7Vueltas: &f{laps}"
@@ -212,7 +212,7 @@ setup:
       pitstops: "&e6/7 &fParadas obligatorias en el pit (opcional)"
       laps: "&e7/7 &fVueltas"
     starts:
-      description: "&fColócate donde quieras un slot de salida y usa el botón de abajo. Repite para cada slot."
+      description: "&fAñade al menos 1 salida. Repite si necesitas más."
       added: "&7Añadido: &f{count}"
       clear: "&7Limpiar: "
       optional-slots: "&7Opcional: asigna jugadores específicos a slots mediante "
@@ -224,19 +224,19 @@ setup:
       btn-clear-custom-slot: "&b[Limpiar slot personalizado]"
       btn-auto-assign: "&b[Asignar automático]"
     finish:
-      description: "&fUsa la varita para marcar &aEsquina A &f(click izquierdo) y &aEsquina B &f(click derecho), luego haz click en &a[Establecer meta]"
+      description: "&fMarca Esquina A/B y pulsa &a[Establecer meta]&f."
       status: "&7Estado: {status}"
       wand-prompt: "&7¿Necesitas la varita? "
       btn-set-finish: "&a[Establecer meta]"
     lights:
-      description: "&fMira un bloque de &aLámpara de Piedra Roja &fy haz click en &a[Añadir luz]&f. Debes añadir exactamente 5."
+      description: "&fAñade luces de salida hasta tener exactamente 5."
       added: "&7Añadido: &f{count}/5"
       clear-button: "&b[Limpiar luces]"
       btn-add-light: "&a[Añadir luz]"
     pit:
-      description: "&fPuedes establecer un área de pit por defecto y/o pits específicos de equipos. &7(Opcional, puedes saltar)"
+      description: "&fConfigura pit por defecto/equipo si lo necesitas. &7(Opcional)"
       status: "&7Por defecto: {default} &8\u2022 &7Pits de equipos: &f{team_pits}"
-      tip: "&7Consejo: &fPit por defecto establecido. Los pits de equipos son opcionales; puedes hacer click en Siguiente."
+      tip: "&7Consejo: &fCon pit por defecto ya es suficiente. Los pits por equipo son opcionales."
       default-prefix: "&fPit por defecto: marca la región del pit (entrada y salida dentro del mismo cuboide), luego "
       team-prefix: "&fPit de equipo: marca el pit para un equipo, luego "
       team-suffix: " &7(usa autocompletado tras 'setpit')"
@@ -247,7 +247,7 @@ setup:
       btn-set-team-pit: "&b[Establecer pit de equipo]"
       btn-get-wand: "&b[Obtener varita]"
     checkpoints:
-      description: "&fPara cada checkpoint: marca ambas esquinas (click izquierdo/derecho), luego haz click en &a[Añadir checkpoint]&f."
+      description: "&fAñade checkpoints en orden. &7(Opcional)"
       added: "&7Añadido: &f{count}"
       btn-add-checkpoint: "&a[Añadir checkpoint]"
     pitstops:

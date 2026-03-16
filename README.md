@@ -16,11 +16,18 @@
 
 An F1‒style ice boat racing plugin for Bukkit/Spigot (compatible with Paper/Purpur) with a clean, vanilla‒like GUI. Manage teams, configure tracks with the built‒in BoatRacing selection tool, run timed races with checkpoints, pit area penalties, and a guided setup wizard.
 
-> Status: Public release (1.1.1)
+> Status: Public release (1.1.2)
 
 See the changelog in [CHANGELOG.md](https://github.com/Jaie55/BoatRacing/blob/main/CHANGELOG.md).
 
 This is how we test the plugin to validate its behavior after each update: see the QA checklist in [CHECKLIST.md](CHECKLIST.md)
+
+## What's new (1.1.2)
+Placeholders, wizard UX and i18n refinements:
+- **PlaceholderAPI integration**: BoatRacing now registers `%boatracing_*%` placeholders for holograms/scoreboards (player/team data, live race values, records, wins and top rankings).
+- **Persistent race stats**: new aggregated stats storage (`stats.yml`) for player wins, team wins, best race and best lap.
+- **Wizard readability pass**: setup wizard prompts are now more compact and step-focused to reduce chat noise.
+- **Registration announce fully i18n-based**: registration broadcast template now lives in `messages_<lang>.yml` (`race.registration.announce`) instead of `config.yml`.
 
 ## What's new (1.1.1)
 Lobby and stability updates:
@@ -71,7 +78,7 @@ Improvements and toggles:
 	 - `racing.ui.scoreboard.show-position|show-lap|show-checkpoints|show-pitstops|show-name`
 	 - `racing.ui.actionbar.show-lap|show-checkpoints|show-pitstops|show-time`
  - Pitstops on HUD: when `racing.mandatory-pitstops > 0`, show “PIT A/B” on the sidebar and “Pit A/B” in the ActionBar (gated by the toggles above).
- - Registration broadcast now includes the track name and the exact join command (`racing.registration-announce`).
+ - Registration broadcast now includes the track name and the exact join command (language key `race.registration.announce` in `messages_<lang>.yml`).
  - Sidebar order switched to “L/CP - Name”; removed centering/padding; names shown as-is (keeps leading '.' for Bedrock).
  - Finish attempt message: crossing the finish line without all required checkpoints now shows a clear player message (in addition to the denial sound).
  - Setup Wizard: new optional step “Mandatory pit stops” with quick buttons [0] [1] [2] [3].
@@ -321,6 +328,7 @@ Players without `boatracing.setup` can use `/boatracing race join <track>`, `/bo
 - `racing.mandatory-pitstops`: required pit exits to be allowed to finish (int, default 0 = disabled)
 - `racing.pit-penalty-seconds`: time penalty applied on pit entry (double, default 5.0)
 - `racing.registration-seconds`: registration window length (seconds, default 300)
+ - Registration announce text is language-specific in `messages_<lang>.yml` at `race.registration.announce` (placeholders: `{track}`, `{laps}`, `{cmd}`, `{label}`)
  - `racing.false-start-penalty-seconds`: time penalty applied for a false start during the light countdown (double, default 3.0)
  - `racing.enable-pit-penalty`: enable/disable pit area time penalty (boolean, default true)
  - `racing.enable-false-start-penalty`: enable/disable false start penalty (boolean, default true)
@@ -342,7 +350,78 @@ Legacy migration: if a legacy `plugins/BoatRacing/track.yml` is found on startup
 ## Compatibility
 - Bukkit/Spigot/Paper/Purpur 1.19–1.21.11; Java 17+
 - English‑only messages with vanilla‑styled titles and lore
- 
+
+## Placeholders (PlaceholderAPI)
+If PlaceholderAPI is installed, BoatRacing registers `%boatracing_*%` placeholders for holograms/scoreboards.
+
+### Category: Player and Team (viewer context)
+These placeholders resolve using the player who is looking at the hologram/scoreboard.
+
+| Placeholder | What it does | Example resolved value | Visibility |
+|---|---|---|---|
+| `%boatracing_player_name%` | Player name | `jaie55` | Viewer-only (`jaie55` sees `jaie55`) |
+| `%boatracing_player_team_name%` / `%boatracing_player_team_id%` / `%boatracing_player_team_color%` | Team info of the viewer | `Sharks` / `sharks` / `AQUA` | Viewer-only |
+| `%boatracing_player_team_players%` / `%boatracing_player_team_player_count%` | Team roster and team size of the viewer | `jaie55, KiluGod` / `2` | Viewer-only |
+| `%boatracing_player_number%` / `%boatracing_player_boat%` | Assigned racer number and boat type | `#07` / `OAK_BOAT` | Viewer-only |
+
+### Category: Live Race State (viewer context)
+These are dynamic values during registration/race.
+
+| Placeholder | What it does | Example resolved value | Visibility |
+|---|---|---|---|
+| `%boatracing_player_race_running%` / `%boatracing_player_race_registering%` | Race status flags | `true` / `false` | Viewer-only |
+| `%boatracing_player_current_time%` / `%boatracing_player_current_time_ms%` | Current race time for viewer | `01:42.355` / `102355` | Viewer-only |
+| `%boatracing_player_current_lap%` / `%boatracing_player_current_checkpoint%` | Current lap/checkpoint for viewer | `2` / `5` | Viewer-only |
+| `%boatracing_player_current_position%` / `%boatracing_player_current_pitstops%` / `%boatracing_player_finished%` | Position, pitstops and finish state | `1` / `0` / `false` | Viewer-only |
+
+### Category: Records and Wins (viewer context)
+
+| Placeholder | What it does | Example resolved value | Visibility |
+|---|---|---|---|
+| `%boatracing_player_track_best%` / `%boatracing_player_track_best_ms%` | Viewer best time on current track | `00:59.443` / `59443` | Viewer-only |
+| `%boatracing_player_best_race%` / `%boatracing_player_best_race_ms%` | Viewer best race overall | `01:40.010` / `100010` | Viewer-only |
+| `%boatracing_player_best_lap%` / `%boatracing_player_best_lap_ms%` | Viewer best lap overall | `00:28.911` / `28911` | Viewer-only |
+| `%boatracing_player_wins%` / `%boatracing_player_team_wins%` | Viewer wins and viewer team wins | `12` / `18` | Viewer-only |
+
+### Category: Global and Top Stats
+These are global values and look the same for everyone.
+
+| Placeholder | What it does | Example resolved value | Visibility |
+|---|---|---|---|
+| `%boatracing_teams_count%` / `%boatracing_teams_list%` | Number of teams and team list | `4` / `Sharks, Rockets, Drift, Wave` | Global (same for all players) |
+| `%boatracing_track_name%` / `%boatracing_track_best_player%` / `%boatracing_track_best_time%` | Current track and best record holder/time | `harbor` / `jaie55` / `00:58.772` | Global |
+| `%boatracing_top_player_wins_name%` / `%boatracing_top_player_wins%` | Top player by wins | `jaie55` / `29` | Global |
+| `%boatracing_top_team_wins_name%` / `%boatracing_top_team_wins%` | Top team by wins | `Sharks` / `77` | Global |
+| `%boatracing_top_player_best_race_name%` / `%boatracing_top_player_best_race%` | Best race holder/time | `KiluGod` / `01:38.404` | Global |
+| `%boatracing_top_player_best_lap_name%` / `%boatracing_top_player_best_lap%` | Best lap holder/time | `jaie55` / `00:27.950` | Global |
+
+### Category: Team Lookup by Name
+Use a team token in `<team>` (spaces can be written as `_`).
+
+| Placeholder | What it does | Example resolved value | Visibility |
+|---|---|---|---|
+| `%boatracing_team_players_<team>%` | Team players for a specific team | `%boatracing_team_players_sharks%` -> `jaie55, KiluGod` | Targeted by team token (same for all viewers) |
+| `%boatracing_team_player_count_<team>%` | Player count for a specific team | `%boatracing_team_player_count_sharks%` -> `2` | Targeted by team token |
+| `%boatracing_team_wins_<team>%` | Wins for a specific team | `%boatracing_team_wins_sharks%` -> `77` | Targeted by team token |
+
+### Category: Player Lookup by Name/UUID (NPC/static holograms)
+Use a player identifier in `<player>` (name or UUID). This is the category for fixed labels such as "Top NPC Juanjo".
+
+| Placeholder | What it does | Example resolved value | Visibility |
+|---|---|---|---|
+| `%boatracing_player_name_<player>%` | Target player name | `%boatracing_player_name_jaie55%` -> `jaie55` | Targeted player (same for all viewers) |
+| `%boatracing_player_wins_<player>%` | Target player wins | `%boatracing_player_wins_jaie55%` -> `12` | `jaie55` and `KiluGod` both see stats of `jaie55` |
+| `%boatracing_player_best_race_<player>%` / `%boatracing_player_best_race_ms_<player>%` | Target best race | `%boatracing_player_best_race_jaie55%` -> `01:40.010` | Targeted player |
+| `%boatracing_player_best_lap_<player>%` / `%boatracing_player_best_lap_ms_<player>%` | Target best lap | `%boatracing_player_best_lap_jaie55%` -> `00:28.911` | Targeted player |
+| `%boatracing_player_track_best_<player>%` / `%boatracing_player_track_best_ms_<player>%` | Target best track time | `%boatracing_player_track_best_jaie55%` -> `00:59.443` | Targeted player |
+| `%boatracing_player_team_name_<player>%` / `%boatracing_player_team_id_<player>%` / `%boatracing_player_team_color_<player>%` | Team info of target player | `Sharks` / `sharks` / `AQUA` | Targeted player |
+| `%boatracing_player_team_wins_<player>%` | Team wins of target player team | `%boatracing_player_team_wins_jaie55%` -> `18` | Targeted player |
+| `%boatracing_player_number_<player>%` / `%boatracing_player_boat_<player>%` | Number and boat of target player | `#07` / `OAK_BOAT` | Targeted player |
+
+Quick rule:
+- `%boatracing_player_*%` (without `<player>`) = viewer-context.
+- `%boatracing_player_*_<player>%` = explicit player-context (ideal for NPC/static holograms).
+
 
 ## Notes
 - Leaderless teams: players can create and leave teams; admins handle deletion and member management. Team rename/color can optionally be enabled for members via config (GUI only).

@@ -27,6 +27,7 @@ public class RaceManager {
         public boolean finished = false;
         public long finishTime = -1L; // millis
         public long penaltyMillis = 0L;
+        public long lastLapSplitMillis = 0L;
         public boolean wasInFinish = false;
         public boolean wasInPit = false;
         public boolean wasInCheckpoint = false; // for current next checkpoint only
@@ -143,6 +144,43 @@ public class RaceManager {
     public Collection<UUID> getParticipants() { return states.keySet(); }
     public int getMandatoryPitstops() { return mandatoryPitstops; }
 
+    // --- Live read-only stats for placeholders ---
+    public long getLiveTimeMillis(UUID playerId) {
+        RaceState st = states.get(playerId);
+        if (st == null) return -1L;
+        return timeFor(st);
+    }
+
+    public int getLiveLap(UUID playerId) {
+        RaceState st = states.get(playerId);
+        return st == null ? 0 : st.lap;
+    }
+
+    public int getLiveCheckpoint(UUID playerId) {
+        RaceState st = states.get(playerId);
+        return st == null ? 0 : st.nextCheckpoint;
+    }
+
+    public int getLivePitstops(UUID playerId) {
+        return pitCount.getOrDefault(playerId, 0);
+    }
+
+    public boolean isLiveFinished(UUID playerId) {
+        RaceState st = states.get(playerId);
+        return st != null && st.finished;
+    }
+
+    public int getLivePosition(UUID playerId) {
+        RaceState target = states.get(playerId);
+        if (target == null) return 0;
+        List<Map.Entry<UUID, RaceState>> list = new ArrayList<>(states.entrySet());
+        list.sort(Comparator.comparingLong(e -> timeFor(e.getValue())));
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i).getKey().equals(playerId)) return i + 1;
+        }
+        return 0;
+    }
+
     // --- Race lifecycle ---
     public void startRace(Collection<Player> participants) {
         if (track.getFinish() == null) throw new IllegalStateException("Finish region is not set");
@@ -160,6 +198,7 @@ public class RaceManager {
             RaceState st = new RaceState();
             Long pre = enableFalseStartPenalty ? preStartPenalties.remove(p.getUniqueId()) : null;
             if (pre != null && pre > 0) st.penaltyMillis += pre;
+            st.lastLapSplitMillis = 0L;
             states.put(p.getUniqueId(), st);
             setupPlayerBoard(p);
             pitCount.put(p.getUniqueId(), 0);
@@ -273,15 +312,23 @@ public class RaceManager {
                 // Lap finish time before mutating state
                 int lapCompleted = st.lap + 1;
                 long lapFinishMs = (System.currentTimeMillis() - startTime) + st.penaltyMillis;
+                long lapDurationMs = Math.max(0L, lapFinishMs - st.lastLapSplitMillis);
+                st.lastLapSplitMillis = lapFinishMs;
                 st.lap++;
                 st.nextCheckpoint = 0;
                 st.wasInCheckpoint = false;
+                if (plugin.getStatsManager() != null && lapDurationMs > 0) {
+                    plugin.getStatsManager().updatePlayerBestLap(p.getUniqueId(), lapDurationMs);
+                }
                 // Do not reset pit counter; mandatory pitstops apply for the whole race
                 if (st.lap >= totalLaps) {
                     st.finished = true;
                     long now = System.currentTimeMillis();
                     st.finishTime = (now - startTime) + st.penaltyMillis;
                     try { track.updateBestTime(p.getUniqueId(), st.finishTime); } catch (Exception ignored) { var inst = BoatRacingPlugin.getInstance(); if (inst != null) inst.getLogger().finer("updateBestTime failed: " + ignored.getMessage()); }
+                    if (plugin.getStatsManager() != null) {
+                        plugin.getStatsManager().updatePlayerBestRace(p.getUniqueId(), st.finishTime);
+                    }
                     // Winner reference and gap to winner (same line)
                     Long winnerMs = lapLeaderFinishTimes.get(lapCompleted);
                     if (winnerMs == null) {
@@ -339,6 +386,14 @@ public class RaceManager {
         if (states.isEmpty()) return;
         List<Map.Entry<UUID, RaceState>> list = new ArrayList<>(states.entrySet());
         list.sort(Comparator.comparingLong(e -> timeFor(e.getValue())));
+
+        // Persist winner stats for placeholders/holograms
+        if (!list.isEmpty() && plugin.getStatsManager() != null) {
+            UUID winner = list.get(0).getKey();
+            plugin.getStatsManager().addPlayerWin(winner);
+            plugin.getTeamManager().getTeamByMember(winner).ifPresent(t -> plugin.getStatsManager().addTeamWin(t.getId()));
+        }
+
         for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(color(plugin.msg().get("race.results.header")));
         int pos = 1;
         for (Map.Entry<UUID, RaceState> e : list) {

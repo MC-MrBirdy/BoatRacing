@@ -1,10 +1,23 @@
 README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 
-## What to verify for 1.1.1
+## What to verify for 1.1.2
 - Versioning and docs:
-	- Project version is 1.1.1 in `pom.xml`.
-	- `CHANGELOG.md` contains a 1.1.1 section with lobby/track-load/setup-click updates and compatibility scope clarifications.
-	- `CHECKLIST.md` includes this 1.1.1 validation block.
+	- Project version is 1.1.2 in `pom.xml`.
+	- `CHANGELOG.md` contains a 1.1.2 section with placeholders, wizard compact text, and registration announce i18n-source changes.
+	- `CHECKLIST.md` includes this 1.1.2 validation block.
+	- `README.md` status shows 1.1.2.
+- PlaceholderAPI integration:
+	- With PlaceholderAPI installed, BoatRacing logs placeholder expansion registration on startup.
+	- `%boatracing_player_team_name%`, `%boatracing_player_wins%`, `%boatracing_player_best_race%` resolve correctly for online players.
+	- `%boatracing_top_player_wins_name%` and `%boatracing_top_team_wins_name%` resolve without errors.
+	- Team lookup placeholders (`%boatracing_team_players_<team>%`, `%boatracing_team_wins_<team>%`) work with names using spaces/underscores.
+- Registration announce i18n source:
+	- `config.yml` no longer contains `racing.registration-announce`.
+	- Registration announce text comes from `messages_<lang>.yml` key `race.registration.announce`.
+	- EN/ES/zh_TW/ru announce lines include `{cmd}` and render correctly in chat.
+- Wizard compact text:
+	- Wizard step prompts are concise (no long paragraphs) while keeping key action buttons.
+	- Navigation row and step status remain clear across EN/ES/zh_TW/ru message sets.
 	- `README.md` server matrix lists Folia as supported for this jar and clarifies Sponge/Velocity/BungeeCord scope.
 - Folia compatibility smoke checks:
 	- Open/join/start/force/stop/status race flows run without scheduler/threading errors on Folia.

@@ -45,7 +45,7 @@ race:
   unknown-subcommand: "&cUnknown race subcommand. Use /{label} race help"
 
   registration:
-    announce: "&eA new race has been scheduled on &f{track}&e (&f{laps}&e laps). &7Join with &f/{label} race join {track}"
+    announce: "&eA new race has been scheduled on &f{track}&e (&f{laps}&e laps). &7Join with &f{cmd}"
     closes-in: "&7Registration closes in &f{seconds}s"
     countdown: "&7Registration ends in &f{remain}s&7. Registered: &f{count}"
     joined: "&aYou have registered for the race. &7Laps: &f{laps}"
@@ -212,7 +212,7 @@ setup:
       pitstops: "&e6/7 &fMandatory pit stops (optional)"
       laps: "&e7/7 &fLaps"
     starts:
-      description: "&fStand where you want a grid slot, then use the button below. Repeat for each slot."
+      description: "&fAdd at least one start slot. Repeat as needed."
       added: "&7Added: &f{count}"
       clear: "&7Clear: "
       optional-slots: "&7Optional: assign specific players to slots via "
@@ -224,19 +224,19 @@ setup:
       btn-clear-custom-slot: "&b[Clear custom slot]"
       btn-auto-assign: "&b[Auto assign]"
     finish:
-      description: "&fUse the wand to mark &aCorner A &f(left-click) and &aCorner B &f(right-click), then click &a[Set finish]"
+      description: "&fMark Corner A/B, then click &a[Set finish]&f."
       status: "&7Status: {status}"
       wand-prompt: "&7Need the wand? "
       btn-set-finish: "&a[Set finish]"
     lights:
-      description: "&fLook at a &aRedstone Lamp &fblock and click &a[Add light]&f. You must add exactly 5."
+      description: "&fAdd start lights until you have exactly 5."
       added: "&7Added: &f{count}/5"
       clear-button: "&b[Clear lights]"
       btn-add-light: "&a[Add light]"
     pit:
-      description: "&fYou can set a default pit area and/or team-specific pits. &7(Optional, you can skip)"
+      description: "&fSet default/team pits if needed. &7(Optional)"
       status: "&7Default: {default} &8\u2022 &7Team pits: &f{team_pits}"
-      tip: "&7Tip: &fDefault pit set. Team pits are optional; you can click Next."
+      tip: "&7Tip: &fDefault pit is enough. Team pits are optional."
       default-prefix: "&fDefault pit: mark the pit region (entry and exit within the same cuboid), then "
       team-prefix: "&fTeam pit: mark the pit for a team, then "
       team-suffix: " &7(use tab-complete after 'setpit')"
@@ -247,7 +247,7 @@ setup:
       btn-set-team-pit: "&b[Set team pit]"
       btn-get-wand: "&b[Get wand]"
     checkpoints:
-      description: "&fFor each checkpoint: mark both corners (left/right click), then click &a[Add checkpoint]&f."
+      description: "&fAdd checkpoints in order. &7(Optional)"
       added: "&7Added: &f{count}"
       btn-add-checkpoint: "&a[Add checkpoint]"
     pitstops:

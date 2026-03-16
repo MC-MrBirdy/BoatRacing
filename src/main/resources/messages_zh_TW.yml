@@ -50,7 +50,7 @@ race:
   unknown-subcommand: "&c未知的賽車子指令。使用 /{label} race help"
 
   registration:
-    announce: "&e已在賽道 &f{track}&e 上排定新賽事（&f{laps}&e 圈）。&7使用 &f/{label} race join {track} &7報名"
+    announce: "&e已在賽道 &f{track}&e 上排定新賽事（&f{laps}&e 圈）。&7使用 &f{cmd} &7報名"
     closes-in: "&7報名將在 &f{seconds}s &7後截止"
     countdown: "&7報名將在 &f{remain}s&7 後結束。已報名：&f{count}"
     joined: "&a你已報名參賽。&7圈數：&f{laps}"
@@ -217,7 +217,7 @@ setup:
       pitstops: "&e6/7 &f強制維修站停靠（選填）"
       laps: "&e7/7 &f圈數"
     starts:
-      description: "&f站到你想要的出發格位，然後使用下方按鈕；重複執行以新增多個。"
+      description: "&f先新增至少 1 個出發格位；需要時可重複新增。"
       added: "&7已新增：&f{count}"
       clear: "&7清除："
       optional-slots: "&7選填：透過 "
@@ -229,19 +229,19 @@ setup:
       btn-clear-custom-slot: "&b[清除自訂格位]"
       btn-auto-assign: "&b[自動分配]"
     finish:
-      description: "&f使用選區工具標記 &a角落 A&f（左鍵點擊）和 &a角落 B&f（右鍵點擊），然後點擊 &a[設定終點]"
+      description: "&f標記角落 A/B 後，點擊 &a[設定終點]&f。"
       status: "&7狀態：{status}"
       wand-prompt: "&7需要選區工具？"
       btn-set-finish: "&a[設定終點]"
     lights:
-      description: "&f凝視一個 &a紅石燈&f 方塊，然後點擊 &a[新增起跑燈]&f，必須共新增 5 個。"
+      description: "&f新增起跑燈，直到總數恰好 5 個。"
       added: "&7已新增：&f{count}/5"
       clear-button: "&b[清除起跑燈]"
       btn-add-light: "&a[新增起跑燈]"
     pit:
-      description: "&f你可以設定預設維修站和/或隊伍專屬維修站。&7（選填，可跳過）"
+      description: "&f可設定預設/隊伍維修站。&7（選填）"
       status: "&7預設：{default} &8\u2022 &7隊伍維修站：&f{team_pits}"
-      tip: "&7提示：&f預設維修站已設定，隊伍維修站為選填，可點擊下一步。"
+      tip: "&7提示：&f有預設維修站即可；隊伍維修站為選填。"
       default-prefix: "&f預設維修站：標記維修站區域（進出口需在同一立方體內），然後"
       team-prefix: "&f隊伍維修站：標記某隊伍的維修站，然後"
       team-suffix: " &7（在 'setpit' 後使用 Tab 補全）"
@@ -252,7 +252,7 @@ setup:
       btn-set-team-pit: "&b[設定隊伍維修站]"
       btn-get-wand: "&b[取得選區工具]"
     checkpoints:
-      description: "&f對於每個檢查點：標記兩個角落（左鍵/右鍵點擊），然後點擊 &a[新增檢查點]&f。"
+      description: "&f依序新增檢查點。&7（選填）"
       added: "&7已新增：&f{count}"
       btn-add-checkpoint: "&a[新增檢查點]"
     pitstops:

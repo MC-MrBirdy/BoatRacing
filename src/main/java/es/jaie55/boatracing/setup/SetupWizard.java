@@ -158,27 +158,20 @@ public class SetupWizard {
             case STARTS -> {
                 p.sendMessage(Text.c(" "));
                 p.sendMessage(Text.colorize(plugin.msg().get("setup.wizard.step.starts")));
-                p.sendMessage(Text.colorize(plugin.msg().get("setup.wizard.starts.description")));
-                p.sendMessage(Text.c(" ").append(Text.suggest(plugin.msg().get("setup.wizard.starts.btn-add-start"),"/boatracing setup addstart")));
+                p.sendMessage(Text.colorize(plugin.msg().get("setup.wizard.starts.custom-slots", "count", t.getCustomStartSlots().size())));
                 p.sendMessage(Text.c(plugin.msg().get("setup.wizard.starts.added", "count", t.getStarts().size()) + " &8• ")
-                    .append(Text.c(plugin.msg().get("setup.wizard.starts.clear")))
+                    .append(Text.suggest(plugin.msg().get("setup.wizard.starts.btn-add-start"),"/boatracing setup addstart"))
+                    .append(Text.c(" &8• "))
                     .append(Text.suggest(plugin.msg().get("setup.wizard.starts.btn-clear"),"/boatracing setup clearstarts")));
-                p.sendMessage(Text.c(plugin.msg().get("setup.wizard.starts.optional-slots"))
-                    .append(Text.suggest(plugin.msg().get("setup.wizard.starts.btn-custom-slots"),"/boatracing setup setpos ")));
                 p.sendMessage(Text.c(" ")
                     .append(Text.suggest(plugin.msg().get("setup.wizard.starts.btn-set-custom-slot"),"/boatracing setup setpos "))
                     .append(Text.c(" "))
-                    .append(Text.suggest(plugin.msg().get("setup.wizard.starts.btn-clear-custom-slot"),"/boatracing setup clearpos "))
-                    .append(Text.c(" "))
-                    .append(Text.suggest(plugin.msg().get("setup.wizard.starts.btn-auto-assign"),"/boatracing setup setpos "))
-                );
-                p.sendMessage(Text.colorize(plugin.msg().get("setup.wizard.starts.custom-slots", "count", t.getCustomStartSlots().size())));
+                    .append(Text.suggest(plugin.msg().get("setup.wizard.starts.btn-clear-custom-slot"),"/boatracing setup clearpos ")));
                 nav(p, s);
             }
             case FINISH -> {
                 p.sendMessage(Text.c(" "));
                 p.sendMessage(Text.colorize(plugin.msg().get("setup.wizard.step.finish")));
-                p.sendMessage(Text.colorize(plugin.msg().get("setup.wizard.finish.description")));
                 p.sendMessage(Text.c(plugin.msg().get("setup.wizard.finish.wand-prompt"))
                     .append(Text.suggest(plugin.msg().get("setup.btn-get-wand"),"/boatracing setup wand"))
                     .append(Text.c(" &8• " + plugin.msg().get("setup.wizard.finish.status", "status", t.getFinish()!=null ? plugin.msg().get("setup.status-yes") : plugin.msg().get("setup.status-no")))));
@@ -188,43 +181,37 @@ public class SetupWizard {
             case LIGHTS -> {
                 p.sendMessage(Text.c(" "));
                 p.sendMessage(Text.colorize(plugin.msg().get("setup.wizard.step.lights")));
-                p.sendMessage(Text.colorize(plugin.msg().get("setup.wizard.lights.description")));
                 p.sendMessage(Text.c(plugin.msg().get("setup.wizard.lights.added", "count", t.getLights().size()) + " &8• ")
-                    .append(Text.c(plugin.msg().get("setup.wizard.starts.clear")))
+                    .append(Text.suggest(plugin.msg().get("setup.wizard.lights.btn-add-light"),"/boatracing setup addlight"))
+                    .append(Text.c(" &8• "))
                     .append(Text.suggest(plugin.msg().get("setup.wizard.lights.clear-button"),"/boatracing setup clearlights")));
-                p.sendMessage(Text.c(" ").append(Text.suggest(plugin.msg().get("setup.wizard.lights.btn-add-light"),"/boatracing setup addlight")));
                 nav(p, s);
             }
             case PIT -> {
                 p.sendMessage(Text.c(" "));
                 p.sendMessage(Text.colorize(plugin.msg().get("setup.wizard.step.pit")));
-                p.sendMessage(Text.colorize(plugin.msg().get("setup.wizard.pit.description")));
-                p.sendMessage(Text.c(plugin.msg().get("setup.wizard.pit.default-prefix"))
-                    .append(Text.suggest(plugin.msg().get("setup.wizard.pit.btn-set-pit"),"/boatracing setup setpit")));
-                p.sendMessage(Text.c(plugin.msg().get("setup.wizard.pit.team-prefix"))
-                    .append(Text.suggest(plugin.msg().get("setup.wizard.pit.btn-set-team-pit"),"/boatracing setup setpit "))
-                    .append(Text.c(plugin.msg().get("setup.wizard.pit.team-suffix"))));
                 p.sendMessage(Text.c(plugin.msg().get("setup.wizard.pit.status-label"))
                     .append(Text.c(plugin.msg().get("setup.wizard.pit.default-label")))
                     .append(Text.c(t.getPitlane()!=null?"&ayes":"&cno"))
-                    .append(Text.c(plugin.msg().get("setup.wizard.pit.team-pits-label", "count", t.getTeamPits().size())))
+                    .append(Text.c(plugin.msg().get("setup.wizard.pit.team-pits-label", "count", t.getTeamPits().size()))));
+                p.sendMessage(Text.c(" ")
+                    .append(Text.suggest(plugin.msg().get("setup.wizard.pit.btn-set-pit"),"/boatracing setup setpit"))
+                    .append(Text.c(" &8• "))
+                    .append(Text.suggest(plugin.msg().get("setup.wizard.pit.btn-set-team-pit"),"/boatracing setup setpit "))
                     .append(Text.c(" &8• "))
                     .append(Text.suggest(plugin.msg().get("setup.wizard.pit.btn-get-wand"),"/boatracing setup wand")));
-                if (t.getPitlane() != null) {
-                    p.sendMessage(Text.colorize(plugin.msg().get("setup.wizard.pit.tip")));
-                }
                 nav(p, s);
             }
             case CHECKPOINTS -> {
                 p.sendMessage(Text.c(" "));
                 p.sendMessage(Text.colorize(plugin.msg().get("setup.wizard.step.checkpoints")));
-                p.sendMessage(Text.colorize(plugin.msg().get("setup.wizard.checkpoints.description")));
                 p.sendMessage(Text.c(plugin.msg().get("setup.wizard.checkpoints.added", "count", t.getCheckpoints().size()))
+                    .append(Text.c(" &8• "))
+                    .append(Text.suggest(plugin.msg().get("setup.wizard.checkpoints.btn-add-checkpoint"),"/boatracing setup addcheckpoint"))
                     .append(Text.c(" &8• "))
                     .append(Text.suggest(plugin.msg().get("setup.btn-get-wand"),"/boatracing setup wand"))
                     .append(Text.c(" &8• "))
                     .append(Text.suggest(plugin.msg().get("setup.btn-clear-checkpoints"),"/boatracing setup clearcheckpoints")));
-                p.sendMessage(Text.c(" ").append(Text.suggest(plugin.msg().get("setup.wizard.checkpoints.btn-add-checkpoint"),"/boatracing setup addcheckpoint")));
                 nav(p, s);
             }
             case PITSTOPS -> {

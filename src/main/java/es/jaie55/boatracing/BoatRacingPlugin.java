@@ -27,6 +27,8 @@ import es.jaie55.boatracing.race.RaceManager;
 import es.jaie55.boatracing.reward.RewardManager;
 import es.jaie55.boatracing.setup.SetupWizard;
 import es.jaie55.boatracing.util.MessageManager;
+import es.jaie55.boatracing.util.StatsManager;
+import es.jaie55.boatracing.placeholder.BoatRacingPlaceholderExpansion;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -44,6 +46,8 @@ public class BoatRacingPlugin extends JavaPlugin {
     private RewardManager rewardManager;
     private SetupWizard setupWizard;
     private MessageManager messageManager;
+    private StatsManager statsManager;
+    private BoatRacingPlaceholderExpansion placeholderExpansion;
     private es.jaie55.boatracing.ui.AdminTracksGUI tracksGUI;
     // Last latest-version announced in console due to 5-minute silent checks (to avoid duplicate prints)
     private volatile String lastConsoleAnnouncedVersion = null;
@@ -64,6 +68,7 @@ public class BoatRacingPlugin extends JavaPlugin {
     public TrackLibrary getTrackLibrary() { return trackLibrary; }
     public es.jaie55.boatracing.ui.AdminTracksGUI getTracksGUI() { return tracksGUI; }
     public MessageManager msg() { return messageManager; }
+    public StatsManager getStatsManager() { return statsManager; }
     /** Whether the player can manage races on the currently loaded track (admin perms OR player-start flag). */
     public boolean canManageRace(Player p) {
         if (p.hasPermission("boatracing.race.admin") || p.hasPermission("boatracing.setup")) return true;
@@ -99,6 +104,7 @@ public class BoatRacingPlugin extends JavaPlugin {
         this.prefix = Text.colorize(getConfig().getString("prefix", "&6[BoatRacing] "));
         this.messageManager = new MessageManager(this);
         this.teamManager = new TeamManager(this);
+        this.statsManager = new StatsManager(this);
     this.teamGUI = new TeamGUI(this);
     this.adminGUI = new es.jaie55.boatracing.ui.AdminGUI(this);
     this.adminRaceGUI = new es.jaie55.boatracing.ui.AdminRaceGUI(this);
@@ -223,6 +229,18 @@ public class BoatRacingPlugin extends JavaPlugin {
             getCommand("boatracing").setExecutor(this);
             getCommand("boatracing").setTabCompleter(this);
         }
+
+    // Optional PlaceholderAPI integration for holograms/scoreboards
+    if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            try {
+                this.placeholderExpansion = new BoatRacingPlaceholderExpansion(this);
+                this.placeholderExpansion.register();
+                getLogger().info("PlaceholderAPI detected: BoatRacing placeholders registered.");
+            } catch (Exception ex) {
+                getLogger().warning("Failed to register PlaceholderAPI expansion: " + ex.getMessage());
+            }
+        }
+
     getLogger().info("BoatRacing enabled");
     }
 
@@ -260,6 +278,8 @@ public class BoatRacingPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         if (teamManager != null) teamManager.save();
+        if (statsManager != null) statsManager.save();
+        if (placeholderExpansion != null) placeholderExpansion.unregister();
     }
 
     @Override
@@ -326,6 +346,8 @@ public class BoatRacingPlugin extends JavaPlugin {
                 this.messageManager.reload();
                 // Recreate team manager to re-read data and settings
                 this.teamManager = new TeamManager(this);
+                if (this.statsManager == null) this.statsManager = new StatsManager(this);
+                else this.statsManager.reload();
                 // ViaVersion integration removed; nothing to re-apply
                 p.sendMessage(Text.colorize(prefix + msg().get("plugin.reloaded")));
                 p.playSound(p.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.9f, 1.1f);

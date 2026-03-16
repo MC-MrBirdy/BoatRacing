@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.2 — 2026-03-15
+### Added
+- **PlaceholderAPI integration**: BoatRacing now registers `%boatracing_*%` placeholders for holograms/scoreboards.
+- **Persistent aggregate stats**: new `stats.yml` storage for player wins, team wins, best race, and best lap values used by placeholders.
+
+### Changed
+- **Setup Wizard compact mode**: wizard prompts were shortened and reorganized by step to reduce chat text while keeping actionable buttons.
+- **Registration announce source**: registration announce text is now language-specific in `messages_<lang>.yml` (`race.registration.announce`) instead of `config.yml`.
+- **Registration announce placeholders**: `race.registration.announce` now consistently supports `{track}`, `{laps}`, `{cmd}`, `{label}` across EN/ES/zh_TW/ru.
+
+### Fixed
+- **Build break in TeamManager**: fixed malformed package declaration in `TeamManager.java` that caused compilation failure.
+
+### Docs
+- **Placeholder reference added**: README now documents available `%boatracing_*%` placeholders and team lookup formats.
+
 ## 1.1.1 — 2026-03-13
 ### Added
 - **Registration lobby mechanic (optional)**: new `racing.lobby.*` config block to send registered players to a lobby location while registration is open, with optional return to their previous location on leave/cancel.
