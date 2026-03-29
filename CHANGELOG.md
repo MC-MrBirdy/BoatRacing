@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.3 — 2026-03-29
+### Added
+- **Track-scoped race placeholders**: added `%boatracing_track_race_running_<track>%`, `%boatracing_track_race_registering_<track>%`, and `%boatracing_track_race_status_<track>%` to support per-track displays with the current active-track race state.
+
+### Fixed
+- **Selected boat variant persistence on spawn**: race boats now re-apply the selected boat/raft variant right after spawn and on delayed retries, fixing cases where a chosen variant (for example `DARK_OAK`) appeared as default `OAK`.
+- **No dismount during countdown/race**: racers can no longer manually exit boats/rafts during the 5-light countdown or while the race is running.
+
+### Docs
+- **Track placeholder docs**: README now documents track-scoped placeholders, compatibility aliases, and the current 1.x active-track evaluation behavior.
+- **QA additions for 1.1.3**: CHECKLIST now includes explicit validation steps for track-scoped placeholders and selected boat variant spawn reliability.
+
 ## 1.1.2 — 2026-03-29
 ### Added
 - **PlaceholderAPI integration**: BoatRacing now registers `%boatracing_*%` placeholders for holograms/scoreboards.

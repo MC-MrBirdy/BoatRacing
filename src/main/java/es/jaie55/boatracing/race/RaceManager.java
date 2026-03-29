@@ -88,6 +88,8 @@ public class RaceManager {
     // Race-spawned boats/rafts to ensure deterministic cleanup on finish/cancel.
     private final Set<UUID> raceVehicleIds = new HashSet<>();
     private final Map<UUID, UUID> raceVehicleByPlayer = new HashMap<>();
+    // Participants locked in vehicle during pre-race lights countdown.
+    private final Set<UUID> countdownLockedParticipants = new HashSet<>();
 
     // Scoreboard handling
     private SchedulerCompat.TaskHandle scoreboardTask;
@@ -157,6 +159,12 @@ public class RaceManager {
     public TrackConfig getTrack() { return track; }
     public Set<UUID> getRegistered() { return Collections.unmodifiableSet(registered); }
     public Collection<UUID> getParticipants() { return states.keySet(); }
+    public boolean isParticipant(UUID playerId) { return playerId != null && states.containsKey(playerId); }
+    public boolean shouldPreventVehicleExit(UUID playerId) {
+        if (playerId == null) return false;
+        if (running && states.containsKey(playerId)) return true;
+        return countdownLockedParticipants.contains(playerId);
+    }
     public int getMandatoryPitstops() { return mandatoryPitstops; }
 
     // --- Live read-only stats for placeholders ---
@@ -201,6 +209,7 @@ public class RaceManager {
         if (track.getFinish() == null) throw new IllegalStateException("Finish region is not set");
         // Starting a race must always close any registration window/timer first.
         closeRegistrationWindow();
+        clearCountdownLock();
         running = true;
         startTime = System.currentTimeMillis();
         states.clear();
@@ -226,6 +235,7 @@ public class RaceManager {
 
     public void stopRace(boolean announce) {
         running = false;
+        clearCountdownLock();
         if (announce) announceResults();
         cleanupRaceVehicles();
         sendParticipantsToLobbyAfterRace();
@@ -235,6 +245,7 @@ public class RaceManager {
     public void reset() {
         running = false;
         closeRegistrationWindow();
+        clearCountdownLock();
         cleanupRaceVehicles();
         states.clear();
         startTime = 0L;
@@ -596,6 +607,7 @@ public class RaceManager {
         if (!running) return false;
         running = false;
         closeRegistrationWindow();
+        clearCountdownLock();
         cleanupRaceVehicles();
         sendParticipantsToLobbyAfterRace();
         states.clear();
@@ -636,6 +648,7 @@ public class RaceManager {
     public boolean cancelRegistration(boolean announce) {
         if (!registering) return false;
         closeRegistrationWindow();
+        clearCountdownLock();
         int count = registered.size();
         restoreLobbyForRegistered(true);
         registered.clear();
@@ -708,11 +721,16 @@ public class RaceManager {
 
     private void scheduleBackExpiryNotice(UUID playerId, long expiresAt) {
         cancelBackExpiryTask(playerId);
-        long delayTicks = Math.max(1L, (backWindowMillis + 49L) / 50L);
+        long remainingMillis = Math.max(1L, expiresAt - System.currentTimeMillis());
+        long delayTicks = Math.max(1L, (remainingMillis + 49L) / 50L);
         SchedulerCompat.TaskHandle handle = SchedulerCompat.runLater(plugin, () -> {
             Long currentExpiresAt = preLobbyBackExpiresAt.get(playerId);
             if (!Objects.equals(currentExpiresAt, expiresAt)) return;
-            if (System.currentTimeMillis() < expiresAt) return;
+            long now = System.currentTimeMillis();
+            if (now < expiresAt) {
+                scheduleBackExpiryNotice(playerId, expiresAt);
+                return;
+            }
 
             preLobbyBackExpiresAt.remove(playerId);
             preLobbyLocations.remove(playerId);
@@ -824,48 +842,85 @@ public class RaceManager {
                 String type = nearby.getType().name();
                 if (type.endsWith("BOAT") || type.endsWith("RAFT")) nearby.remove();
             }
-            String matName = plugin.getTeamManager().getTeamByMember(p.getUniqueId()).map((Team t) -> t.getBoatType(p.getUniqueId())).orElse(Material.OAK_BOAT.name());
-            Material chosen = Material.matchMaterial(matName);
-            boolean chest = (chosen != null && chosen.name().contains("CHEST"));
-            final org.bukkit.entity.Vehicle[] vehicleRef = new org.bukkit.entity.Vehicle[1];
-            // Always spawn BOAT or CHEST_BOAT; variant will determine wood/raft model
-            try {
-                org.bukkit.entity.Entity ent = w.spawnEntity(loc, chest ? org.bukkit.entity.EntityType.valueOf("CHEST_BOAT") : org.bukkit.entity.EntityType.valueOf("BOAT"));
-                vehicleRef[0] = (org.bukkit.entity.Vehicle) ent;
-            } catch (Exception ex) {
-                // Last resort: try plain BOAT and log the failure at fine level
-                try {
-                    org.bukkit.entity.Entity ent = w.spawnEntity(loc, org.bukkit.entity.EntityType.valueOf("BOAT"));
-                    vehicleRef[0] = (org.bukkit.entity.Vehicle) ent;
-                } catch (Exception e2) {
-                    // If even that fails, log and continue; caller should handle null vehicle
-                    plugin.getLogger().finer("Failed to spawn boat entity: " + e2.getMessage());
-                }
-            }
-            // Try to set the boat wood type based on the player's selection. Do it next tick for reliability.
-            if (matName != null) {
-                final String matNameFinal = matName;
-                SchedulerCompat.runNow(plugin, () -> {
-                    if (vehicleRef[0] != null) {
-                        applyBoatVariantUniversal(vehicleRef[0], matNameFinal);
-                    }
-                });
-            }
-
-            if (vehicleRef[0] == null) {
+            String selectedBoat = plugin.getTeamManager()
+                    .getTeamByMember(p.getUniqueId())
+                    .map((Team t) -> t.getBoatType(p.getUniqueId()))
+                    .orElse(Material.OAK_BOAT.name());
+            String normalizedBoat = normalizeBoatMaterialName(selectedBoat);
+            boolean chest = normalizedBoat.contains("_CHEST_");
+            org.bukkit.entity.Vehicle spawned = spawnRaceVehicle(w, loc, normalizedBoat, chest);
+            if (spawned == null) {
                 plugin.getLogger().warning("Could not spawn race boat for " + p.getName() + "; skipping start slot #" + (i + 1) + ".");
                 continue;
             }
-            registerRaceVehicle(p.getUniqueId(), vehicleRef[0]);
+            // Apply selected boat/raft model immediately and with delayed retries.
+            // This complements material-specific entity spawn on mixed API versions.
+            applyBoatVariantReliably(spawned, normalizedBoat);
+            registerRaceVehicle(p.getUniqueId(), spawned);
 
-            if (!vehicleRef[0].addPassenger(p)) {
+            if (!spawned.addPassenger(p)) {
                 SchedulerCompat.runNow(plugin, () -> {
-                    if (vehicleRef[0] != null && vehicleRef[0].isValid()) vehicleRef[0].addPassenger(p);
+                    if (spawned.isValid()) spawned.addPassenger(p);
                 });
             }
             placed.add(p);
         }
         return placed;
+    }
+
+    private org.bukkit.entity.Vehicle spawnRaceVehicle(org.bukkit.World world, Location location, String preferredTypeName, boolean chestFallback) {
+        java.util.LinkedHashSet<String> candidates = new java.util.LinkedHashSet<>();
+        if (preferredTypeName != null && !preferredTypeName.isBlank()) {
+            candidates.add(preferredTypeName.toUpperCase(Locale.ROOT));
+        }
+        candidates.add(chestFallback ? "CHEST_BOAT" : "BOAT");
+
+        for (String candidate : candidates) {
+            try {
+                org.bukkit.entity.EntityType type = org.bukkit.entity.EntityType.valueOf(candidate);
+                org.bukkit.entity.Entity entity = world.spawnEntity(location, type);
+                if (entity instanceof org.bukkit.entity.Vehicle vehicle) {
+                    return vehicle;
+                }
+                plugin.getLogger().finer("Spawned non-vehicle entity for boat candidate " + candidate + ": " + entity.getType().name());
+            } catch (IllegalArgumentException ignored) {
+                // Candidate not available on this server/API version.
+            } catch (Exception ex) {
+                plugin.getLogger().finer("Failed to spawn race vehicle candidate " + candidate + ": " + ex.getMessage());
+            }
+        }
+        return null;
+    }
+
+    private static String normalizeBoatMaterialName(String raw) {
+        if (raw == null || raw.isBlank()) return Material.OAK_BOAT.name();
+        String upper = raw.trim().toUpperCase(Locale.ROOT);
+
+        if (upper.equals("BOAT")) return "OAK_BOAT";
+        if (upper.equals("CHEST_BOAT")) return "OAK_CHEST_BOAT";
+        if (upper.equals("RAFT") || upper.equals("BAMBOO_BOAT")) return "BAMBOO_RAFT";
+        if (upper.equals("CHEST_RAFT") || upper.equals("BAMBOO_CHEST_BOAT")) return "BAMBOO_CHEST_RAFT";
+
+        if (upper.endsWith("_BOAT") || upper.endsWith("_CHEST_BOAT") || upper.endsWith("_RAFT") || upper.endsWith("_CHEST_RAFT")) {
+            return upper;
+        }
+
+        if (upper.startsWith("BAMBOO")) {
+            return upper.contains("CHEST") ? "BAMBOO_CHEST_RAFT" : "BAMBOO_RAFT";
+        }
+
+        return upper + "_BOAT";
+    }
+
+    private void applyBoatVariantReliably(org.bukkit.entity.Vehicle vehicle, String materialName) {
+        if (vehicle == null || materialName == null || materialName.isBlank()) return;
+        applyBoatVariantUniversal(vehicle, materialName);
+        SchedulerCompat.runLater(plugin, () -> {
+            if (vehicle.isValid()) applyBoatVariantUniversal(vehicle, materialName);
+        }, 1L);
+        SchedulerCompat.runLater(plugin, () -> {
+            if (vehicle.isValid()) applyBoatVariantUniversal(vehicle, materialName);
+        }, 10L);
     }
 
     private void registerRaceVehicle(UUID playerId, org.bukkit.entity.Vehicle vehicle) {
@@ -957,7 +1012,12 @@ public class RaceManager {
     // --- Countdown with 5 start lights and false-start check ---
     public void startRaceWithCountdown(List<Player> participants) {
         List<TrackConfig.LightPos> ls = track.getLights();
-        if (ls.size() != 5) { startRace(participants); return; }
+        if (ls.size() != 5) {
+            clearCountdownLock();
+            startRace(participants);
+            return;
+        }
+        setCountdownLock(participants);
 
         // Prepare per-player origin and forward vectors
         Map<UUID, Location> origins = new HashMap<>();
@@ -1031,6 +1091,7 @@ public class RaceManager {
                         }
                     }
                     if (checkTaskRef[0] != null) checkTaskRef[0].cancel();
+                    clearCountdownLock();
                     Collection<Player> recipsGo = participantsAndAdmins(participants);
                     for (Player p : recipsGo) p.sendMessage(color(plugin.msg().get("race.go")));
                     for (Player p : recipsGo) p.playSound(p.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.2f);
@@ -1053,6 +1114,17 @@ public class RaceManager {
             for (Player p : recips) p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 0.9f, 1.6f);
             idx[0]++;
         }, 0L, 20L);
+    }
+
+    private void setCountdownLock(Collection<Player> participants) {
+        countdownLockedParticipants.clear();
+        for (Player p : participants) {
+            if (p != null) countdownLockedParticipants.add(p.getUniqueId());
+        }
+    }
+
+    private void clearCountdownLock() {
+        countdownLockedParticipants.clear();
     }
 
     // --- Scoreboard (sidebar) showing Lap, Checkpoints, and Time ---

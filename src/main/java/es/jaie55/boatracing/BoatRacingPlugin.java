@@ -134,6 +134,19 @@ public class BoatRacingPlugin extends JavaPlugin {
                         && from.getBlockZ() == to.getBlockZ()) return;
                 raceManager.tickPlayer(e.getPlayer(), to);
             }
+
+            @org.bukkit.event.EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST, ignoreCancelled = true)
+            public void onVehicleExit(org.bukkit.event.vehicle.VehicleExitEvent e) {
+                if (raceManager == null) return;
+                if (!(e.getExited() instanceof Player p)) return;
+                if (!raceManager.shouldPreventVehicleExit(p.getUniqueId())) return;
+
+                String vehicleType = e.getVehicle().getType().name();
+                if (!vehicleType.endsWith("BOAT") && !vehicleType.endsWith("RAFT")) return;
+
+                e.setCancelled(true);
+                p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.7f, 0.9f);
+            }
         }, this);
     
     try {

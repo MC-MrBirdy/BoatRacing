@@ -18,11 +18,23 @@
 
 An F1‒style ice boat racing plugin for Bukkit/Spigot (compatible with Paper/Purpur) with a clean, vanilla‒like GUI. Manage teams, configure tracks with the built‒in BoatRacing selection tool, run timed races with checkpoints, pit area penalties, and a guided setup wizard.
 
-> Status: Public release (1.1.2)
+> Status: Public release (1.1.3)
 
 See the changelog in [CHANGELOG.md](https://github.com/Jaie55/BoatRacing/blob/main/CHANGELOG.md).
 
 This is how we test the plugin to validate its behavior after each update: see the QA checklist in [CHECKLIST.md](CHECKLIST.md)
+
+<details>
+<summary><strong>What's New (1.1.3)</strong></summary>
+
+Track-aware placeholders and spawn reliability improvements:
+- **Track-scoped race placeholders**: added `%boatracing_track_race_running_<track>%`, `%boatracing_track_race_registering_<track>%`, and `%boatracing_track_race_status_<track>%` to support per-track displays in scoreboards/holograms.
+- **Compatibility aliases for prior naming**: `%boatracing_track_racerunning_<track>%` and `%boatracing_track_raceregistering_<track>%` map to the same values.
+- **Selected boat variant reliability**: race boat/raft variants now re-apply after spawn with delayed retries to reduce cases where selected variants appear as default OAK.
+- **No dismount during pre-start and race**: racers are now prevented from manually exiting boats/rafts during the 5-light countdown and while the race is active.
+- **Current engine scope clarified**: in 1.x, track-scoped race placeholders evaluate against the active track state because the race engine still runs one race session at a time.
+
+</details>
 
 <details>
 <summary><strong>What's New (1.1.2)</strong></summary>
@@ -539,6 +551,10 @@ Resolution rules:
 - `%boatracing_player_*%` uses the viewer as context.
 - `%boatracing_player_*_<player>%` uses an explicit player name or UUID and is ideal for NPCs and static holograms.
 - Team leader placeholders always resolve the current saved leader of that team.
+- Track-scoped race placeholders (`%boatracing_track_race_*_<track>%`) are evaluated against the active track only in the current 1.x single-race engine.
+- Compatibility aliases are available: `%boatracing_track_racerunning_<track>%` and `%boatracing_track_raceregistering_<track>%`.
+- For track-scoped race placeholders, non-active tracks resolve as `false` (`running`/`registering`) or `idle` (`status`).
+- `<track>` tokens support underscores for spaces (for example `My_Track`).
 
 ### Category: Viewer Player and Team
 
@@ -555,6 +571,8 @@ Resolution rules:
 | Placeholder(s) | What it shows | Example text on screen | Visibility |
 |---|---|---|---|
 | `%boatracing_player_race_running%` / `%boatracing_player_race_registering%` | Whether a race is running or registering | `Running: true` / `Registering: false` | Viewer context |
+| `%boatracing_track_race_running_<track>%` / `%boatracing_track_race_registering_<track>%` / `%boatracing_track_race_status_<track>%` | Track-scoped race state (`running`, `registering`, `idle`) for a specific track token | `Harbor running: true` / `Harbor status: running` / `Desert status: idle` | Same for every viewer |
+| `%boatracing_track_racerunning_<track>%` / `%boatracing_track_raceregistering_<track>%` | Backward-compatible aliases for track running/registering booleans | `Harbor running(alias): true` / `Desert registering(alias): false` | Same for every viewer |
 | `%boatracing_player_current_time%` / `%boatracing_player_current_time_ms%` | Live timer for the viewer | `Time: 1:42.355` / `TimeMs: 102355` | Viewer context |
 | `%boatracing_player_current_lap%` / `%boatracing_player_current_checkpoint%` | Viewer lap and next checkpoint progression | `Lap: 2` / `Checkpoint: 5` | Viewer context |
 | `%boatracing_player_current_position%` / `%boatracing_player_current_pitstops%` / `%boatracing_player_finished%` | Viewer live position, pit count, and finish state | `Pos: 1` / `Pit stops: 0` / `Finished: false` | Viewer context |

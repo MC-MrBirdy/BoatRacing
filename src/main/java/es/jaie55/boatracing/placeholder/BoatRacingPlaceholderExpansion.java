@@ -42,6 +42,11 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         if (params == null || params.isEmpty()) return "";
 
         String key = params.toLowerCase(Locale.ROOT);
+        final String trackRaceRunningPrefix = "track_race_running_";
+        final String trackRaceRunningCompatPrefix = "track_racerunning_";
+        final String trackRaceRegisteringPrefix = "track_race_registering_";
+        final String trackRaceRegisteringCompatPrefix = "track_raceregistering_";
+        final String trackRaceStatusPrefix = "track_race_status_";
 
         if (key.equals("teams_count")) return String.valueOf(plugin.getTeamManager().getTeams().size());
         if (key.equals("teams_list")) return plugin.getTeamManager().getTeams().stream().map(Team::getName).sorted(String.CASE_INSENSITIVE_ORDER).collect(Collectors.joining(", "));
@@ -61,6 +66,29 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         }
         if (key.equals("track_best_player")) return trackBestEntry().map(e -> safePlayerName(e.getKey())).orElse("-");
         if (key.equals("track_best_time")) return trackBestEntry().map(e -> formatMillis(e.getValue())).orElse("-");
+        if (key.startsWith(trackRaceRunningPrefix)) {
+            String token = params.substring(trackRaceRunningPrefix.length());
+            return String.valueOf(isRequestedTrackActive(token) && plugin.getRaceManager().isRunning());
+        }
+        if (key.startsWith(trackRaceRunningCompatPrefix)) {
+            String token = params.substring(trackRaceRunningCompatPrefix.length());
+            return String.valueOf(isRequestedTrackActive(token) && plugin.getRaceManager().isRunning());
+        }
+        if (key.startsWith(trackRaceRegisteringPrefix)) {
+            String token = params.substring(trackRaceRegisteringPrefix.length());
+            return String.valueOf(isRequestedTrackActive(token) && plugin.getRaceManager().isRegistering());
+        }
+        if (key.startsWith(trackRaceRegisteringCompatPrefix)) {
+            String token = params.substring(trackRaceRegisteringCompatPrefix.length());
+            return String.valueOf(isRequestedTrackActive(token) && plugin.getRaceManager().isRegistering());
+        }
+        if (key.startsWith(trackRaceStatusPrefix)) {
+            String token = params.substring(trackRaceStatusPrefix.length());
+            if (!isRequestedTrackActive(token)) return "idle";
+            if (plugin.getRaceManager().isRunning()) return "running";
+            if (plugin.getRaceManager().isRegistering()) return "registering";
+            return "idle";
+        }
 
         // Targeted player placeholders (by name/uuid), useful for static NPC/holograms:
         // %boatracing_player_wins_<player>%
@@ -276,6 +304,19 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
             }
         }
         return null;
+    }
+
+    private boolean isRequestedTrackActive(String token) {
+        String requested = normalizeTrackToken(token);
+        if (requested.isEmpty()) return false;
+        String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
+        if (current == null || current.isBlank()) current = "unsaved";
+        return normalizeTrackToken(current).equalsIgnoreCase(requested);
+    }
+
+    private static String normalizeTrackToken(String value) {
+        if (value == null) return "";
+        return value.trim().replace(' ', '_');
     }
 
     private Optional<Map.Entry<UUID, Long>> trackBestEntry() {

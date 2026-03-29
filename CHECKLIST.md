@@ -1,5 +1,24 @@
 README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 
+## What to verify for 1.1.3
+- Versioning and docs:
+	- Project version is 1.1.3 in `pom.xml`.
+	- `CHANGELOG.md` contains a 1.1.3 section with track-scoped placeholders and boat variant spawn reliability.
+	- `CHECKLIST.md` includes this 1.1.3 validation block.
+	- `README.md` status shows 1.1.3.
+- Track-scoped placeholders:
+	- `%boatracing_track_race_running_<track>%`, `%boatracing_track_race_registering_<track>%`, and `%boatracing_track_race_status_<track>%` return expected values for active vs non-active tracks.
+	- Compatibility aliases `%boatracing_track_racerunning_<track>%` and `%boatracing_track_raceregistering_<track>%` resolve to the same values as canonical placeholders.
+	- `%boatracing_track_race_status_<track>%` returns only `running`, `registering`, or `idle`.
+	- Track tokens with spaces represented as underscores (for example `My_Track`) resolve correctly.
+- Selected boat variant reliability:
+	- Selected per-player boat variants (for example `DARK_OAK_BOAT`, `CHERRY_BOAT`, and `BAMBOO_RAFT` where supported) are applied on spawn and do not fall back to `OAK` unless the server version lacks that variant.
+	- Variant remains correct after repeated race cycles (`open/start/stop`) and on both initial mount and delayed mount retries.
+- No dismount lock (countdown + race):
+	- During the 5-light countdown, racers cannot manually exit boats/rafts.
+	- While the race is running, racers cannot manually exit boats/rafts.
+	- After race end/cancel/reset cleanup, players are no longer blocked from normal vehicle exit behavior.
+
 ## What to verify for 1.1.2
 - Versioning and docs:
 	- Project version is 1.1.2 in `pom.xml`.
