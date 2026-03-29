@@ -7,7 +7,7 @@
 - **Race back command**: added `/boatracing race back` so players can manually return to their saved pre-lobby location after race flows.
 - **Post-race lobby return UX**: after a race ends or is cancelled, participants are teleported to the configured race lobby, receive a clickable back shortcut, and have a 3-minute window to return.
 - **French language bundle**: added bundled `messages_fr.yml` (community translation) with complete race/setup/team/admin/gui coverage.
-- **Additional language starter bundles**: added bundled `messages_pt_BR.yml`, `messages_de.yml`, `messages_it.yml`, `messages_pl.yml`, `messages_tr.yml`, `messages_ja.yml`, and `messages_ko.yml` for further localization review.
+- **Additional community language bundles**: added bundled `messages_es_419.yml`, `messages_pt_BR.yml`, `messages_pt_PT.yml`, `messages_de.yml`, `messages_it.yml`, `messages_pl.yml`, `messages_tr.yml`, `messages_ja.yml`, and `messages_ko.yml`, expanding built-in language coverage.
 
 ### Changed
 - **Setup Wizard compact mode**: wizard prompts were shortened and reorganized by step to reduce chat text while keeping actionable buttons.
@@ -16,6 +16,7 @@
 - **Lobby return flow**: pre-lobby locations are preserved during race start, and race-back return entries now expire automatically after 3 minutes (in-memory only).
 - **Race help and tab-complete**: `race back` is now included in help output and tab suggestions for players with `boatracing.race.back`.
 - **Language bundle loading**: language selection now supports bundled and custom `messages_<lang>.yml` files from the plugin folder, with safe fallback to English.
+- **Translation status headers**: bundled language headers now consistently mark `messages_en.yml` and `messages_es.yml` as official translations, and all other bundled languages as unofficial community translations.
 
 ### Fixed
 - **Build break in TeamManager**: fixed malformed package declaration in `TeamManager.java` that caused compilation failure.

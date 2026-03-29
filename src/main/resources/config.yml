@@ -1,5 +1,5 @@
 prefix: "&6[BoatRacing] "
-language: "en"  # Bundled: en/es/fr/pt_BR/de/it/pl/tr/ja/ko/zh_TW/ru. Custom: set e.g. "eo" and create messages_eo.yml in plugins/BoatRacing/
+language: "en"  # Bundled: en/es/es_419/fr/pt_BR/pt_PT/de/it/pl/tr/ja/ko/zh_TW/ru. Custom: set e.g. "eo" and create messages_eo.yml in plugins/BoatRacing/
 max-members-per-team: 2
 player-actions:
   # Allow non-admin players to perform these actions

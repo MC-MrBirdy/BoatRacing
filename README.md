@@ -14,6 +14,8 @@
 
 [![bStats](https://bstats.org/signatures/bukkit/BoatRacing.svg)](https://bstats.org/plugin/bukkit/BoatRacing/26881)
 
+[![Languages](https://img.shields.io/badge/Languages-14-0ea5e9)](#available-languages) [![Official](https://img.shields.io/badge/Official-2-22c55e)](#available-languages) [![Community](https://img.shields.io/badge/Community-12-f59e0b)](#available-languages)
+
 An F1‒style ice boat racing plugin for Bukkit/Spigot (compatible with Paper/Purpur) with a clean, vanilla‒like GUI. Manage teams, configure tracks with the built‒in BoatRacing selection tool, run timed races with checkpoints, pit area penalties, and a guided setup wizard.
 
 > Status: Public release (1.1.2)
@@ -31,6 +33,7 @@ Placeholders, wizard UX and i18n refinements:
 - **Wizard readability pass**: setup wizard prompts are now more compact and step-focused to reduce chat noise.
 - **Registration announce fully i18n-based**: registration broadcast template now lives in `messages_<lang>.yml` (`race.registration.announce`) instead of `config.yml`.
 - **Lobby back flow**: added `/boatracing race back`; after race finish/cancel players return to the waiting lobby, get a clickable back hint, and can return to their pre-lobby location within a 3-minute in-memory window.
+- **Expanded bundled language coverage**: added and reviewed community bundles for `fr`, `pt_BR`, `pt_PT`, `es_419`, `de`, `it`, `pl`, `tr`, `ja`, and `ko`; `en` and `es` remain the official translations.
 
 </details>
 
@@ -62,7 +65,7 @@ Explicit compatibility:
 <summary><strong>What's New (1.1.0)</strong></summary>
 
 Languages and player controls:
-- **Multi-language support**: messages are now fully translatable. Configure language in config.yml (`language`). Bundled options are `en`, `es`, `fr`, `pt_BR`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, `zh_TW`, and `ru`, and custom bundles are also supported by adding `messages_<lang>.yml` to the plugin folder. Reload with `/boatracing reload` to switch languages without restart.
+- **Multi-language support**: messages are now fully translatable. Configure language in config.yml (`language`). Bundled options are `en`, `es`, `es_419`, `fr`, `pt_BR`, `pt_PT`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, `zh_TW`, and `ru`, and custom bundles are also supported by adding `messages_<lang>.yml` to the plugin folder. Reload with `/boatracing reload` to switch languages without restart.
 - **Player-controlled race management**: new config option `player-actions.allow-player-race-start` (default: false) lets non-admin players open, start, force-start and stop races. Can be overridden per-track via `racing.allow-player-start: true` in individual track configs.
 - **Reward system**: full customizable race-end rewards. Configure under `racing.rewards` with position-specific commands, messages and broadcasts. Supports placeholders: {player}, {position}, {time}, {track}, {laps}. Per-track rewards override the global config.
 - **Performance**: PlayerMoveEvent throttle — checkpoint detection now only triggers when entering a new block, not every sub-meter movement.
@@ -197,6 +200,30 @@ Fixes and polish:
 
 </details>
 
+## Available Languages
+
+Official translations: <img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" width="16" height="16" alt="English" /> <img src="https://hatscripts.github.io/circle-flags/flags/es.svg" width="16" height="16" alt="Espanol" />
+[![en official](https://img.shields.io/badge/en-official-22c55e)](#available-languages) [![es official](https://img.shields.io/badge/es-official-22c55e)](#available-languages)
+
+Community translations: <img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" width="16" height="16" alt="French" /> <img src="https://hatscripts.github.io/circle-flags/flags/br.svg" width="16" height="16" alt="Portuguese Brazil" /> <img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" width="16" height="16" alt="Portuguese Portugal" /> <img src="https://hatscripts.github.io/circle-flags/flags/mx.svg" width="16" height="16" alt="Spanish Latin America" /> <img src="https://hatscripts.github.io/circle-flags/flags/de.svg" width="16" height="16" alt="German" /> <img src="https://hatscripts.github.io/circle-flags/flags/it.svg" width="16" height="16" alt="Italian" /> <img src="https://hatscripts.github.io/circle-flags/flags/pl.svg" width="16" height="16" alt="Polish" /> <img src="https://hatscripts.github.io/circle-flags/flags/tr.svg" width="16" height="16" alt="Turkish" /> <img src="https://hatscripts.github.io/circle-flags/flags/jp.svg" width="16" height="16" alt="Japanese" /> <img src="https://hatscripts.github.io/circle-flags/flags/kr.svg" width="16" height="16" alt="Korean" /> <img src="https://hatscripts.github.io/circle-flags/flags/tw.svg" width="16" height="16" alt="Traditional Chinese" /> <img src="https://hatscripts.github.io/circle-flags/flags/ru.svg" width="16" height="16" alt="Russian" />
+[![fr community](https://img.shields.io/badge/fr-community-f59e0b)](#available-languages) [![pt_BR community](https://img.shields.io/badge/pt_BR-community-f59e0b)](#available-languages) [![pt_PT community](https://img.shields.io/badge/pt_PT-community-f59e0b)](#available-languages) [![es_419 community](https://img.shields.io/badge/es_419-community-f59e0b)](#available-languages) [![de community](https://img.shields.io/badge/de-community-f59e0b)](#available-languages) [![it community](https://img.shields.io/badge/it-community-f59e0b)](#available-languages) [![pl community](https://img.shields.io/badge/pl-community-f59e0b)](#available-languages) [![tr community](https://img.shields.io/badge/tr-community-f59e0b)](#available-languages) [![ja community](https://img.shields.io/badge/ja-community-f59e0b)](#available-languages) [![ko community](https://img.shields.io/badge/ko-community-f59e0b)](#available-languages) [![zh_TW community](https://img.shields.io/badge/zh_TW-community-f59e0b)](#available-languages) [![ru community](https://img.shields.io/badge/ru-community-f59e0b)](#available-languages)
+
+Available codes and names:
+- `en` English (official)
+- `es` Espanol (Espana) (official)
+- `es_419` Espanol (Latinoamerica)
+- `fr` Francais
+- `pt_BR` Portugues (Brasil)
+- `pt_PT` Portugues (Portugal)
+- `de` Deutsch
+- `it` Italiano
+- `pl` Polski
+- `tr` Turkce
+- `ja` Japanese
+- `ko` Korean
+- `zh_TW` Traditional Chinese
+- `ru` Russian
+
 ## Features
 - Team GUI for players: browse teams, open team view, join/leave, manage your racer number and boat type, and optionally rename/change color/disband from the GUI when enabled in config.
 - Admin tooling: dedicated GUIs for teams, players, race control, and named tracks, plus command equivalents for scripting or console-style workflows.
@@ -206,7 +233,7 @@ Fixes and polish:
 - Race systems: ordered checkpoints, optional pit area, optional mandatory pit stops, false-start penalties, registration lobby teleport/return, 5-light countdown, and live results broadcasting.
 - HUD and scoreboard: in-race sidebar plus ActionBar with per-section config toggles, safe scoreboard restoration after races, and compatibility flow for external scoreboards.
 - Persistent stats: `stats.yml` stores wins, best race and best lap so PlaceholderAPI, holograms, scoreboards, and NPCs can show live and historical data.
-- i18n: bundled message packs for `en`, `es`, `zh_TW`, and `ru`, all hot-reloadable with `/boatracing reload`.
+- i18n: bundled message packs for `en`, `es`, `es_419`, `fr`, `pt_BR`, `pt_PT`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, `zh_TW`, and `ru`; `en`/`es` are official and the rest are community translations. All are hot-reloadable with `/boatracing reload`.
 - Rewards, updates, and metrics: per-position race rewards, Modrinth update checks, and optional bStats metrics.
 
 ## Requirements
