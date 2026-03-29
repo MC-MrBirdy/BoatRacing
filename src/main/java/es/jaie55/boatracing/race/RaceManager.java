@@ -40,9 +40,6 @@ public class RaceManager {
         EXPIRED
     }
 
-    private static final long BACK_WINDOW_MILLIS = 180_000L;
-    private static final int BACK_WINDOW_MINUTES = 3;
-
     private final BoatRacingPlugin plugin;
     private final TrackConfig track;
     private boolean running = false;
@@ -78,6 +75,7 @@ public class RaceManager {
     // Optional registration lobby
     private boolean lobbyEnabled;
     private boolean lobbyReturnOnLeave;
+    private long backWindowMillis;
     private String lobbyWorld;
     private double lobbyX;
     private double lobbyY;
@@ -86,6 +84,10 @@ public class RaceManager {
     private float lobbyPitch;
     private final Map<UUID, Location> preLobbyLocations = new HashMap<>();
     private final Map<UUID, Long> preLobbyBackExpiresAt = new HashMap<>();
+    private final Map<UUID, SchedulerCompat.TaskHandle> backExpiryTasks = new HashMap<>();
+    // Race-spawned boats/rafts to ensure deterministic cleanup on finish/cancel.
+    private final Set<UUID> raceVehicleIds = new HashSet<>();
+    private final Map<UUID, UUID> raceVehicleByPlayer = new HashMap<>();
 
     // Scoreboard handling
     private SchedulerCompat.TaskHandle scoreboardTask;
@@ -135,6 +137,8 @@ public class RaceManager {
         this.abShowPit = cfg.getBoolean("racing.ui.actionbar.show-pitstops", true);
         this.lobbyEnabled = cfg.getBoolean("racing.lobby.enabled", false);
         this.lobbyReturnOnLeave = cfg.getBoolean("racing.lobby.return-on-leave", true);
+        long configuredBackWindowSeconds = Math.max(1L, cfg.getLong("racing.lobby.back-window-seconds", 180L));
+        this.backWindowMillis = configuredBackWindowSeconds * 1000L;
         this.lobbyWorld = cfg.getString("racing.lobby.world", "world");
         this.lobbyX = cfg.getDouble("racing.lobby.x", 0.0);
         this.lobbyY = cfg.getDouble("racing.lobby.y", 80.0);
@@ -223,6 +227,7 @@ public class RaceManager {
     public void stopRace(boolean announce) {
         running = false;
         if (announce) announceResults();
+        cleanupRaceVehicles();
         sendParticipantsToLobbyAfterRace();
         stopScoreboard();
     }
@@ -230,10 +235,12 @@ public class RaceManager {
     public void reset() {
         running = false;
         closeRegistrationWindow();
+        cleanupRaceVehicles();
         states.clear();
         startTime = 0L;
         registered.clear();
         preStartPenalties.clear();
+        cancelAllBackExpiryTasks();
         preLobbyLocations.clear();
         preLobbyBackExpiresAt.clear();
         stopScoreboard();
@@ -564,6 +571,7 @@ public class RaceManager {
         }
         if (participants.isEmpty()) {
             restoreLobbyForRegistered(true);
+            cancelAllBackExpiryTasks();
             preLobbyLocations.clear();
             preLobbyBackExpiresAt.clear();
             broadcast(color(plugin.msg().get("race.cancelled-no-participants")));
@@ -572,6 +580,7 @@ public class RaceManager {
         List<Player> placed = placeAtStartsWithBoats(participants);
         if (placed.isEmpty()) {
             restoreLobbyForRegistered(true);
+            cancelAllBackExpiryTasks();
             preLobbyLocations.clear();
             preLobbyBackExpiresAt.clear();
             broadcast(color(plugin.msg().get("race.cancelled-no-slots")));
@@ -587,6 +596,7 @@ public class RaceManager {
         if (!running) return false;
         running = false;
         closeRegistrationWindow();
+        cleanupRaceVehicles();
         sendParticipantsToLobbyAfterRace();
         states.clear();
         broadcast(color(plugin.msg().get("race.cancelled-general")));
@@ -600,16 +610,19 @@ public class RaceManager {
         Location prev = preLobbyLocations.get(playerId);
         if (prev == null || prev.getWorld() == null) {
             preLobbyBackExpiresAt.remove(playerId);
+            cancelBackExpiryTask(playerId);
             return BackResult.NO_LOCATION;
         }
         Long expiresAt = preLobbyBackExpiresAt.get(playerId);
         if (expiresAt != null && System.currentTimeMillis() > expiresAt) {
             preLobbyLocations.remove(playerId);
             preLobbyBackExpiresAt.remove(playerId);
+            cancelBackExpiryTask(playerId);
             return BackResult.EXPIRED;
         }
         preLobbyLocations.remove(playerId);
         preLobbyBackExpiresAt.remove(playerId);
+        cancelBackExpiryTask(playerId);
         if (p.isInsideVehicle()) {
             org.bukkit.entity.Entity vehicle = p.getVehicle();
             p.leaveVehicle();
@@ -626,6 +639,7 @@ public class RaceManager {
         int count = registered.size();
         restoreLobbyForRegistered(true);
         registered.clear();
+        cancelAllBackExpiryTasks();
         preLobbyLocations.clear();
         preLobbyBackExpiresAt.clear();
         if (announce) broadcast(color(plugin.msg().get("race.registration.cancelled", "count", String.valueOf(count))));
@@ -652,6 +666,7 @@ public class RaceManager {
         if (p == null || !p.isOnline()) return;
         preLobbyLocations.put(p.getUniqueId(), p.getLocation().clone());
         preLobbyBackExpiresAt.remove(p.getUniqueId());
+        cancelBackExpiryTask(p.getUniqueId());
     }
 
     private void teleportToLobbyIfEnabled(Player p) {
@@ -671,16 +686,57 @@ public class RaceManager {
         Location lobby = getLobbyLocation();
         if (lobby == null) return;
         final String backCommand = "/boatracing race back";
+        long backWindowSeconds = Math.max(1L, backWindowMillis / 1000L);
+        long backWindowMinutes = Math.max(1L, (backWindowSeconds + 59L) / 60L);
         for (UUID id : new ArrayList<>(states.keySet())) {
             Player p = Bukkit.getPlayer(id);
             if (p == null || !p.isOnline()) continue;
             teleportToLobbyIfEnabled(p);
             Location saved = preLobbyLocations.get(id);
             if (saved == null || saved.getWorld() == null) continue;
-            preLobbyBackExpiresAt.put(id, System.currentTimeMillis() + BACK_WINDOW_MILLIS);
+            long expiresAt = System.currentTimeMillis() + backWindowMillis;
+            preLobbyBackExpiresAt.put(id, expiresAt);
+            scheduleBackExpiryNotice(id, expiresAt);
             p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-waiting-returned")));
-            p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-back-window", "minutes", String.valueOf(BACK_WINDOW_MINUTES))));
+            p.sendMessage(color(plugin.pref() + plugin.msg().get(
+                    "race.registration.lobby-back-window",
+                    "minutes", String.valueOf(backWindowMinutes),
+                    "seconds", String.valueOf(backWindowSeconds))));
             p.sendMessage(Text.cmd(plugin.msg().get("race.registration.lobby-back-click"), backCommand));
+        }
+    }
+
+    private void scheduleBackExpiryNotice(UUID playerId, long expiresAt) {
+        cancelBackExpiryTask(playerId);
+        long delayTicks = Math.max(1L, (backWindowMillis + 49L) / 50L);
+        SchedulerCompat.TaskHandle handle = SchedulerCompat.runLater(plugin, () -> {
+            Long currentExpiresAt = preLobbyBackExpiresAt.get(playerId);
+            if (!Objects.equals(currentExpiresAt, expiresAt)) return;
+            if (System.currentTimeMillis() < expiresAt) return;
+
+            preLobbyBackExpiresAt.remove(playerId);
+            preLobbyLocations.remove(playerId);
+            backExpiryTasks.remove(playerId);
+
+            Player p = Bukkit.getPlayer(playerId);
+            if (p != null && p.isOnline()) {
+                p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-back-expired")));
+                p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+            }
+        }, delayTicks);
+        backExpiryTasks.put(playerId, handle);
+    }
+
+    private void cancelBackExpiryTask(UUID playerId) {
+        SchedulerCompat.TaskHandle handle = backExpiryTasks.remove(playerId);
+        if (handle != null) {
+            try { handle.cancel(); } catch (Exception ignored) { plugin.getLogger().finer("Failed to cancel back expiry task: " + ignored.getMessage()); }
+        }
+    }
+
+    private void cancelAllBackExpiryTasks() {
+        for (UUID playerId : new ArrayList<>(backExpiryTasks.keySet())) {
+            cancelBackExpiryTask(playerId);
         }
     }
 
@@ -690,6 +746,7 @@ public class RaceManager {
         UUID playerId = p.getUniqueId();
         Location prev = preLobbyLocations.remove(playerId);
         preLobbyBackExpiresAt.remove(playerId);
+        cancelBackExpiryTask(playerId);
         if (prev != null && prev.getWorld() != null) {
             p.teleport(prev);
             p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-returned")));
@@ -703,6 +760,7 @@ public class RaceManager {
             if (p != null && p.isOnline()) {
                 Location prev = preLobbyLocations.remove(id);
                 preLobbyBackExpiresAt.remove(id);
+                cancelBackExpiryTask(id);
                 if (prev != null && prev.getWorld() != null) {
                     p.teleport(prev);
                     p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-returned")));
@@ -715,6 +773,8 @@ public class RaceManager {
         List<Player> placed = new ArrayList<>();
         List<TrackConfig.StartSlot> starts = track.getStarts();
         if (starts.isEmpty()) return placed;
+        // Defensive: remove any stale race boats before spawning a new grid.
+        cleanupRaceVehicles();
 
         // 1) Build slot assignment map (slotIndex -> player)
         java.util.Map<Integer, Player> slotToPlayer = new java.util.HashMap<>();
@@ -792,6 +852,12 @@ public class RaceManager {
                 });
             }
 
+            if (vehicleRef[0] == null) {
+                plugin.getLogger().warning("Could not spawn race boat for " + p.getName() + "; skipping start slot #" + (i + 1) + ".");
+                continue;
+            }
+            registerRaceVehicle(p.getUniqueId(), vehicleRef[0]);
+
             if (!vehicleRef[0].addPassenger(p)) {
                 SchedulerCompat.runNow(plugin, () -> {
                     if (vehicleRef[0] != null && vehicleRef[0].isValid()) vehicleRef[0].addPassenger(p);
@@ -800,6 +866,46 @@ public class RaceManager {
             placed.add(p);
         }
         return placed;
+    }
+
+    private void registerRaceVehicle(UUID playerId, org.bukkit.entity.Vehicle vehicle) {
+        if (vehicle == null) return;
+        UUID vehicleId = vehicle.getUniqueId();
+        raceVehicleIds.add(vehicleId);
+        if (playerId != null) raceVehicleByPlayer.put(playerId, vehicleId);
+    }
+
+    private void cleanupRaceVehicles() {
+        if (raceVehicleIds.isEmpty() && raceVehicleByPlayer.isEmpty()) return;
+
+        // First dismount participants still riding tracked race vehicles.
+        for (UUID playerId : new ArrayList<>(raceVehicleByPlayer.keySet())) {
+            Player p = Bukkit.getPlayer(playerId);
+            if (p != null && p.isOnline() && p.isInsideVehicle()) {
+                org.bukkit.entity.Entity vehicle = p.getVehicle();
+                p.leaveVehicle();
+                if (vehicle != null) {
+                    String type = vehicle.getType().name();
+                    if (type.endsWith("BOAT") || type.endsWith("RAFT")) {
+                        vehicle.remove();
+                    }
+                }
+            }
+        }
+
+        // Then remove any remaining tracked race vehicles by entity id.
+        for (UUID vehicleId : new ArrayList<>(raceVehicleIds)) {
+            org.bukkit.entity.Entity vehicle = Bukkit.getEntity(vehicleId);
+            if (vehicle != null && vehicle.isValid()) {
+                String type = vehicle.getType().name();
+                if (type.endsWith("BOAT") || type.endsWith("RAFT")) {
+                    vehicle.remove();
+                }
+            }
+        }
+
+        raceVehicleIds.clear();
+        raceVehicleByPlayer.clear();
     }
 
     // Try to set wood/raft variant on Boat or ChestBoat by reflecting setVariant or setBoatType

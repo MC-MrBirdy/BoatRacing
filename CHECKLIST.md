@@ -6,6 +6,7 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 	- `CHANGELOG.md` contains a 1.1.2 section with placeholders, wizard compact text, registration announce i18n-source changes, lobby-back updates, and expanded bundled language coverage.
 	- `CHECKLIST.md` includes this 1.1.2 validation block.
 	- `README.md` status shows 1.1.2.
+	- `README.md` language badges/counts and available language list include both `zh_TW` and `zh_CN`.
 - PlaceholderAPI integration:
 	- With PlaceholderAPI installed, BoatRacing logs placeholder expansion registration on startup.
 	- `%boatracing_player_team_name%`, `%boatracing_player_wins%`, `%boatracing_player_best_race%` resolve correctly for online players.
@@ -15,6 +16,8 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 	- `config.yml` no longer contains `racing.registration-announce`.
 	- Registration announce text comes from `messages_<lang>.yml` key `race.registration.announce`.
 	- EN/ES/es_419/fr/pt_BR/pt_PT/de/it/pl/tr/ja/ko/zh_TW/zh_CN/ru announce lines include `{cmd}` and render correctly in chat.
+	- `language: "zh_TW"` loads Traditional Chinese (Taiwan) messages from `messages_zh_TW.yml`.
+	- `language: "zh_CN"` loads Simplified Chinese (Mainland) messages from `messages_zh_CN.yml`.
 - Wizard compact text:
 	- Wizard step prompts are concise (no long paragraphs) while keeping key action buttons.
 	- Navigation row and step status remain clear across EN/ES/es_419/fr/pt_BR/pt_PT/de/it/pl/tr/ja/ko/zh_TW/zh_CN/ru message sets.
@@ -36,7 +39,9 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 	- Finishing or cancelling an active race sends participants to the configured lobby location.
 	- After race finish/cancel from lobby, players receive a clickable chat hint for `/boatracing race back`.
 	- Running or clicking `/boatracing race back` within 3 minutes returns players to their saved pre-lobby location.
+	- When the back window expires, players receive an automatic expiration message without needing to execute `/boatracing race back`.
 	- After the 3-minute window expires, `/boatracing race back` reports expiration and does not teleport.
+	- `racing.lobby.back-window-seconds` changes both the usable back window duration and the automatic expiration timing.
 	- While a player is still registered, `/boatracing race back` is denied and instructs the player to leave registration first.
 	- If no saved location exists, `/boatracing race back` reports that state cleanly.
 	- Back-return locations are in-memory only (not persisted), so after restart/reload there is no old race-back location to restore.
@@ -55,6 +60,11 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 - Race active-track behavior:
 	- If the requested race track is already the active one (especially `unsaved`), `race open/join/leave/force/start/stop/status` should not lose in-memory setup state.
 	- A track with starts/finish configured in-memory should remain ready when opening registration on that active track.
+- Race boat entity cleanup:
+	- On race finish, race-spawned boats/rafts are removed from the world (no orphan entities left on start grid/track).
+	- On race cancel (`/boatracing race stop <track>` while running), race-spawned boats/rafts are removed from the world.
+	- If a player dismounts manually before finish/cancel, their race boat is still removed during race cleanup.
+	- Repeating race cycles (`open/start/stop`) does not accumulate stale boats from previous races.
 - Setup clickable command UX:
 	- Setup wizard buttons that need arguments (e.g., setpos/clearpos/setpit team) should suggest text in chat instead of executing incomplete commands.
 	- Buttons for actions like set finish, add light, and add checkpoint are clickable and insert/suggest the correct command flow.

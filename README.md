@@ -14,7 +14,7 @@
 
 [![bStats](https://bstats.org/signatures/bukkit/BoatRacing.svg)](https://bstats.org/plugin/bukkit/BoatRacing/26881)
 
-[![Languages](https://img.shields.io/badge/Languages-14-0ea5e9)](#available-languages) [![Official](https://img.shields.io/badge/Official-2-22c55e)](#available-languages) [![Community](https://img.shields.io/badge/Community-12-f59e0b)](#available-languages)
+[![Languages](https://img.shields.io/badge/Languages-15-0ea5e9)](#available-languages) [![Official](https://img.shields.io/badge/Official-2-22c55e)](#available-languages) [![Community](https://img.shields.io/badge/Community-13-f59e0b)](#available-languages)
 
 An F1‒style ice boat racing plugin for Bukkit/Spigot (compatible with Paper/Purpur) with a clean, vanilla‒like GUI. Manage teams, configure tracks with the built‒in BoatRacing selection tool, run timed races with checkpoints, pit area penalties, and a guided setup wizard.
 
@@ -33,7 +33,8 @@ Placeholders, wizard UX and i18n refinements:
 - **Wizard readability pass**: setup wizard prompts are now more compact and step-focused to reduce chat noise.
 - **Registration announce fully i18n-based**: registration broadcast template now lives in `messages_<lang>.yml` (`race.registration.announce`) instead of `config.yml`.
 - **Lobby back flow**: added `/boatracing race back`; after race finish/cancel players return to the waiting lobby, get a clickable back hint, and can return to their pre-lobby location within a 3-minute in-memory window.
-- **Expanded bundled language coverage**: added and reviewed community bundles for `fr`, `pt_BR`, `pt_PT`, `es_419`, `de`, `it`, `pl`, `tr`, `ja`, and `ko`; `en` and `es` remain the official translations.
+- **Expanded bundled language coverage**: added and reviewed community bundles for `fr`, `pt_BR`, `pt_PT`, `es_419`, `de`, `it`, `pl`, `tr`, `ja`, and `ko`; Chinese is now split into `zh_TW` (Taiwan, Traditional) and `zh_CN` (Mainland, Simplified).
+- **Race boat cleanup reliability**: race-spawned boats/rafts are now tracked and removed on finish/cancel/reset to prevent leftover vehicle entities.
 
 </details>
 
@@ -466,6 +467,7 @@ Global racing defaults:
 Registration lobby:
 - `racing.lobby.enabled`
 - `racing.lobby.return-on-leave`
+- `racing.lobby.back-window-seconds`
 - `racing.lobby.world`
 - `racing.lobby.x`
 - `racing.lobby.y`

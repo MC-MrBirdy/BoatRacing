@@ -18,9 +18,12 @@
 - **Language bundle loading**: language selection now supports bundled and custom `messages_<lang>.yml` files from the plugin folder, with safe fallback to English.
 - **Translation status headers**: bundled language headers now consistently mark `messages_en.yml` and `messages_es.yml` as official translations, and all other bundled languages as unofficial community translations.
 - **Chinese locale split**: kept `messages_zh_TW.yml` for Taiwan Traditional Chinese and added `messages_zh_CN.yml` for Mainland Simplified Chinese.
+- **Race back window configurability**: the `/boatracing race back` availability window is now configurable with `racing.lobby.back-window-seconds`.
 
 ### Fixed
 - **Build break in TeamManager**: fixed malformed package declaration in `TeamManager.java` that caused compilation failure.
+- **Race boat entity cleanup**: race-spawned boats/rafts are now tracked and removed deterministically on finish/cancel/reset, preventing leftover vehicle entities in the world.
+- **Race back expiry notification**: players now receive an automatic message when the back window expires, instead of only seeing it after manually running `/boatracing race back`.
 
 ### Docs
 - **Placeholder reference added**: README now documents available `%boatracing_*%` placeholders and team lookup formats.
