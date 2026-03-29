@@ -1,4 +1,8 @@
-# BoatRacing – Messages / i18n
+﻿# BoatRacing – Messages / i18n (Polski)
+#
+# ⚠  Draft bundled language file. Please review/translate for production use.
+# ⚠  WARNING: This is a generated starter bundle and may still contain English text.
+#
 # You can customise every user-facing message here.
 # Use & for colour codes. Placeholders are written as {name}.
 # After editing, run /boatracing reload to apply changes.
@@ -273,10 +277,10 @@ setup:
   status-yes: "&ayes"
   status-no: "&cno"
   nav-label: "&8Navigation: "
-  nav-back: "&b⟵ Back"
-  nav-status: "&bℹ Status"
-  nav-cancel: "&b✖ Cancel"
-  nav-skip: "&b⏭ Skip"
+  nav-back: "&bâŸµ Back"
+  nav-status: "&bâ„¹ Status"
+  nav-cancel: "&bâœ– Cancel"
+  nav-skip: "&bâ­ Skip"
   when-ready: "&7When ready: "
   choose: "&fChoose: "
   choose-laps: "&fChoose laps: "
@@ -284,9 +288,9 @@ setup:
   btn-clear-checkpoints: "&b[Clear checkpoints]"
   btn-open-registration: "&b[Open registration]"
   btn-setup-show: "&b[Setup show]"
-  summary: "&7Summary: &fStarts {starts} &8• &7Finish {finish} &8• &7Pit area {pit} &8• &7Checkpoints &f{checkpoints} &8• &7Custom slots &f{custom_slots}"
+  summary: "&7Summary: &fStarts {starts} &8â€¢ &7Finish {finish} &8â€¢ &7Pit area {pit} &8â€¢ &7Checkpoints &f{checkpoints} &8â€¢ &7Custom slots &f{custom_slots}"
   next-label: "&7Next: "
-  details-label: " &8• &7Details: "
+  details-label: " &8â€¢ &7Details: "
 
 team:
   created: "&aCreated team '{name}'"
@@ -430,20 +434,20 @@ plugin:
 
 gui:
   common:
-    back: "&7« Back"
+    back: "&7Â« Back"
     unset: "(unset)"
 
   admin:
-    title: "BoatRacing • Admin"
-    title-teams: "Admin • Teams"
-    title-team: "Admin • Team"
-    title-team-color: "Admin • Team color"
+    title: "BoatRacing â€¢ Admin"
+    title-teams: "Admin â€¢ Teams"
+    title-team: "Admin â€¢ Team"
+    title-team-color: "Admin â€¢ Team color"
     title-confirm-delete: "Delete team?"
-    title-players: "Admin • Players"
-    title-player: "Admin • Player"
-    title-assign-team: "Admin • Assign team"
-    title-boat-picker: "Admin • Choose boat"
-    title-team-prefix: "Admin • Team • "
+    title-players: "Admin â€¢ Players"
+    title-player: "Admin â€¢ Player"
+    title-assign-team: "Admin â€¢ Assign team"
+    title-boat-picker: "Admin â€¢ Choose boat"
+    title-team-prefix: "Admin â€¢ Team â€¢ "
     btn-manage-teams: "&b&lManage teams"
     btn-manage-race: "&6&lManage race"
     btn-manage-tracks: "&d&lManage tracks"
@@ -477,7 +481,7 @@ gui:
     anvil-racer-number: "Racer number (1-99)"
 
   race:
-    title: "Admin • Race"
+    title: "Admin â€¢ Race"
     btn-status: "&e&lRace status"
     lore-track: "&7Track: &f{track}"
     lore-ready-yes: "&7Ready: &ayes"
@@ -507,7 +511,7 @@ gui:
     anvil-set-laps: "Set laps"
 
   tracks:
-    title: "Admin • Tracks"
+    title: "Admin â€¢ Tracks"
     title-confirm: "Delete track?"
     lore-selected: " &7(selected)"
     lore-click-load: "&7Click: &fLoad"
@@ -522,7 +526,7 @@ gui:
   team:
     title: "Teams"
     title-team: "Team"
-    title-team-prefix: "Team • "
+    title-team-prefix: "Team â€¢ "
     title-member: "Your profile"
     title-color-picker: "Choose team color"
     title-boat-picker: "Choose your boat"

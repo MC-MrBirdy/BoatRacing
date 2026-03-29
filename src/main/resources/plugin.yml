@@ -25,6 +25,7 @@ permissions:
       boatracing.admin: true
       boatracing.race.join: true
       boatracing.race.leave: true
+      boatracing.race.back: true
       boatracing.race.status: true
       boatracing.race.admin: true
   boatracing.use:
@@ -35,6 +36,7 @@ permissions:
       boatracing.version: true
       boatracing.race.join: true
       boatracing.race.leave: true
+      boatracing.race.back: true
       boatracing.race.status: true
   boatracing.teams:
     description: Use /boatracing teams
@@ -63,6 +65,7 @@ permissions:
       boatracing.setup: true
       boatracing.race.join: true
       boatracing.race.leave: true
+      boatracing.race.back: true
       boatracing.race.status: true
       boatracing.race.admin: true
   boatracing.race.join:
@@ -70,6 +73,9 @@ permissions:
     default: true
   boatracing.race.leave:
     description: Leave a race registration
+    default: true
+  boatracing.race.back:
+    description: Return to your saved pre-lobby location
     default: true
   boatracing.race.status:
     description: View race status for a track

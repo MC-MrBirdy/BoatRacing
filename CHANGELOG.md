@@ -4,17 +4,25 @@
 ### Added
 - **PlaceholderAPI integration**: BoatRacing now registers `%boatracing_*%` placeholders for holograms/scoreboards.
 - **Persistent aggregate stats**: new `stats.yml` storage for player wins, team wins, best race, and best lap values used by placeholders.
+- **Race back command**: added `/boatracing race back` so players can manually return to their saved pre-lobby location after race flows.
+- **Post-race lobby return UX**: after a race ends or is cancelled, participants are teleported to the configured race lobby, receive a clickable back shortcut, and have a 3-minute window to return.
+- **French language bundle**: added bundled `messages_fr.yml` (community translation) with complete race/setup/team/admin/gui coverage.
+- **Additional language starter bundles**: added bundled `messages_pt_BR.yml`, `messages_de.yml`, `messages_it.yml`, `messages_pl.yml`, `messages_tr.yml`, `messages_ja.yml`, and `messages_ko.yml` for further localization review.
 
 ### Changed
 - **Setup Wizard compact mode**: wizard prompts were shortened and reorganized by step to reduce chat text while keeping actionable buttons.
 - **Registration announce source**: registration announce text is now language-specific in `messages_<lang>.yml` (`race.registration.announce`) instead of `config.yml`.
-- **Registration announce placeholders**: `race.registration.announce` now consistently supports `{track}`, `{laps}`, `{cmd}`, `{label}` across EN/ES/zh_TW/ru.
+- **Registration announce placeholders**: `race.registration.announce` now consistently supports `{track}`, `{laps}`, `{cmd}`, `{label}` across bundled language files.
+- **Lobby return flow**: pre-lobby locations are preserved during race start, and race-back return entries now expire automatically after 3 minutes (in-memory only).
+- **Race help and tab-complete**: `race back` is now included in help output and tab suggestions for players with `boatracing.race.back`.
+- **Language bundle loading**: language selection now supports bundled and custom `messages_<lang>.yml` files from the plugin folder, with safe fallback to English.
 
 ### Fixed
 - **Build break in TeamManager**: fixed malformed package declaration in `TeamManager.java` that caused compilation failure.
 
 ### Docs
 - **Placeholder reference added**: README now documents available `%boatracing_*%` placeholders and team lookup formats.
+- **Lobby-back docs updated**: README and QA checklist now document the clickable `race back` flow and 3-minute return window as part of 1.1.2.
 
 ## 1.1.1 — 2026-03-13
 ### Added

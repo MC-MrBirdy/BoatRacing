@@ -5,6 +5,7 @@ import es.jaie55.boatracing.team.Team;
 import es.jaie55.boatracing.track.Region;
 import es.jaie55.boatracing.track.TrackConfig;
 import es.jaie55.boatracing.util.SchedulerCompat;
+import es.jaie55.boatracing.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -32,6 +33,15 @@ public class RaceManager {
         public boolean wasInPit = false;
         public boolean wasInCheckpoint = false; // for current next checkpoint only
     }
+
+    public enum BackResult {
+        SUCCESS,
+        NO_LOCATION,
+        EXPIRED
+    }
+
+    private static final long BACK_WINDOW_MILLIS = 180_000L;
+    private static final int BACK_WINDOW_MINUTES = 3;
 
     private final BoatRacingPlugin plugin;
     private final TrackConfig track;
@@ -75,6 +85,7 @@ public class RaceManager {
     private float lobbyYaw;
     private float lobbyPitch;
     private final Map<UUID, Location> preLobbyLocations = new HashMap<>();
+    private final Map<UUID, Long> preLobbyBackExpiresAt = new HashMap<>();
 
     // Scoreboard handling
     private SchedulerCompat.TaskHandle scoreboardTask;
@@ -212,6 +223,7 @@ public class RaceManager {
     public void stopRace(boolean announce) {
         running = false;
         if (announce) announceResults();
+        sendParticipantsToLobbyAfterRace();
         stopScoreboard();
     }
 
@@ -223,6 +235,7 @@ public class RaceManager {
         registered.clear();
         preStartPenalties.clear();
         preLobbyLocations.clear();
+        preLobbyBackExpiresAt.clear();
         stopScoreboard();
     }
 
@@ -508,7 +521,10 @@ public class RaceManager {
 
     public boolean join(Player p) {
         if (!registering || running) return false;
-        registered.add(p.getUniqueId());
+        boolean added = registered.add(p.getUniqueId());
+        if (added) {
+            capturePreLobbyLocation(p);
+        }
         teleportToLobbyIfEnabled(p);
         p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.joined", "laps", String.valueOf(totalLaps))));
         p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.8f, 1.3f);
@@ -549,6 +565,7 @@ public class RaceManager {
         if (participants.isEmpty()) {
             restoreLobbyForRegistered(true);
             preLobbyLocations.clear();
+            preLobbyBackExpiresAt.clear();
             broadcast(color(plugin.msg().get("race.cancelled-no-participants")));
             return false;
         }
@@ -556,12 +573,12 @@ public class RaceManager {
         if (placed.isEmpty()) {
             restoreLobbyForRegistered(true);
             preLobbyLocations.clear();
+            preLobbyBackExpiresAt.clear();
             broadcast(color(plugin.msg().get("race.cancelled-no-slots")));
             return false;
         }
         if (placed.size() < participants.size()) broadcast(color(plugin.msg().get("race.some-not-placed")));
-        // Race is starting; no need to restore old locations for participants.
-        preLobbyLocations.clear();
+        // Keep pre-lobby locations so players can use /boatracing race back after the race.
         startRaceWithCountdown(placed);
         return true;
     }
@@ -570,10 +587,37 @@ public class RaceManager {
         if (!running) return false;
         running = false;
         closeRegistrationWindow();
+        sendParticipantsToLobbyAfterRace();
         states.clear();
         broadcast(color(plugin.msg().get("race.cancelled-general")));
         stopScoreboard();
         return true;
+    }
+
+    public BackResult returnToSavedLocation(Player p) {
+        if (p == null || !p.isOnline()) return BackResult.NO_LOCATION;
+        UUID playerId = p.getUniqueId();
+        Location prev = preLobbyLocations.get(playerId);
+        if (prev == null || prev.getWorld() == null) {
+            preLobbyBackExpiresAt.remove(playerId);
+            return BackResult.NO_LOCATION;
+        }
+        Long expiresAt = preLobbyBackExpiresAt.get(playerId);
+        if (expiresAt != null && System.currentTimeMillis() > expiresAt) {
+            preLobbyLocations.remove(playerId);
+            preLobbyBackExpiresAt.remove(playerId);
+            return BackResult.EXPIRED;
+        }
+        preLobbyLocations.remove(playerId);
+        preLobbyBackExpiresAt.remove(playerId);
+        if (p.isInsideVehicle()) {
+            org.bukkit.entity.Entity vehicle = p.getVehicle();
+            p.leaveVehicle();
+            if (vehicle != null) vehicle.remove();
+        }
+        p.teleport(prev);
+        p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-returned")));
+        return BackResult.SUCCESS;
     }
 
     public boolean cancelRegistration(boolean announce) {
@@ -583,6 +627,7 @@ public class RaceManager {
         restoreLobbyForRegistered(true);
         registered.clear();
         preLobbyLocations.clear();
+        preLobbyBackExpiresAt.clear();
         if (announce) broadcast(color(plugin.msg().get("race.registration.cancelled", "count", String.valueOf(count))));
         return true;
     }
@@ -603,19 +648,48 @@ public class RaceManager {
         return new Location(world, lobbyX, lobbyY, lobbyZ, lobbyYaw, lobbyPitch);
     }
 
+    private void capturePreLobbyLocation(Player p) {
+        if (p == null || !p.isOnline()) return;
+        preLobbyLocations.put(p.getUniqueId(), p.getLocation().clone());
+        preLobbyBackExpiresAt.remove(p.getUniqueId());
+    }
+
     private void teleportToLobbyIfEnabled(Player p) {
         if (p == null || !p.isOnline()) return;
         Location lobby = getLobbyLocation();
         if (lobby == null) return;
-        preLobbyLocations.putIfAbsent(p.getUniqueId(), p.getLocation().clone());
+        if (p.isInsideVehicle()) {
+            org.bukkit.entity.Entity vehicle = p.getVehicle();
+            p.leaveVehicle();
+            if (vehicle != null) vehicle.remove();
+        }
         p.teleport(lobby);
         p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-teleported")));
+    }
+
+    private void sendParticipantsToLobbyAfterRace() {
+        Location lobby = getLobbyLocation();
+        if (lobby == null) return;
+        final String backCommand = "/boatracing race back";
+        for (UUID id : new ArrayList<>(states.keySet())) {
+            Player p = Bukkit.getPlayer(id);
+            if (p == null || !p.isOnline()) continue;
+            teleportToLobbyIfEnabled(p);
+            Location saved = preLobbyLocations.get(id);
+            if (saved == null || saved.getWorld() == null) continue;
+            preLobbyBackExpiresAt.put(id, System.currentTimeMillis() + BACK_WINDOW_MILLIS);
+            p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-waiting-returned")));
+            p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-back-window", "minutes", String.valueOf(BACK_WINDOW_MINUTES))));
+            p.sendMessage(Text.cmd(plugin.msg().get("race.registration.lobby-back-click"), backCommand));
+        }
     }
 
     private void restoreFromLobbyIfNeeded(Player p, boolean onlyWhenLeaving) {
         if (p == null || !p.isOnline()) return;
         if (onlyWhenLeaving && !lobbyReturnOnLeave) return;
-        Location prev = preLobbyLocations.remove(p.getUniqueId());
+        UUID playerId = p.getUniqueId();
+        Location prev = preLobbyLocations.remove(playerId);
+        preLobbyBackExpiresAt.remove(playerId);
         if (prev != null && prev.getWorld() != null) {
             p.teleport(prev);
             p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-returned")));
@@ -627,7 +701,8 @@ public class RaceManager {
         for (UUID id : new ArrayList<>(registered)) {
             Player p = Bukkit.getPlayer(id);
             if (p != null && p.isOnline()) {
-                Location prev = preLobbyLocations.get(id);
+                Location prev = preLobbyLocations.remove(id);
+                preLobbyBackExpiresAt.remove(id);
                 if (prev != null && prev.getWorld() != null) {
                     p.teleport(prev);
                     p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-returned")));

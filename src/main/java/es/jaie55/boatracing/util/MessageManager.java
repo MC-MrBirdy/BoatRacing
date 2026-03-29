@@ -14,8 +14,6 @@ import java.nio.charset.StandardCharsets;
  * Language is configured in config.yml via the 'language' setting (default: "en").
  */
 public final class MessageManager {
-    private static final java.util.Set<String> BUNDLED = java.util.Set.of("en", "es", "zh_TW", "ru");
-
     private final JavaPlugin plugin;
     private YamlConfiguration messages;
 
@@ -25,23 +23,60 @@ public final class MessageManager {
     }
 
     public void reload() {
-        // Determine language from config; default to "en"
-        String lang = plugin.getConfig().getString("language", "en");
-        if (!BUNDLED.contains(lang)) lang = "en";
-        
+        String lang = sanitizeLanguage(plugin.getConfig().getString("language", "en"));
+
+        File file = resolveLanguageFile(lang);
+        if (file == null && !"en".equalsIgnoreCase(lang)) {
+            plugin.getLogger().warning("Language '" + lang + "' was not found. Falling back to 'en'.");
+            lang = "en";
+            file = resolveLanguageFile(lang);
+        }
+        if (file == null) {
+            plugin.getLogger().severe("Could not load message bundle 'messages_en.yml'. Message keys will be shown as fallback.");
+            messages = new YamlConfiguration();
+            return;
+        }
+
+        String filename = file.getName();
+        messages = YamlConfiguration.loadConfiguration(file);
+
+        // Merge any new keys added in future updates
+        try (InputStream defaults = plugin.getResource(filename)) {
+            if (defaults != null) {
+                YamlConfiguration def = YamlConfiguration.loadConfiguration(
+                        new InputStreamReader(defaults, StandardCharsets.UTF_8));
+                messages.addDefaults(def);
+                messages.options().copyDefaults(true);
+            }
+        } catch (Exception ex) {
+            plugin.getLogger().warning("Failed to merge default messages for '" + filename + "': " + ex.getMessage());
+        }
+    }
+
+    private String sanitizeLanguage(String lang) {
+        if (lang == null) return "en";
+        String normalized = lang.trim();
+        if (normalized.isEmpty()) return "en";
+        if (!normalized.matches("[A-Za-z0-9_-]+")) {
+            plugin.getLogger().warning("Invalid language code '" + normalized + "'. Falling back to 'en'.");
+            return "en";
+        }
+        return normalized;
+    }
+
+    private File resolveLanguageFile(String lang) {
         String filename = "messages_" + lang + ".yml";
         File file = new File(plugin.getDataFolder(), filename);
-        if (!file.exists()) {
-            plugin.saveResource(filename, false);
+        if (file.exists()) return file;
+
+        try (InputStream bundled = plugin.getResource(filename)) {
+            if (bundled == null) return null;
+        } catch (Exception ignored) {
+            return null;
         }
-        messages = YamlConfiguration.loadConfiguration(file);
-        // Merge any new keys added in future updates
-        InputStream defaults = plugin.getResource(filename);
-        if (defaults != null) {
-            YamlConfiguration def = YamlConfiguration.loadConfiguration(
-                    new InputStreamReader(defaults, StandardCharsets.UTF_8));
-            messages.addDefaults(def);
-        }
+
+        plugin.saveResource(filename, false);
+        return file.exists() ? file : null;
     }
 
     /**

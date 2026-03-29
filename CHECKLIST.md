@@ -3,7 +3,7 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 ## What to verify for 1.1.2
 - Versioning and docs:
 	- Project version is 1.1.2 in `pom.xml`.
-	- `CHANGELOG.md` contains a 1.1.2 section with placeholders, wizard compact text, and registration announce i18n-source changes.
+	- `CHANGELOG.md` contains a 1.1.2 section with placeholders, wizard compact text, registration announce i18n-source changes, and lobby-back updates.
 	- `CHECKLIST.md` includes this 1.1.2 validation block.
 	- `README.md` status shows 1.1.2.
 - PlaceholderAPI integration:
@@ -33,6 +33,14 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 	- With `racing.lobby.return-on-leave: true`, leaving registration teleports players back to their pre-lobby location.
 	- Cancelling registration (`race stop` or cancellation flow) returns registered players to their pre-lobby location.
 	- Starting a race does not return players to pre-lobby; players are placed on start slots as usual.
+	- Finishing or cancelling an active race sends participants to the configured lobby location.
+	- After race finish/cancel from lobby, players receive a clickable chat hint for `/boatracing race back`.
+	- Running or clicking `/boatracing race back` within 3 minutes returns players to their saved pre-lobby location.
+	- After the 3-minute window expires, `/boatracing race back` reports expiration and does not teleport.
+	- While a player is still registered, `/boatracing race back` is denied and instructs the player to leave registration first.
+	- If no saved location exists, `/boatracing race back` reports that state cleanly.
+	- Back-return locations are in-memory only (not persisted), so after restart/reload there is no old race-back location to restore.
+	- `boatracing.race.back` permission exists and defaults to true.
 - Scoreboard interoperability with SimpleScore:
 	- Documentation explicitly references SimpleScore compatibility and links to:
 		- https://github.com/RuiPereiraDev/SimpleScore
@@ -55,11 +63,22 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 - Multi-language support:
 	- With `language: "en"` (default), all messages appear in English; plugin loads messages_en.yml.
 	- With `language: "es"`, all messages appear in Español (España); plugin loads messages_es.yml.
+	- With `language: "fr"`, all messages appear in French; plugin loads messages_fr.yml.
+	- With `language: "pt_BR"`, plugin loads messages_pt_BR.yml.
+	- With `language: "de"`, plugin loads messages_de.yml.
+	- With `language: "it"`, plugin loads messages_it.yml.
+	- With `language: "pl"`, plugin loads messages_pl.yml.
+	- With `language: "tr"`, plugin loads messages_tr.yml.
+	- With `language: "ja"`, plugin loads messages_ja.yml.
+	- With `language: "ko"`, plugin loads messages_ko.yml.
 	- With `language: "zh_TW"`, all messages appear in Traditional Chinese; plugin loads messages_zh_TW.yml.
 	- With `language: "ru"`, all messages appear in Russian; plugin loads messages_ru.yml.
 	- In `messages_zh_TW.yml` and `messages_ru.yml`, an explicit warning indicates translations are unofficial and should be reviewed.
+	- In `messages_pt_BR.yml`, `messages_de.yml`, `messages_it.yml`, `messages_pl.yml`, `messages_tr.yml`, `messages_ja.yml`, and `messages_ko.yml`, an explicit warning indicates they are starter bundles and should be reviewed/translated before production use.
 	- Both files exist in the data folder after first run. `/boatracing reload` switches language without restart.
+	- Custom language bundles work: set `language: "eo"` (or another code), create `messages_eo.yml` in the plugin folder, reload, and messages are read from that file.
 	- Invalid language values fall back to English.
+	- If the configured language file does not exist in plugin folder and is not bundled, the plugin falls back to English cleanly.
 	- Setup Wizard navigation/help lines must never show raw keys (e.g. `setup.wizard.nav-label`); labels render localized text correctly.
 - Player-controlled race management:
 	- With `player-actions.allow-player-race-start: false` (default), only admins can open/start/force/stop races; non-admins get permission denied.

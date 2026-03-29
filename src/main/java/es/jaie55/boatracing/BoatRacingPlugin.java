@@ -360,6 +360,9 @@ public class BoatRacingPlugin extends JavaPlugin {
                     p.sendMessage(Text.colorize(msg().get("race.help.join", "label", label)));
                     p.sendMessage(Text.colorize(msg().get("race.help.leave", "label", label)));
                     p.sendMessage(Text.colorize(msg().get("race.help.status", "label", label)));
+                    if (p.hasPermission("boatracing.race.back")) {
+                        p.sendMessage(Text.colorize(msg().get("race.help.back", "label", label)));
+                    }
                     if (p.hasPermission("boatracing.race.admin") || p.hasPermission("boatracing.setup")
                             || getConfig().getBoolean("player-actions.allow-player-race-start", false)) {
                         p.sendMessage(Text.colorize(msg().get("race.help.admin", "label", label)));
@@ -421,6 +424,34 @@ public class BoatRacingPlugin extends JavaPlugin {
                                 p.sendMessage(Text.colorize(prefix + msg().get("race.registration.not-registered")));
                             }
                         }
+                        return true;
+                    }
+                    case "back" -> {
+                        if (!p.hasPermission("boatracing.race.back")) {
+                            p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
+                            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+                            return true;
+                        }
+                        if (raceManager.isRegistering() && raceManager.getRegistered().contains(p.getUniqueId())) {
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.registration.back-while-registered", "label", label)));
+                            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+                            return true;
+                        }
+                        if (raceManager.isRunning() && raceManager.getParticipants().contains(p.getUniqueId())) {
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.registration.back-while-racing")));
+                            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+                            return true;
+                        }
+                        RaceManager.BackResult backResult = raceManager.returnToSavedLocation(p);
+                        if (backResult != RaceManager.BackResult.SUCCESS) {
+                            String key = backResult == RaceManager.BackResult.EXPIRED
+                                    ? "race.registration.lobby-back-expired"
+                                    : "race.registration.lobby-no-previous";
+                            p.sendMessage(Text.colorize(prefix + msg().get(key)));
+                            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+                            return true;
+                        }
+                        p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 1.1f);
                         return true;
                     }
                     case "force" -> {
@@ -1310,6 +1341,7 @@ public class BoatRacingPlugin extends JavaPlugin {
                     java.util.List<String> subs = new java.util.ArrayList<>();
                     subs.add("help");
                     subs.add("join"); subs.add("leave"); subs.add("status");
+                    if (sender.hasPermission("boatracing.race.back")) subs.add("back");
                     if (sender.hasPermission("boatracing.race.admin") || sender.hasPermission("boatracing.setup")) {
                         subs.add("open"); subs.add("start"); subs.add("force"); subs.add("stop");
                     }
