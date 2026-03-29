@@ -1,9 +1,9 @@
 # BoatRacing – Messages / i18n (Français)
 #
-# ⚠  Attention : ceci est une traduction communautaire NON OFFICIELLE,
-#    non revue par l'auteur du plugin.
-# ⚠  Des erreurs peuvent exister. Les corrections et contributions sont les bienvenues.
+# ⚠  Traduction communautaire non officielle, non relue par l'auteur du plugin.
+# ⚠  Elle peut contenir des erreurs. Corrections et contributions bienvenues.
 #
+# Vous pouvez personnaliser ici tous les messages visibles par les joueurs.
 # Utilisez & pour les codes couleur. Les placeholders s'écrivent {name}.
 # Après modification, exécutez /boatracing reload pour appliquer les changements.
 

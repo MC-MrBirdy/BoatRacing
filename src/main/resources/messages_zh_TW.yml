@@ -1,12 +1,11 @@
 # BoatRacing – 訊息 / 國際化（繁體中文）
 #
-# ⚠  警告：此為非官方社群翻譯，尚未經過外掛作者審核。
-# ⚠  內容可能含有錯誤或不自然的用詞。歡迎提交修正！
-# ⚠  WARNING: This is an UNOFFICIAL community translation, not reviewed by the plugin author.
-#    Errors may exist. Contributions and corrections are welcome.
+# ⚠  這是非官方社群翻譯，尚未經外掛作者審核。
+# ⚠  可能包含錯誤。歡迎提供修正與貢獻。
 #
-# 使用 & 代碼上色。佔位符格式為 {名稱}。
-# 修改後執行 /boatracing reload 以套用變更。
+# 你可以在這裡自訂所有顯示給玩家的訊息。
+# 使用 & 作為顏色代碼，佔位符寫作 {name}。
+# 編輯後執行 /boatracing reload 以套用變更。
 
 general:
   players-only: "&c僅限玩家使用。"
