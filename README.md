@@ -210,8 +210,8 @@ Community translations: <img src="https://hatscripts.github.io/circle-flags/flag
 
 Available codes and names:
 - `en` English (official)
-- `es` Espanol (Espana) (official)
-- `es_419` Espanol (Latinoamerica)
+- `es` Español (España) (official)
+- `es_419` Español (Latinoamerica)
 - `fr` Francais
 - `pt_BR` Portugues (Brasil)
 - `pt_PT` Portugues (Portugal)
