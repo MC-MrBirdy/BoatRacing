@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.2 — 2026-03-15
+## 1.1.2 — 2026-03-29
 ### Added
 - **PlaceholderAPI integration**: BoatRacing now registers `%boatracing_*%` placeholders for holograms/scoreboards.
 - **Persistent aggregate stats**: new `stats.yml` storage for player wins, team wins, best race, and best lap values used by placeholders.
@@ -17,6 +17,7 @@
 - **Race help and tab-complete**: `race back` is now included in help output and tab suggestions for players with `boatracing.race.back`.
 - **Language bundle loading**: language selection now supports bundled and custom `messages_<lang>.yml` files from the plugin folder, with safe fallback to English.
 - **Translation status headers**: bundled language headers now consistently mark `messages_en.yml` and `messages_es.yml` as official translations, and all other bundled languages as unofficial community translations.
+- **Chinese locale split**: kept `messages_zh_TW.yml` for Taiwan Traditional Chinese and added `messages_zh_CN.yml` for Mainland Simplified Chinese.
 
 ### Fixed
 - **Build break in TeamManager**: fixed malformed package declaration in `TeamManager.java` that caused compilation failure.

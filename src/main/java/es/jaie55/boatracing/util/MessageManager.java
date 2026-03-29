@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Loads and serves user-facing messages from messages_en.yml, messages_es.yml,
- * messages_zh_TW.yml, messages_ru.yml – or any custom file placed in the plugin folder.
+ * messages_zh_TW.yml, messages_zh_CN.yml, messages_ru.yml – or any custom file placed in the plugin folder.
  * Language is configured in config.yml via the 'language' setting (default: "en").
  */
 public final class MessageManager {

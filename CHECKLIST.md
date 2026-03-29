@@ -14,10 +14,10 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 - Registration announce i18n source:
 	- `config.yml` no longer contains `racing.registration-announce`.
 	- Registration announce text comes from `messages_<lang>.yml` key `race.registration.announce`.
-	- EN/ES/es_419/fr/pt_BR/pt_PT/de/it/pl/tr/ja/ko/zh_TW/ru announce lines include `{cmd}` and render correctly in chat.
+	- EN/ES/es_419/fr/pt_BR/pt_PT/de/it/pl/tr/ja/ko/zh_TW/zh_CN/ru announce lines include `{cmd}` and render correctly in chat.
 - Wizard compact text:
 	- Wizard step prompts are concise (no long paragraphs) while keeping key action buttons.
-	- Navigation row and step status remain clear across EN/ES/es_419/fr/pt_BR/pt_PT/de/it/pl/tr/ja/ko/zh_TW/ru message sets.
+	- Navigation row and step status remain clear across EN/ES/es_419/fr/pt_BR/pt_PT/de/it/pl/tr/ja/ko/zh_TW/zh_CN/ru message sets.
 	- `README.md` server matrix lists Folia as supported for this jar and clarifies Sponge/Velocity/BungeeCord scope.
 - Folia compatibility smoke checks:
 	- Open/join/start/force/stop/status race flows run without scheduler/threading errors on Folia.
@@ -73,10 +73,11 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 	- With `language: "tr"`, plugin loads messages_tr.yml.
 	- With `language: "ja"`, plugin loads messages_ja.yml.
 	- With `language: "ko"`, plugin loads messages_ko.yml.
-	- With `language: "zh_TW"`, all messages appear in Traditional Chinese; plugin loads messages_zh_TW.yml.
+	- With `language: "zh_TW"`, all messages appear in Traditional Chinese (Taiwan); plugin loads messages_zh_TW.yml.
+	- With `language: "zh_CN"`, all messages appear in Simplified Chinese (Mainland); plugin loads messages_zh_CN.yml.
 	- With `language: "ru"`, all messages appear in Russian; plugin loads messages_ru.yml.
 	- In `messages_en.yml` and `messages_es.yml`, header comments indicate official translations.
-	- In `messages_es_419.yml`, `messages_fr.yml`, `messages_pt_BR.yml`, `messages_pt_PT.yml`, `messages_de.yml`, `messages_it.yml`, `messages_pl.yml`, `messages_tr.yml`, `messages_ja.yml`, `messages_ko.yml`, `messages_zh_TW.yml`, and `messages_ru.yml`, header comments indicate unofficial community translations and recommend review.
+	- In `messages_es_419.yml`, `messages_fr.yml`, `messages_pt_BR.yml`, `messages_pt_PT.yml`, `messages_de.yml`, `messages_it.yml`, `messages_pl.yml`, `messages_tr.yml`, `messages_ja.yml`, `messages_ko.yml`, `messages_zh_TW.yml`, `messages_zh_CN.yml`, and `messages_ru.yml`, header comments indicate unofficial community translations and recommend review.
 	- Bundled language files exist in the data folder after first run. `/boatracing reload` switches language without restart.
 	- Custom language bundles work: set `language: "eo"` (or another code), create `messages_eo.yml` in the plugin folder, reload, and messages are read from that file.
 	- Invalid language values fall back to English.

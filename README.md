@@ -49,7 +49,7 @@ Lobby and stability updates:
 - **SimpleScore compatibility hook**: when SimpleScore is installed, BoatRacing now integrates with its hide/show viewer flow during races to prevent sidebar ownership conflicts and restore the external scoreboard after stop/cancel.
 - **Registration restart-loop fix**: fixed a state/timer issue where an old `race open` countdown could survive `start/force/stop` paths and re-trigger race starts unexpectedly.
 - **Setup clickable UX**: setup wizard/admin tips now suggest commands in chat when arguments are needed, so players can tab-complete before execution.
-- **Lobby messages translated**: lobby teleport/return feedback added to EN/ES/zh_TW/ru message files.
+- **Lobby messages translated**: lobby teleport/return feedback added to EN/ES/zh_TW/zh_CN/ru message files.
 
 Explicit compatibility:
 - **SimpleScore**: BoatRacing includes explicit compatibility with SimpleScore.
@@ -65,7 +65,7 @@ Explicit compatibility:
 <summary><strong>What's New (1.1.0)</strong></summary>
 
 Languages and player controls:
-- **Multi-language support**: messages are now fully translatable. Configure language in config.yml (`language`). Bundled options are `en`, `es`, `es_419`, `fr`, `pt_BR`, `pt_PT`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, `zh_TW`, and `ru`, and custom bundles are also supported by adding `messages_<lang>.yml` to the plugin folder. Reload with `/boatracing reload` to switch languages without restart.
+- **Multi-language support**: messages are now fully translatable. Configure language in config.yml (`language`). Bundled options are `en`, `es`, `es_419`, `fr`, `pt_BR`, `pt_PT`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, `zh_TW`, `zh_CN`, and `ru`, and custom bundles are also supported by adding `messages_<lang>.yml` to the plugin folder. Reload with `/boatracing reload` to switch languages without restart.
 - **Player-controlled race management**: new config option `player-actions.allow-player-race-start` (default: false) lets non-admin players open, start, force-start and stop races. Can be overridden per-track via `racing.allow-player-start: true` in individual track configs.
 - **Reward system**: full customizable race-end rewards. Configure under `racing.rewards` with position-specific commands, messages and broadcasts. Supports placeholders: {player}, {position}, {time}, {track}, {laps}. Per-track rewards override the global config.
 - **Performance**: PlayerMoveEvent throttle — checkpoint detection now only triggers when entering a new block, not every sub-meter movement.
@@ -205,8 +205,8 @@ Fixes and polish:
 Official translations: <img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" width="16" height="16" alt="English" /> <img src="https://hatscripts.github.io/circle-flags/flags/es.svg" width="16" height="16" alt="Espanol" />
 [![en official](https://img.shields.io/badge/en-official-22c55e)](#available-languages) [![es official](https://img.shields.io/badge/es-official-22c55e)](#available-languages)
 
-Community translations: <img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" width="16" height="16" alt="French" /> <img src="https://hatscripts.github.io/circle-flags/flags/br.svg" width="16" height="16" alt="Portuguese Brazil" /> <img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" width="16" height="16" alt="Portuguese Portugal" /> <img src="https://hatscripts.github.io/circle-flags/flags/mx.svg" width="16" height="16" alt="Spanish Latin America" /> <img src="https://hatscripts.github.io/circle-flags/flags/de.svg" width="16" height="16" alt="German" /> <img src="https://hatscripts.github.io/circle-flags/flags/it.svg" width="16" height="16" alt="Italian" /> <img src="https://hatscripts.github.io/circle-flags/flags/pl.svg" width="16" height="16" alt="Polish" /> <img src="https://hatscripts.github.io/circle-flags/flags/tr.svg" width="16" height="16" alt="Turkish" /> <img src="https://hatscripts.github.io/circle-flags/flags/jp.svg" width="16" height="16" alt="Japanese" /> <img src="https://hatscripts.github.io/circle-flags/flags/kr.svg" width="16" height="16" alt="Korean" /> <img src="https://hatscripts.github.io/circle-flags/flags/tw.svg" width="16" height="16" alt="Traditional Chinese" /> <img src="https://hatscripts.github.io/circle-flags/flags/ru.svg" width="16" height="16" alt="Russian" />
-[![fr community](https://img.shields.io/badge/fr-community-f59e0b)](#available-languages) [![pt_BR community](https://img.shields.io/badge/pt_BR-community-f59e0b)](#available-languages) [![pt_PT community](https://img.shields.io/badge/pt_PT-community-f59e0b)](#available-languages) [![es_419 community](https://img.shields.io/badge/es_419-community-f59e0b)](#available-languages) [![de community](https://img.shields.io/badge/de-community-f59e0b)](#available-languages) [![it community](https://img.shields.io/badge/it-community-f59e0b)](#available-languages) [![pl community](https://img.shields.io/badge/pl-community-f59e0b)](#available-languages) [![tr community](https://img.shields.io/badge/tr-community-f59e0b)](#available-languages) [![ja community](https://img.shields.io/badge/ja-community-f59e0b)](#available-languages) [![ko community](https://img.shields.io/badge/ko-community-f59e0b)](#available-languages) [![zh_TW community](https://img.shields.io/badge/zh_TW-community-f59e0b)](#available-languages) [![ru community](https://img.shields.io/badge/ru-community-f59e0b)](#available-languages)
+Community translations: <img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" width="16" height="16" alt="French" /> <img src="https://hatscripts.github.io/circle-flags/flags/br.svg" width="16" height="16" alt="Portuguese Brazil" /> <img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" width="16" height="16" alt="Portuguese Portugal" /> <img src="https://hatscripts.github.io/circle-flags/flags/mx.svg" width="16" height="16" alt="Spanish Latin America" /> <img src="https://hatscripts.github.io/circle-flags/flags/de.svg" width="16" height="16" alt="German" /> <img src="https://hatscripts.github.io/circle-flags/flags/it.svg" width="16" height="16" alt="Italian" /> <img src="https://hatscripts.github.io/circle-flags/flags/pl.svg" width="16" height="16" alt="Polish" /> <img src="https://hatscripts.github.io/circle-flags/flags/tr.svg" width="16" height="16" alt="Turkish" /> <img src="https://hatscripts.github.io/circle-flags/flags/jp.svg" width="16" height="16" alt="Japanese" /> <img src="https://hatscripts.github.io/circle-flags/flags/kr.svg" width="16" height="16" alt="Korean" /> <img src="https://hatscripts.github.io/circle-flags/flags/tw.svg" width="16" height="16" alt="Chinese (Taiwan, Traditional)" /> <img src="https://hatscripts.github.io/circle-flags/flags/cn.svg" width="16" height="16" alt="Chinese (Mainland, Simplified)" /> <img src="https://hatscripts.github.io/circle-flags/flags/ru.svg" width="16" height="16" alt="Russian" />
+[![fr community](https://img.shields.io/badge/fr-community-f59e0b)](#available-languages) [![pt_BR community](https://img.shields.io/badge/pt_BR-community-f59e0b)](#available-languages) [![pt_PT community](https://img.shields.io/badge/pt_PT-community-f59e0b)](#available-languages) [![es_419 community](https://img.shields.io/badge/es_419-community-f59e0b)](#available-languages) [![de community](https://img.shields.io/badge/de-community-f59e0b)](#available-languages) [![it community](https://img.shields.io/badge/it-community-f59e0b)](#available-languages) [![pl community](https://img.shields.io/badge/pl-community-f59e0b)](#available-languages) [![tr community](https://img.shields.io/badge/tr-community-f59e0b)](#available-languages) [![ja community](https://img.shields.io/badge/ja-community-f59e0b)](#available-languages) [![ko community](https://img.shields.io/badge/ko-community-f59e0b)](#available-languages) [![zh_TW community](https://img.shields.io/badge/zh_TW-community-f59e0b)](#available-languages) [![zh_CN community](https://img.shields.io/badge/zh_CN-community-f59e0b)](#available-languages) [![ru community](https://img.shields.io/badge/ru-community-f59e0b)](#available-languages)
 
 Available codes and names:
 - `en` English (official)
@@ -221,7 +221,8 @@ Available codes and names:
 - `tr` Turkce
 - `ja` Japanese
 - `ko` Korean
-- `zh_TW` Traditional Chinese
+- `zh_TW` Chinese (Taiwan, Traditional)
+- `zh_CN` Chinese (Mainland, Simplified)
 - `ru` Russian
 
 ## Features
@@ -233,7 +234,7 @@ Available codes and names:
 - Race systems: ordered checkpoints, optional pit area, optional mandatory pit stops, false-start penalties, registration lobby teleport/return, 5-light countdown, and live results broadcasting.
 - HUD and scoreboard: in-race sidebar plus ActionBar with per-section config toggles, safe scoreboard restoration after races, and compatibility flow for external scoreboards.
 - Persistent stats: `stats.yml` stores wins, best race and best lap so PlaceholderAPI, holograms, scoreboards, and NPCs can show live and historical data.
-- i18n: bundled message packs for `en`, `es`, `es_419`, `fr`, `pt_BR`, `pt_PT`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, `zh_TW`, and `ru`; `en`/`es` are official and the rest are community translations. All are hot-reloadable with `/boatracing reload`.
+- i18n: bundled message packs for `en`, `es`, `es_419`, `fr`, `pt_BR`, `pt_PT`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, `zh_TW`, `zh_CN`, and `ru`; `en`/`es` are official and the rest are community translations. All are hot-reloadable with `/boatracing reload`.
 - Rewards, updates, and metrics: per-position race rewards, Modrinth update checks, and optional bStats metrics.
 
 ## Requirements
@@ -433,7 +434,7 @@ Permission notes:
 ## Configuration
 Core:
 - `prefix`: chat prefix.
-- `language`: bundled values are `en`, `es`, `zh_TW`, and `ru`.
+- `language`: bundled values are `en`, `es`, `zh_TW`, `zh_CN`, and `ru`.
 - `max-members-per-team`: team size limit.
 
 Player actions:
@@ -523,7 +524,7 @@ Legacy migration:
 - Optional PlaceholderAPI support through a soft dependency
 - SimpleScore compatibility hook for hiding/restoring external sidebars during races
 - Compatible with TAB environments for scoreboard usage, without requiring a TAB-specific dependency
-- Bundled languages: English, Spanish, French, Portuguese (Brazil), German, Italian, Polish, Turkish, Japanese, Korean, Traditional Chinese, Russian
+- Bundled languages: English, Spanish, French, Portuguese (Brazil), German, Italian, Polish, Turkish, Japanese, Korean, Chinese (Taiwan, Traditional), Chinese (Mainland, Simplified), Russian
 - Note: `pt_BR`, `de`, `it`, `pl`, `tr`, `ja`, and `ko` are bundled starter files and may still require translation review.
 - Custom languages are supported via `messages_<lang>.yml` in the plugin data folder and can be selected with `language: "<lang>"`.
 
