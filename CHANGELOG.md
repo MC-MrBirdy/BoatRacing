@@ -1,16 +1,22 @@
 # Changelog
 
-## 1.1.3 — 2026-03-29
+## 1.1.3 — 2026-03-30
 ### Added
-- **Track-scoped race placeholders**: added `%boatracing_track_race_running_<track>%`, `%boatracing_track_race_registering_<track>%`, and `%boatracing_track_race_status_<track>%` to support per-track displays with the current active-track race state.
+- **Parallel race sessions by track**: race lifecycle commands now operate per track session, allowing multiple tracks to run registration/races at the same time.
+- **Map vote commands**: added `/boatracing race voteopen <track1> <track2> [seconds]`, `/boatracing race vote <track>`, `/boatracing race voteui`, `/boatracing race votestatus`, and `/boatracing race voteclose`.
+- **Track-scoped race placeholders**: `%boatracing_track_race_running_<track>%`, `%boatracing_track_race_registering_<track>%`, and `%boatracing_track_race_status_<track>%` now resolve against the requested track session.
 
 ### Fixed
 - **Selected boat variant persistence on spawn**: race boats now re-apply the selected boat/raft variant right after spawn and on delayed retries, fixing cases where a chosen variant (for example `DARK_OAK`) appeared as default `OAK`.
 - **No dismount during countdown/race**: racers can no longer manually exit boats/rafts during the 5-light countdown or while the race is running.
+- **Vote-open UX prompt**: map-vote start now includes a clickable chat action to open vote UI (`/boatracing race voteui`) instead of only a typed command hint.
+- **Reward command parsing compatibility**: reward distribution now supports both `commands` (list) and legacy `command` (single string), with safer fallback behavior for missing per-position keys (including position `1`).
 
 ### Docs
-- **Track placeholder docs**: README now documents track-scoped placeholders, compatibility aliases, and the current 1.x active-track evaluation behavior.
+- **Track placeholder docs**: README now documents track-scoped placeholders, compatibility aliases, and per-track session evaluation behavior.
+- **Race/map-vote docs**: README now includes the new map vote commands (including `voteui`) and multi-track race behavior notes.
 - **QA additions for 1.1.3**: CHECKLIST now includes explicit validation steps for track-scoped placeholders and selected boat variant spawn reliability.
+- **Rewards schema guidance**: README/CHECKLIST now document reward command compatibility and recommend explicit `commands: []` in each position block.
 
 ## 1.1.2 — 2026-03-29
 ### Added

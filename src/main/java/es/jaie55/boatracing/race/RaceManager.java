@@ -42,6 +42,7 @@ public class RaceManager {
 
     private final BoatRacingPlugin plugin;
     private final TrackConfig track;
+    private final String trackName;
     private boolean running = false;
     private boolean registering = false;
     private int totalLaps;
@@ -107,9 +108,22 @@ public class RaceManager {
     private final Map<Integer, Long> lapLeaderFinishTimes = new HashMap<>();
 
     public RaceManager(BoatRacingPlugin plugin, TrackConfig track) {
+        this(plugin, track, null);
+    }
+
+    public RaceManager(BoatRacingPlugin plugin, TrackConfig track, String trackName) {
         this.plugin = plugin;
         this.track = track;
+        String normalized = (trackName == null || trackName.isBlank()) ? null : trackName.trim();
+        this.trackName = normalized;
         loadSettings();
+    }
+
+    public String getTrackName() {
+        if (trackName != null && !trackName.isBlank()) return trackName;
+        return Optional.ofNullable(plugin.getTrackLibrary())
+                .map(es.jaie55.boatracing.track.TrackLibrary::getCurrent)
+                .orElse("unsaved");
     }
 
     /**
@@ -162,7 +176,8 @@ public class RaceManager {
     public boolean isParticipant(UUID playerId) { return playerId != null && states.containsKey(playerId); }
     public boolean shouldPreventVehicleExit(UUID playerId) {
         if (playerId == null) return false;
-        if (running && states.containsKey(playerId)) return true;
+        RaceState st = states.get(playerId);
+        if (running && st != null && !st.finished) return true;
         return countdownLockedParticipants.contains(playerId);
     }
     public int getMandatoryPitstops() { return mandatoryPitstops; }
@@ -374,6 +389,10 @@ public class RaceManager {
                     String finMsg = plugin.msg().get("race.player-finished", "player", p.getName(), "time", formatSeconds(st.finishTime), "gap", gapSuffix);
                     for (Player r : participantsAndAdmins(statesToPlayers())) r.sendMessage(color(finMsg));
                     p.playSound(p.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.3f);
+
+                    // Move finished racers to waiting lobby immediately.
+                    sendParticipantToLobbyAfterRace(p.getUniqueId(), p);
+
                     checkAllFinished();
                 } else {
                     // Lap finish broadcast (always). First finisher sets baseline; others show +gap to leader
@@ -458,8 +477,7 @@ public class RaceManager {
         try {
             es.jaie55.boatracing.reward.RewardManager rm = plugin.getRewardManager();
             if (rm != null && rm.isEnabled()) {
-                String trackName = Optional.ofNullable(plugin.getTrackLibrary())
-                        .map(es.jaie55.boatracing.track.TrackLibrary::getCurrent).orElse(plugin.msg().get("general.unsaved"));
+                String trackName = getTrackName();
                 List<Map.Entry<UUID, Long>> results = new ArrayList<>();
                 for (Map.Entry<UUID, RaceState> e : list) {
                     results.add(new AbstractMap.SimpleEntry<>(e.getKey(), timeFor(e.getValue())));
@@ -496,9 +514,7 @@ public class RaceManager {
         long seconds = secondsOverride != null ? secondsOverride : registrationSeconds;
         long endAt = System.currentTimeMillis() + (seconds * 1000L);
 
-        String trackName = Optional.ofNullable(plugin.getTrackLibrary())
-                .map(es.jaie55.boatracing.track.TrackLibrary::getCurrent)
-                .orElse(plugin.msg().get("general.unsaved"));
+        String trackName = getTrackName();
         String cmd = "/boatracing race join " + trackName;
 
         String line = plugin.msg().get("race.registration.announce",
@@ -696,27 +712,43 @@ public class RaceManager {
     }
 
     private void sendParticipantsToLobbyAfterRace() {
-        Location lobby = getLobbyLocation();
-        if (lobby == null) return;
-        final String backCommand = "/boatracing race back";
-        long backWindowSeconds = Math.max(1L, backWindowMillis / 1000L);
-        long backWindowMinutes = Math.max(1L, (backWindowSeconds + 59L) / 60L);
         for (UUID id : new ArrayList<>(states.keySet())) {
             Player p = Bukkit.getPlayer(id);
             if (p == null || !p.isOnline()) continue;
-            teleportToLobbyIfEnabled(p);
-            Location saved = preLobbyLocations.get(id);
-            if (saved == null || saved.getWorld() == null) continue;
-            long expiresAt = System.currentTimeMillis() + backWindowMillis;
-            preLobbyBackExpiresAt.put(id, expiresAt);
-            scheduleBackExpiryNotice(id, expiresAt);
-            p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-waiting-returned")));
-            p.sendMessage(color(plugin.pref() + plugin.msg().get(
-                    "race.registration.lobby-back-window",
-                    "minutes", String.valueOf(backWindowMinutes),
-                    "seconds", String.valueOf(backWindowSeconds))));
-            p.sendMessage(Text.cmd(plugin.msg().get("race.registration.lobby-back-click"), backCommand));
+            sendParticipantToLobbyAfterRace(id, p);
         }
+    }
+
+    private void sendParticipantToLobbyAfterRace(UUID playerId, Player p) {
+        if (playerId == null || p == null || !p.isOnline()) return;
+
+        Location lobby = getLobbyLocation();
+        if (lobby == null) return;
+
+        Long existingExpiresAt = preLobbyBackExpiresAt.get(playerId);
+        if (existingExpiresAt != null && existingExpiresAt > System.currentTimeMillis()) {
+            return;
+        }
+
+        cleanupRaceVehicleForPlayer(playerId);
+        teleportToLobbyIfEnabled(p);
+
+        Location saved = preLobbyLocations.get(playerId);
+        if (saved == null || saved.getWorld() == null) return;
+
+        long expiresAt = System.currentTimeMillis() + backWindowMillis;
+        preLobbyBackExpiresAt.put(playerId, expiresAt);
+        scheduleBackExpiryNotice(playerId, expiresAt);
+
+        final String backCommand = "/boatracing race back";
+        long backWindowSeconds = Math.max(1L, backWindowMillis / 1000L);
+        long backWindowMinutes = Math.max(1L, (backWindowSeconds + 59L) / 60L);
+        p.sendMessage(color(plugin.pref() + plugin.msg().get("race.registration.lobby-waiting-returned")));
+        p.sendMessage(color(plugin.pref() + plugin.msg().get(
+                "race.registration.lobby-back-window",
+                "minutes", String.valueOf(backWindowMinutes),
+                "seconds", String.valueOf(backWindowSeconds))));
+        p.sendMessage(Text.cmd(plugin.msg().get("race.registration.lobby-back-click"), backCommand));
     }
 
     private void scheduleBackExpiryNotice(UUID playerId, long expiresAt) {
@@ -928,6 +960,34 @@ public class RaceManager {
         UUID vehicleId = vehicle.getUniqueId();
         raceVehicleIds.add(vehicleId);
         if (playerId != null) raceVehicleByPlayer.put(playerId, vehicleId);
+    }
+
+    private void cleanupRaceVehicleForPlayer(UUID playerId) {
+        if (playerId == null) return;
+
+        Player p = Bukkit.getPlayer(playerId);
+        if (p != null && p.isOnline() && p.isInsideVehicle()) {
+            org.bukkit.entity.Entity currentVehicle = p.getVehicle();
+            p.leaveVehicle();
+            if (currentVehicle != null) {
+                String type = currentVehicle.getType().name();
+                if (type.endsWith("BOAT") || type.endsWith("RAFT")) {
+                    currentVehicle.remove();
+                }
+            }
+        }
+
+        UUID vehicleId = raceVehicleByPlayer.remove(playerId);
+        if (vehicleId == null) return;
+
+        raceVehicleIds.remove(vehicleId);
+        org.bukkit.entity.Entity trackedVehicle = Bukkit.getEntity(vehicleId);
+        if (trackedVehicle != null && trackedVehicle.isValid()) {
+            String type = trackedVehicle.getType().name();
+            if (type.endsWith("BOAT") || type.endsWith("RAFT")) {
+                trackedVehicle.remove();
+            }
+        }
     }
 
     private void cleanupRaceVehicles() {

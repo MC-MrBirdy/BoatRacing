@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 public final class MessageManager {
     private final JavaPlugin plugin;
     private YamlConfiguration messages;
+    private YamlConfiguration englishDefaults;
 
     public MessageManager(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -24,6 +25,8 @@ public final class MessageManager {
 
     public void reload() {
         String lang = sanitizeLanguage(plugin.getConfig().getString("language", "en"));
+
+        englishDefaults = loadBundledYaml("messages_en.yml");
 
         File file = resolveLanguageFile(lang);
         if (file == null && !"en".equalsIgnoreCase(lang)) {
@@ -40,16 +43,32 @@ public final class MessageManager {
         String filename = file.getName();
         messages = YamlConfiguration.loadConfiguration(file);
 
+        // Always fallback to English for any missing key in community bundles.
+        if (englishDefaults != null) {
+            messages.addDefaults(englishDefaults);
+        }
+
         // Merge any new keys added in future updates
         try (InputStream defaults = plugin.getResource(filename)) {
             if (defaults != null) {
                 YamlConfiguration def = YamlConfiguration.loadConfiguration(
                         new InputStreamReader(defaults, StandardCharsets.UTF_8));
                 messages.addDefaults(def);
-                messages.options().copyDefaults(true);
             }
         } catch (Exception ex) {
             plugin.getLogger().warning("Failed to merge default messages for '" + filename + "': " + ex.getMessage());
+        }
+
+        messages.options().copyDefaults(true);
+    }
+
+    private YamlConfiguration loadBundledYaml(String filename) {
+        try (InputStream defaults = plugin.getResource(filename)) {
+            if (defaults == null) return null;
+            return YamlConfiguration.loadConfiguration(new InputStreamReader(defaults, StandardCharsets.UTF_8));
+        } catch (Exception ex) {
+            plugin.getLogger().warning("Failed to load bundled messages from '" + filename + "': " + ex.getMessage());
+            return null;
         }
     }
 
@@ -90,6 +109,9 @@ public final class MessageManager {
      */
     public String get(String key, Object... pairs) {
         String msg = messages.getString(key);
+        if (msg == null && englishDefaults != null) {
+            msg = englishDefaults.getString(key);
+        }
         if (msg == null) return key; // fallback: show the key itself
         for (int i = 0; i + 1 < pairs.length; i += 2) {
             msg = msg.replace("{" + pairs[i] + "}", String.valueOf(pairs[i + 1]));

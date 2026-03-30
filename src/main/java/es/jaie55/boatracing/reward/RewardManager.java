@@ -34,6 +34,7 @@ public class RewardManager {
         if (!isEnabled()) return;
         ConfigurationSection posSection = plugin.getConfig().getConfigurationSection("racing.rewards.positions");
         if (posSection == null) return;
+        ConfigurationSection defaultReward = posSection.getConfigurationSection("default");
 
         int position = 1;
         for (Map.Entry<UUID, Long> entry : results) {
@@ -45,7 +46,7 @@ public class RewardManager {
             // Find the config section for this position, fall back to "default"
             ConfigurationSection reward = posSection.getConfigurationSection(String.valueOf(position));
             if (reward == null) {
-                reward = posSection.getConfigurationSection("default");
+                reward = defaultReward;
             }
             if (reward == null) { position++; continue; }
 
@@ -53,21 +54,25 @@ public class RewardManager {
             String timeFormatted = formatTime(finishTimeMs);
 
             // Execute console commands
-            List<String> commands = reward.getStringList("commands");
+            List<String> commands = resolveRewardList(reward, defaultReward, "commands");
+            if (commands.isEmpty()) {
+                // Compatibility with older/simplified configs that use singular key.
+                commands = resolveRewardList(reward, defaultReward, "command");
+            }
             for (String cmd : commands) {
                 String resolved = applyPlaceholders(cmd, playerName, position, timeFormatted, trackName, totalLaps);
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), resolved);
             }
 
             // Send personal messages
-            List<String> messages = reward.getStringList("messages");
+            List<String> messages = resolveRewardList(reward, defaultReward, "messages");
             for (String msg : messages) {
                 String resolved = applyPlaceholders(msg, playerName, position, timeFormatted, trackName, totalLaps);
                 player.sendMessage(Text.colorize(resolved));
             }
 
             // Broadcast messages to all online players
-            List<String> broadcasts = reward.getStringList("broadcast");
+            List<String> broadcasts = resolveRewardList(reward, defaultReward, "broadcast");
             for (String bc : broadcasts) {
                 String resolved = applyPlaceholders(bc, playerName, position, timeFormatted, trackName, totalLaps);
                 String colorized = Text.colorize(resolved);
@@ -87,6 +92,36 @@ public class RewardManager {
                 .replace("{time}", time)
                 .replace("{track}", track)
                 .replace("{laps}", String.valueOf(laps));
+    }
+
+    private List<String> resolveRewardList(ConfigurationSection reward, ConfigurationSection fallback, String key) {
+        List<String> direct = readListOrSingle(reward, key);
+        if (!direct.isEmpty()) return direct;
+        if (reward != null && reward.contains(key, false)) return direct;
+        if (fallback == null || fallback == reward) return direct;
+        return readListOrSingle(fallback, key);
+    }
+
+    private List<String> readListOrSingle(ConfigurationSection section, String key) {
+        if (section == null || key == null || key.isEmpty()) return java.util.Collections.emptyList();
+        Object raw = section.get(key);
+        if (raw == null) return java.util.Collections.emptyList();
+
+        List<String> out = new ArrayList<>();
+        if (raw instanceof List<?> list) {
+            for (Object entry : list) {
+                if (entry == null) continue;
+                String value = String.valueOf(entry).trim();
+                if (!value.isEmpty()) out.add(value);
+            }
+            return out;
+        }
+
+        if (raw instanceof String str) {
+            String value = str.trim();
+            if (!value.isEmpty()) out.add(value);
+        }
+        return out;
     }
 
     private static String formatTime(long millis) {

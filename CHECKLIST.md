@@ -3,14 +3,30 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 ## What to verify for 1.1.3
 - Versioning and docs:
 	- Project version is 1.1.3 in `pom.xml`.
-	- `CHANGELOG.md` contains a 1.1.3 section with track-scoped placeholders and boat variant spawn reliability.
+	- `CHANGELOG.md` contains a 1.1.3 section with multi-track race sessions, map-vote commands (`voteopen|vote|voteui|votestatus|voteclose`), clickable vote-start UI prompt behavior, reward command compatibility notes, and boat variant spawn reliability.
 	- `CHECKLIST.md` includes this 1.1.3 validation block.
 	- `README.md` status shows 1.1.3.
 - Track-scoped placeholders:
-	- `%boatracing_track_race_running_<track>%`, `%boatracing_track_race_registering_<track>%`, and `%boatracing_track_race_status_<track>%` return expected values for active vs non-active tracks.
+	- `%boatracing_track_race_running_<track>%`, `%boatracing_track_race_registering_<track>%`, and `%boatracing_track_race_status_<track>%` return expected values per requested track session (not only active-track state).
 	- Compatibility aliases `%boatracing_track_racerunning_<track>%` and `%boatracing_track_raceregistering_<track>%` resolve to the same values as canonical placeholders.
 	- `%boatracing_track_race_status_<track>%` returns only `running`, `registering`, or `idle`.
 	- Track tokens with spaces represented as underscores (for example `My_Track`) resolve correctly.
+- Simultaneous races by track:
+	- Open registration on two different tracks and verify both sessions stay independent (join/leave/status/start/stop affect only the targeted track).
+	- Verify a player cannot join/register in track B while already registered or racing in track A.
+	- During parallel races, movement/lap progression and no-dismount lock apply correctly in each player’s own race session.
+- Map vote commands:
+	- `/boatracing race voteopen <track1> <track2> [seconds]` opens a vote with valid options and broadcast instructions.
+	- Vote-open announcement includes a clickable chat action that runs `/boatracing race voteui` for players.
+	- `/boatracing race vote <track>` registers or changes a player vote correctly.
+	- `/boatracing race vote` (without `<track>`) opens the vote UI for the player when a vote is active.
+	- `/boatracing race voteui` opens the vote UI for the player when a vote is active.
+	- `/boatracing race votestatus` shows current counts.
+	- `/boatracing race voteclose` ends vote immediately and announces winner resolution.
+- Rewards command compatibility:
+	- With `racing.rewards.enabled: true`, first place executes configured reward commands under `racing.rewards.positions.1.commands`.
+	- If a position section uses legacy `command: "..."` (single string), it is still executed.
+	- If a position-specific `commands` key is missing, fallback behavior remains safe and does not break reward distribution for that finisher.
 - Selected boat variant reliability:
 	- Selected per-player boat variants (for example `DARK_OAK_BOAT`, `CHERRY_BOAT`, and `BAMBOO_RAFT` where supported) are applied on spawn and do not fall back to `OAK` unless the server version lacks that variant.
 	- Variant remains correct after repeated race cycles (`open/start/stop`) and on both initial mount and delayed mount retries.

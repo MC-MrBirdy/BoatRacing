@@ -1,4 +1,4 @@
-﻿# BoatRacing - Mesajlar / i18n (Turkce)
+# BoatRacing - Mesajlar / i18n (Turkce)
 #
 # ⚠  Bu, eklenti yazari tarafindan incelenmemis resmi olmayan topluluk cevirisidir.
 # ⚠  Hatalar icerebilir. Duzeltmeler ve katkilari memnuniyetle karsilariz.
@@ -41,12 +41,19 @@ race:
     force: "&cKullanım: /{label} race force <track>"
     start: "&cKullanım: /{label} race start <track>"
     stop: "&cKullanım: /{label} race stop <track>"
+    voteopen: "&cKullanım: /{label} race voteopen <track1> <track2> [saniye]"
+    vote: "&cKullanım: /{label} race vote <track>"
 
   help:
     header: "&eYarış komutları:"
     join: "&7 - &f/{label} race join <track> &7(Bu parkurdaki kayda katıl; takım gerekli)"
     leave: "&7 - &f/{label} race leave <track> &7(Bu parkurdaki kayıttan ayrıl)"
     status: "&7 - &f/{label} race status <track> &7(Parkur için yarış durumunu göster)"
+    vote: "&7 - &f/{label} race vote <track> &7(Harita oyu ver)"
+    voteui: "&7 - &f/{label} race voteui &7(Oylama arayüzünü açar)"
+    votestatus: "&7 - &f/{label} race votestatus &7(Mevcut oy sayılarını göster)"
+    voteopen: "&7 - &f/{label} race voteopen <track1> <track2> [saniye] &7(Harita oylamasını aç)"
+    voteclose: "&7 - &f/{label} race voteclose &7(Oylamayı şimdi kapat ve sonuçlandır)"
     back: "&7 - &f/{label} race back &7(Yarış lobisine katılmadan önceki kayıtlı konumuna dön)"
     admin: "&8Yönetici:&7 /{label} race open|start|force|stop <track>"
   unknown-subcommand: "&cBilinmeyen race alt komutu. /{label} race help kullan"
@@ -79,6 +86,7 @@ race:
   cannot-open-registration: "&cŞu anda kayıt açılamıyor."
   no-participants: "&cKayıtlı katılımcı yok. &7Önce kaydı aç: &f/{label} race open"
   must-be-in-team: "&cYarışa katılmak için bir takımda olmalısın."
+  already-in-other-race: "&cZaten başka bir yarışta kayıtlısın veya yarışıyorsun."
   already-running: "&cYarış zaten devam ediyor."
   no-start-slots: "&cBu parkurda boş başlangıç slotu yok."
   some-not-placed: "&7Başlangıç slotu yetersizliği nedeniyle bazı kayıtlı oyuncular yerleştirilemedi."
@@ -121,6 +129,22 @@ race:
     checkpoints: "&7Kontrol noktaları: &f{count}"
     mandatory-pitstops: "&7Zorunlu pit stop: &f{count}"
     track-ready: "&aParkur hazır."
+
+  vote:
+    ended-no-options: "&cHarita oylamasi secenek olmadan bitti."
+    ended-no-winner: "&cHarita oylamasi kazanan olmadan bitti."
+    ended-winner: "&aHarita oylamasi bitti. Kazanan: &f{winner} &7({votes} oy)"
+    next-step: "&7Sonraki adim: &f/boatracing race open {winner}"
+    need-two-tracks: "&cEn az 2 gecerli parkur belirtmelisin."
+    started: "&eHarita oylamasi basladi (&f{seconds}s&e)!"
+    started-click: "&b[Oylama arayuzunu acmak icin tikla]"
+    started-instructions: "&7Su komutla oy ver: &f/{label} race vote <track>"
+    started-options: "&7Secenekler: &f{options}"
+    no-active: "&cEtkin bir harita oylamasi yok."
+    invalid-option: "&cBu harita mevcut oylamada degil."
+    registered: "&a&f{track}&a icin oy kaydedildi."
+    status-header: "&eMevcut harita oylamasi:"
+    status-line: "&7- &f{track}&7: &e{count}"
 
   actionbar:
     lap: "&eT &f{lap}/{total}"

@@ -1,4 +1,4 @@
-﻿# BoatRacing – Wiadomości / i18n (Polski)
+# BoatRacing – Wiadomości / i18n (Polski)
 #
 # ⚠  To nieoficjalne tłumaczenie społeczności, niezweryfikowane przez autora pluginu.
 # ⚠  Mogą występować błędy. Poprawki i wkład są mile widziane.
@@ -40,12 +40,19 @@ race:
     force: "&cUżycie: /{label} race force <track>"
     start: "&cUżycie: /{label} race start <track>"
     stop: "&cUżycie: /{label} race stop <track>"
+    voteopen: "&cUżycie: /{label} race voteopen <track1> <track2> [sekundy]"
+    vote: "&cUżycie: /{label} race vote <track>"
 
   help:
     header: "&eKomendy wyścigu:"
     join: "&7 - &f/{label} race join <track> &7(Dołącz do rejestracji na tym torze; wymagany zespół)"
     leave: "&7 - &f/{label} race leave <track> &7(Opuść rejestrację na tym torze)"
     status: "&7 - &f/{label} race status <track> &7(Pokaż status wyścigu dla toru)"
+    vote: "&7 - &f/{label} race vote <track> &7(Oddaj głos na mapę)"
+    voteui: "&7 - &f/{label} race voteui &7(Otwiera interfejs głosowania)"
+    votestatus: "&7 - &f/{label} race votestatus &7(Pokaż bieżącą liczbę głosów)"
+    voteopen: "&7 - &f/{label} race voteopen <track1> <track2> [sekundy] &7(Otwórz głosowanie mapy)"
+    voteclose: "&7 - &f/{label} race voteclose &7(Zamknij i rozstrzygnij głosowanie teraz)"
     back: "&7 - &f/{label} race back &7(Wróć do swojej zapisanej lokalizacji przed dołączeniem do poczekalní wyścigu)"
     admin: "&8Admin:&7 /{label} race open|start|force|stop <track>"
   unknown-subcommand: "&cNieznane polecenie podrzędne wyścigu. Użyj /{label} race help"
@@ -78,6 +85,7 @@ race:
   cannot-open-registration: "&cNie można teraz otworzyć rejestracji."
   no-participants: "&cBrak zarejestrowanych uczestników. &7Najpierw otwórz rejestrację: &f/{label} race open"
   must-be-in-team: "&cMusisz być w zespole, aby dołączyć do wyścigu."
+  already-in-other-race: "&cJesteś już zarejestrowana(y) lub ścigasz się w innym wyścigu."
   already-running: "&cWyścig już się odbywa."
   no-start-slots: "&cBrak wolnych stanowisk startowych na tym torze."
   some-not-placed: "&7Niektórzy zarejestrowani gracze nie mogli być umieszczeni ze względu na brak wolnych stanowisk startowych."
@@ -120,6 +128,22 @@ race:
     checkpoints: "&7Punkty kontrolne: &f{count}"
     mandatory-pitstops: "&7Obowiązkowe postoje w boksach: &f{count}"
     track-ready: "&aTor jest gotowy."
+
+  vote:
+    ended-no-options: "&cGłosowanie mapy zakończyło się bez opcji."
+    ended-no-winner: "&cGłosowanie mapy zakończyło się bez zwycięzcy."
+    ended-winner: "&aGłosowanie mapy zakończone. Zwycięzca: &f{winner} &7({votes} głosów)"
+    next-step: "&7Następny krok: &f/boatracing race open {winner}"
+    need-two-tracks: "&cMusisz podać co najmniej 2 prawidłowe tory."
+    started: "&eRozpoczęto głosowanie mapy (&f{seconds}s&e)!"
+    started-click: "&b[Kliknij, aby otworzyć interfejs głosowania]"
+    started-instructions: "&7Głosuj przez: &f/{label} race vote <track>"
+    started-options: "&7Opcje: &f{options}"
+    no-active: "&cNie ma aktywnego głosowania mapy."
+    invalid-option: "&cTa mapa nie jest w bieżącym głosowaniu."
+    registered: "&aGłos zarejestrowany na &f{track}&a."
+    status-header: "&eAktualne głosowanie mapy:"
+    status-line: "&7- &f{track}&7: &e{count}"
 
   actionbar:
     lap: "&eO &f{lap}/{total}"

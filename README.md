@@ -30,9 +30,12 @@ This is how we test the plugin to validate its behavior after each update: see t
 Track-aware placeholders and spawn reliability improvements:
 - **Track-scoped race placeholders**: added `%boatracing_track_race_running_<track>%`, `%boatracing_track_race_registering_<track>%`, and `%boatracing_track_race_status_<track>%` to support per-track displays in scoreboards/holograms.
 - **Compatibility aliases for prior naming**: `%boatracing_track_racerunning_<track>%` and `%boatracing_track_raceregistering_<track>%` map to the same values.
+- **Parallel race sessions by track**: races are now managed per track session, so different tracks can run registration/races at the same time.
+- **Map vote command flow**: added `/boatracing race voteopen`, `vote`, `voteui`, `votestatus`, and `voteclose` to coordinate map selection in chat.
+- **Clickable vote UI prompt on vote start**: when a map vote opens, players receive a clickable chat action that runs `/boatracing race voteui` directly instead of a plain typed-command instruction.
 - **Selected boat variant reliability**: race boat/raft variants now re-apply after spawn with delayed retries to reduce cases where selected variants appear as default OAK.
 - **No dismount during pre-start and race**: racers are now prevented from manually exiting boats/rafts during the 5-light countdown and while the race is active.
-- **Current engine scope clarified**: in 1.x, track-scoped race placeholders evaluate against the active track state because the race engine still runs one race session at a time.
+- **Reward command compatibility hardening**: reward parsing now supports both `commands` (list) and legacy `command` (single string), with safer fallback behavior for missing per-position keys (including 1st place).
 
 </details>
 
@@ -121,7 +124,7 @@ Improvements and toggles:
  - Results broadcast: podium medals 🥇/🥈/🥉 and rank colors for top‑3; keeps a penalty suffix when present; names rendered safely (keeps leading '.' for Bedrock).
  - Wizard flow: if a default pit is already set in step 4, the wizard automatically advances to Checkpoints (team pits remain optional).
  - Permissions: introduced wildcard `boatracing.*`. Admins still get absolutely all plugin permissions, now by explicit children under `boatracing.admin` to avoid circular inheritance.
- - Tab-complete: players (non-admin) see `join|leave|status` under `/boatracing race`; admin-only verbs (`open|start|force|stop`) are suggested only to admins.
+ - Tab-complete: players (non-admin) see `join|leave|status|vote|voteui|votestatus` under `/boatracing race`; admin-only verbs (`open|start|force|stop|voteopen|voteclose`) are suggested only to admins.
  
 Updater:
  - Console notice restored: a single WARN shortly after startup when outdated, plus an hourly reminder while still outdated (respects `updates.console-warn`).
@@ -245,6 +248,7 @@ Available codes and names:
 - Built-in setup flow: Blaze Rod selection wand, cuboid region tools, clickable setup tips, and a compact guided wizard with auto-advance where possible.
 - Grid control: custom per-player start slots, auto placement for the rest, and fallback ordering by best recorded track time.
 - Race systems: ordered checkpoints, optional pit area, optional mandatory pit stops, false-start penalties, registration lobby teleport/return, 5-light countdown, and live results broadcasting.
+- Multi-track race orchestration: independent race sessions per track and map-vote commands for admins/players in chat.
 - HUD and scoreboard: in-race sidebar plus ActionBar with per-section config toggles, safe scoreboard restoration after races, and compatibility flow for external scoreboards.
 - Persistent stats: `stats.yml` stores wins, best race and best lap so PlaceholderAPI, holograms, scoreboards, and NPCs can show live and historical data.
 - i18n: bundled message packs for `en`, `es`, `es_419`, `fr`, `pt_BR`, `pt_PT`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, `zh_TW`, `zh_CN`, and `ru`; `en`/`es` are official and the rest are community translations. All are hot-reloadable with `/boatracing reload`.
@@ -354,10 +358,20 @@ Race commands:
 - `/boatracing race force <track>`
 - `/boatracing race stop <track>`
 - `/boatracing race status <track>`
+- `/boatracing race voteopen <track1> <track2> [seconds]`
+- `/boatracing race vote <track>`
+- `/boatracing race voteui`
+- `/boatracing race votestatus`
+- `/boatracing race voteclose`
 
 Race behavior:
 - Players must belong to a team before joining registration.
 - Registration loads track settings before opening, including any per-track `racing.*` overrides.
+- Multiple race sessions can run in parallel on different tracks.
+- A player can only be registered/racing in one session at a time.
+- Tab-complete includes `vote`, `voteui`, and `votestatus` for players, plus `voteopen` and `voteclose` for admins.
+- `/boatracing race vote` without `<track>` opens the vote UI when a map vote is active (same behavior as `/boatracing race voteui`).
+- `/boatracing race voteopen ...` now announces a clickable vote UI action in chat that runs `/boatracing race voteui`.
 - `start` and `force` use registered players only.
 - Grid order is: custom start slot bindings first, then best recorded track times, then players without a recorded time.
 - Boats are spawned using each player’s selected boat type with cross-version-safe material resolution.
@@ -503,6 +517,8 @@ Rewards:
 - `racing.rewards.positions.<place>.commands`
 - `racing.rewards.positions.<place>.messages`
 - `racing.rewards.positions.<place>.broadcast`
+- Legacy compatibility: `racing.rewards.positions.<place>.command` (single string) is also accepted, but `commands` list is recommended.
+- Recommended schema hygiene: keep `commands: []` explicitly present for each configured position block (including `1`).
 - Supported reward placeholders: `{player}`, `{position}`, `{time}`, `{track}`, `{laps}`
 
 Message templates:
@@ -551,9 +567,9 @@ Resolution rules:
 - `%boatracing_player_*%` uses the viewer as context.
 - `%boatracing_player_*_<player>%` uses an explicit player name or UUID and is ideal for NPCs and static holograms.
 - Team leader placeholders always resolve the current saved leader of that team.
-- Track-scoped race placeholders (`%boatracing_track_race_*_<track>%`) are evaluated against the active track only in the current 1.x single-race engine.
+- Track-scoped race placeholders (`%boatracing_track_race_*_<track>%`) resolve against the race session of the requested track.
 - Compatibility aliases are available: `%boatracing_track_racerunning_<track>%` and `%boatracing_track_raceregistering_<track>%`.
-- For track-scoped race placeholders, non-active tracks resolve as `false` (`running`/`registering`) or `idle` (`status`).
+- For track-scoped race placeholders, tracks without an active session resolve as `false` (`running`/`registering`) or `idle` (`status`).
 - `<track>` tokens support underscores for spaces (for example `My_Track`).
 
 ### Category: Viewer Player and Team
@@ -570,7 +586,7 @@ Resolution rules:
 
 | Placeholder(s) | What it shows | Example text on screen | Visibility |
 |---|---|---|---|
-| `%boatracing_player_race_running%` / `%boatracing_player_race_registering%` | Whether a race is running or registering | `Running: true` / `Registering: false` | Viewer context |
+| `%boatracing_player_race_running%` / `%boatracing_player_race_registering%` | Whether the viewer is currently racing or currently registered in their own race session | `Running: true` / `Registering: false` | Viewer context |
 | `%boatracing_track_race_running_<track>%` / `%boatracing_track_race_registering_<track>%` / `%boatracing_track_race_status_<track>%` | Track-scoped race state (`running`, `registering`, `idle`) for a specific track token | `Harbor running: true` / `Harbor status: running` / `Desert status: idle` | Same for every viewer |
 | `%boatracing_track_racerunning_<track>%` / `%boatracing_track_raceregistering_<track>%` | Backward-compatible aliases for track running/registering booleans | `Harbor running(alias): true` / `Desert registering(alias): false` | Same for every viewer |
 | `%boatracing_player_current_time%` / `%boatracing_player_current_time_ms%` | Live timer for the viewer | `Time: 1:42.355` / `TimeMs: 102355` | Viewer context |

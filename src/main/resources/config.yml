@@ -89,9 +89,10 @@ racing:
     positions:
       # 1st place rewards
       1:
-        commands:
-          # - "give {player} diamond 5"
-          # - "eco give {player} 1000"
+        commands: []
+        # Example commands:
+        # - "give {player} diamond 5"
+        # - "eco give {player} 1000"
         messages:
           - "&6&l1st Place! &eCongratulations, you won the race on &f{track}&e!"
         broadcast: []

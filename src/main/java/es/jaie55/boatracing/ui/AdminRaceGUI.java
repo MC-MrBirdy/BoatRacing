@@ -69,6 +69,9 @@ public class AdminRaceGUI implements Listener {
         inv.setItem(20, action(Material.GOLD_BLOCK, plugin.msg().get("gui.race.btn-start"), "start"));
         inv.setItem(21, action(Material.REDSTONE_TORCH, plugin.msg().get("gui.race.btn-force"), "force"));
         inv.setItem(22, action(Material.BARRIER, plugin.msg().get("gui.race.btn-stop"), "stop"));
+        String voteState = plugin.msg().get(plugin.isMapVoteOpen() ? "gui.race.lore-vote-open" : "gui.race.lore-vote-closed");
+        inv.setItem(23, actionWithLore(Material.CARTOGRAPHY_TABLE, plugin.msg().get("gui.race.btn-vote-setup"), "vote:setup", java.util.Arrays.asList(voteState)));
+        inv.setItem(24, action(Material.BARRIER, plugin.msg().get("gui.race.btn-vote-close"), "vote:close"));
 
         // Laps quick set
         inv.setItem(27, action(Material.PAPER, plugin.msg().get("gui.race.btn-set-laps", "n", "1"), "laps:1"));
@@ -134,7 +137,7 @@ public class AdminRaceGUI implements Listener {
         }
         // Some actions open an Anvil (e.g., custom laps). If we refresh immediately,
         // it will close the Anvil. Skip auto-refresh for those.
-        boolean skipRefresh = "laps:custom".equals(action);
+        boolean skipRefresh = "laps:custom".equals(action) || "vote:setup".equals(action);
         handle(p, action, im);
         if (!skipRefresh) {
             // Refresh UI after action
@@ -176,6 +179,10 @@ public class AdminRaceGUI implements Listener {
                 if (rm.isRunning()) any |= rm.cancelRace();
                 if (!any) p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("setup.nothing-to-stop")));
             }
+            case "vote:setup" -> {
+                if (plugin.getVoteGUI() != null) plugin.getVoteGUI().openAdminSetup(p);
+            }
+            case "vote:close" -> plugin.closeMapVoteFromAdmin(p);
             default -> {
                 if (action.startsWith("laps:")) {
                     String v = action.substring("laps:".length());
@@ -263,6 +270,19 @@ public class AdminRaceGUI implements Listener {
         ItemMeta im = it.getItemMeta();
         if (im != null) {
             im.displayName(Text.item(titleLegacy));
+            im.getPersistentDataContainer().set(KEY_ACTION, org.bukkit.persistence.PersistentDataType.STRING, action);
+            im.addItemFlags(ItemFlag.values());
+            it.setItemMeta(im);
+        }
+        return it;
+    }
+
+    private ItemStack actionWithLore(Material mat, String titleLegacy, String action, java.util.List<String> loreLines) {
+        ItemStack it = new ItemStack(mat);
+        ItemMeta im = it.getItemMeta();
+        if (im != null) {
+            im.displayName(Text.item(titleLegacy));
+            if (loreLines != null && !loreLines.isEmpty()) im.lore(Text.lore(loreLines));
             im.getPersistentDataContainer().set(KEY_ACTION, org.bukkit.persistence.PersistentDataType.STRING, action);
             im.addItemFlags(ItemFlag.values());
             it.setItemMeta(im);

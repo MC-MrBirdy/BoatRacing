@@ -1,6 +1,7 @@
 package es.jaie55.boatracing.placeholder;
 
 import es.jaie55.boatracing.BoatRacingPlugin;
+import es.jaie55.boatracing.race.RaceManager;
 import es.jaie55.boatracing.team.Team;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Bukkit;
@@ -68,25 +69,30 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         if (key.equals("track_best_time")) return trackBestEntry().map(e -> formatMillis(e.getValue())).orElse("-");
         if (key.startsWith(trackRaceRunningPrefix)) {
             String token = params.substring(trackRaceRunningPrefix.length());
-            return String.valueOf(isRequestedTrackActive(token) && plugin.getRaceManager().isRunning());
+            RaceManager rm = getRaceManagerForTrackToken(token);
+            return String.valueOf(rm != null && rm.isRunning());
         }
         if (key.startsWith(trackRaceRunningCompatPrefix)) {
             String token = params.substring(trackRaceRunningCompatPrefix.length());
-            return String.valueOf(isRequestedTrackActive(token) && plugin.getRaceManager().isRunning());
+            RaceManager rm = getRaceManagerForTrackToken(token);
+            return String.valueOf(rm != null && rm.isRunning());
         }
         if (key.startsWith(trackRaceRegisteringPrefix)) {
             String token = params.substring(trackRaceRegisteringPrefix.length());
-            return String.valueOf(isRequestedTrackActive(token) && plugin.getRaceManager().isRegistering());
+            RaceManager rm = getRaceManagerForTrackToken(token);
+            return String.valueOf(rm != null && rm.isRegistering());
         }
         if (key.startsWith(trackRaceRegisteringCompatPrefix)) {
             String token = params.substring(trackRaceRegisteringCompatPrefix.length());
-            return String.valueOf(isRequestedTrackActive(token) && plugin.getRaceManager().isRegistering());
+            RaceManager rm = getRaceManagerForTrackToken(token);
+            return String.valueOf(rm != null && rm.isRegistering());
         }
         if (key.startsWith(trackRaceStatusPrefix)) {
             String token = params.substring(trackRaceStatusPrefix.length());
-            if (!isRequestedTrackActive(token)) return "idle";
-            if (plugin.getRaceManager().isRunning()) return "running";
-            if (plugin.getRaceManager().isRegistering()) return "registering";
+            RaceManager rm = getRaceManagerForTrackToken(token);
+            if (rm == null) return "idle";
+            if (rm.isRunning()) return "running";
+            if (rm.isRegistering()) return "registering";
             return "idle";
         }
 
@@ -222,6 +228,7 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         if (player == null) return "";
         UUID pid = player.getUniqueId();
         Team team = plugin.getTeamManager().getTeamByMember(pid).orElse(null);
+        RaceManager playerRace = plugin.getRaceManagerForPlayer(pid);
 
         if (key.equals("player_name")) return safePlayerName(pid);
         if (key.equals("player_team_name")) return team != null ? team.getName() : "-";
@@ -263,15 +270,17 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
             return v == null ? "-1" : String.valueOf(v);
         }
 
-        if (key.equals("player_race_running")) return String.valueOf(plugin.getRaceManager().isRunning());
-        if (key.equals("player_race_registering")) return String.valueOf(plugin.getRaceManager().isRegistering());
-        if (key.equals("player_current_time")) return formatMillis(plugin.getRaceManager().getLiveTimeMillis(pid));
-        if (key.equals("player_current_time_ms")) return String.valueOf(plugin.getRaceManager().getLiveTimeMillis(pid));
-        if (key.equals("player_current_lap")) return String.valueOf(plugin.getRaceManager().getLiveLap(pid));
-        if (key.equals("player_current_checkpoint")) return String.valueOf(plugin.getRaceManager().getLiveCheckpoint(pid));
-        if (key.equals("player_current_position")) return String.valueOf(plugin.getRaceManager().getLivePosition(pid));
-        if (key.equals("player_current_pitstops")) return String.valueOf(plugin.getRaceManager().getLivePitstops(pid));
-        if (key.equals("player_finished")) return String.valueOf(plugin.getRaceManager().isLiveFinished(pid));
+        if (key.equals("player_race_running")) return String.valueOf(playerRace != null && playerRace.isRunning() && playerRace.isParticipant(pid));
+        if (key.equals("player_race_registering")) return String.valueOf(playerRace != null && playerRace.isRegistering() && playerRace.getRegistered().contains(pid));
+
+        long liveMs = playerRace != null ? playerRace.getLiveTimeMillis(pid) : -1L;
+        if (key.equals("player_current_time")) return formatMillis(liveMs);
+        if (key.equals("player_current_time_ms")) return String.valueOf(liveMs);
+        if (key.equals("player_current_lap")) return String.valueOf(playerRace != null ? playerRace.getLiveLap(pid) : 0);
+        if (key.equals("player_current_checkpoint")) return String.valueOf(playerRace != null ? playerRace.getLiveCheckpoint(pid) : 0);
+        if (key.equals("player_current_position")) return String.valueOf(playerRace != null ? playerRace.getLivePosition(pid) : 0);
+        if (key.equals("player_current_pitstops")) return String.valueOf(playerRace != null ? playerRace.getLivePitstops(pid) : 0);
+        if (key.equals("player_finished")) return String.valueOf(playerRace != null && playerRace.isLiveFinished(pid));
 
         return null;
     }
@@ -306,12 +315,18 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         return null;
     }
 
-    private boolean isRequestedTrackActive(String token) {
+    private RaceManager getRaceManagerForTrackToken(String token) {
         String requested = normalizeTrackToken(token);
-        if (requested.isEmpty()) return false;
-        String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
-        if (current == null || current.isBlank()) current = "unsaved";
-        return normalizeTrackToken(current).equalsIgnoreCase(requested);
+        if (requested.isEmpty()) return null;
+
+        for (RaceManager rm : plugin.getAllRaceManagers()) {
+            if (rm == null) continue;
+            if (normalizeTrackToken(rm.getTrackName()).equalsIgnoreCase(requested)) return rm;
+        }
+
+        // Backward compatibility for placeholders explicitly targeting the in-memory unsaved track.
+        if (requested.equalsIgnoreCase("unsaved")) return plugin.getRaceManager();
+        return null;
     }
 
     private static String normalizeTrackToken(String value) {

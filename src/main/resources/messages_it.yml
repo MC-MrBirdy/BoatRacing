@@ -1,4 +1,4 @@
-﻿# BoatRacing – Messaggi / i18n (Italiano)
+# BoatRacing – Messaggi / i18n (Italiano)
 #
 # ⚠  Traduzione della community non ufficiale, non revisionata dall'autore del plugin.
 # ⚠  Potrebbe contenere errori. Correzioni e contributi sono benvenuti.
@@ -41,12 +41,19 @@ race:
     force: "&cUso: /{label} race force <track>"
     start: "&cUso: /{label} race start <track>"
     stop: "&cUso: /{label} race stop <track>"
+    voteopen: "&cUso: /{label} race voteopen <track1> <track2> [secondi]"
+    vote: "&cUso: /{label} race vote <track>"
 
   help:
     header: "&eComandi gara:"
     join: "&7 - &f/{label} race join <track> &7(Iscriviti alla registrazione su questa pista; team richiesto)"
     leave: "&7 - &f/{label} race leave <track> &7(Lascia la registrazione su questa pista)"
     status: "&7 - &f/{label} race status <track> &7(Mostra lo stato della gara per la pista)"
+    vote: "&7 - &f/{label} race vote <track> &7(Vota una mappa)"
+    voteui: "&7 - &f/{label} race voteui &7(Apre l'interfaccia di voto)"
+    votestatus: "&7 - &f/{label} race votestatus &7(Mostra il conteggio attuale dei voti)"
+    voteopen: "&7 - &f/{label} race voteopen <track1> <track2> [secondi] &7(Apre la votazione mappa)"
+    voteclose: "&7 - &f/{label} race voteclose &7(Chiude e risolve subito la votazione)"
     back: "&7 - &f/{label} race back &7(Torna alla tua posizione salvata prima di entrare nella lobby gara)"
     admin: "&8Admin:&7 /{label} race open|start|force|stop <track>"
   unknown-subcommand: "&cSottocomando gara sconosciuto. Usa /{label} race help"
@@ -79,6 +86,7 @@ race:
   cannot-open-registration: "&cImpossibile aprire le iscrizioni adesso."
   no-participants: "&cNessun partecipante iscritto. &7Apri prima le iscrizioni: &f/{label} race open"
   must-be-in-team: "&cDevi essere in un team per unirti alla gara."
+  already-in-other-race: "&cSei gia registrato o in gara in un'altra corsa."
   already-running: "&cLa gara e gia in corso."
   no-start-slots: "&cNessuno slot di partenza libero su questa pista."
   some-not-placed: "&7Alcuni giocatori iscritti non sono stati posizionati per mancanza di slot di partenza."
@@ -121,6 +129,22 @@ race:
     checkpoints: "&7Checkpoint: &f{count}"
     mandatory-pitstops: "&7Pit stop obbligatori: &f{count}"
     track-ready: "&aLa pista e pronta."
+
+  vote:
+    ended-no-options: "&cLa votazione mappa e terminata senza opzioni."
+    ended-no-winner: "&cLa votazione mappa e terminata senza un vincitore."
+    ended-winner: "&aVotazione mappa terminata. Vincitore: &f{winner} &7({votes} voti)"
+    next-step: "&7Passo successivo: &f/boatracing race open {winner}"
+    need-two-tracks: "&cDevi fornire almeno 2 piste valide."
+    started: "&eVotazione mappa avviata (&f{seconds}s&e)!"
+    started-click: "&b[Clicca per aprire l'interfaccia di voto]"
+    started-instructions: "&7Vota con: &f/{label} race vote <track>"
+    started-options: "&7Opzioni: &f{options}"
+    no-active: "&cNon c'e una votazione mappa attiva."
+    invalid-option: "&cQuella mappa non e nella votazione attuale."
+    registered: "&aVoto registrato per &f{track}&a."
+    status-header: "&eVotazione mappa attuale:"
+    status-line: "&7- &f{track}&7: &e{count}"
 
   actionbar:
     lap: "&eL &f{lap}/{total}"
