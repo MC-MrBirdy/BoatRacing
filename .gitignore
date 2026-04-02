@@ -24,7 +24,10 @@
 # Ignore Maven wrapper (incl. properties)
 
 # Allow GitHub meta if present
+!/.github/
 !/.github/**
+!/.github/ISSUE_TEMPLATE/
+!/.github/ISSUE_TEMPLATE/**
 
 # Explicit excludes (redundant with the allowlist but documented)
 /mvnw

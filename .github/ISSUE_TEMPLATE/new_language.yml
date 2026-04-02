@@ -1,0 +1,79 @@
+name: New language request
+description: Request or propose a new language bundle for BoatRacing
+title: "[Language] "
+labels:
+  - i18n
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve language support.
+        Use this form to request or contribute a new translation.
+
+  - type: input
+    id: language_name
+    attributes:
+      label: Language name
+      description: Example: Dutch
+      placeholder: Dutch
+    validations:
+      required: true
+
+  - type: input
+    id: language_code
+    attributes:
+      label: Language code
+      description: Use the target code for messages_<code>.yml (for example nl, sv, cs, uk).
+      placeholder: nl
+    validations:
+      required: true
+
+  - type: dropdown
+    id: request_type
+    attributes:
+      label: Request type
+      options:
+        - I only request this language
+        - I can provide a full translation
+        - I can help review an existing draft
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Why this language should be added
+      description: Community/server context, user demand, etc.
+      placeholder: This language is used by...
+    validations:
+      required: true
+
+  - type: textarea
+    id: translation_status
+    attributes:
+      label: Translation status (if you can contribute)
+      description: Tell us whether you already have a draft or can translate from English.
+      placeholder: I can provide messages_nl.yml based on messages_en.yml.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Contributor checklist
+      options:
+        - label: I can keep placeholders unchanged (for example {player}, {track}, {laps}).
+        - label: I can preserve color/style formatting (& color codes, symbols, punctuation style).
+        - label: I can review race/setup/gui/admin keys to avoid missing entries.
+
+  - type: textarea
+    id: sample
+    attributes:
+      label: Optional sample translation
+      description: Paste 3-10 example keys to show style/quality.
+      render: yaml
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional notes
+      description: Any special locale conventions (formal tone, script variants, etc.).

@@ -1,0 +1,101 @@
+name: Bug report
+description: Report a reproducible issue in BoatRacing
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this bug.
+        Please fill out as much as possible so we can reproduce it quickly.
+
+  - type: input
+    id: plugin_version
+    attributes:
+      label: BoatRacing version
+      description: Example: 1.1.4
+      placeholder: 1.1.4
+    validations:
+      required: true
+
+  - type: input
+    id: server_software
+    attributes:
+      label: Server software and version
+      description: Example: Paper 1.21.1 build 120
+      placeholder: Paper/Purpur/Spigot + version/build
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Bug summary
+      description: Short description of what is broken.
+      placeholder: What happened?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Race / leaderboard
+        - Teams / GUI
+        - Setup / tracks
+        - Placeholders
+        - Rewards
+        - Translations / i18n
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Write exact steps so we can reproduce.
+      placeholder: |
+        1. Run command ...
+        2. Join race ...
+        3. Reach checkpoint ...
+        4. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: What happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / stack trace
+      description: Paste relevant server logs. Remove secrets if needed.
+      render: shell
+
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots or videos
+      description: Paste links to screenshots/videos if available.
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Any other details (plugins installed, ping/lag, etc.).
