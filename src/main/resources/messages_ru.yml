@@ -83,7 +83,9 @@ race:
   track-load-failed: "&cНе удалось загрузить трассу: &f{track}"
   track-not-ready: "&cТрасса не готова: &7{requirements}"
   cannot-open-registration: "&cНевозможно открыть регистрацию сейчас."
+
   no-participants: "&cНет зарегистрированных участников. &7Сначала откройте регистрацию: &f/{label} race open"
+  not-enough-players: "&cНедостаточно игроков для начала гонки. &7Нужно: &f{min}&7, сейчас: &f{current}"
   must-be-in-team: "&cВы должны состоять в команде для участия в гонке."
   already-in-other-race: "&cВы уже зарегистрированы или участвуете в другой гонке."
   already-running: "&cГонка уже идёт."

@@ -53,6 +53,7 @@ public class RaceManager {
     private boolean enablePitPenalty;
     private boolean enableFalseStartPenalty;
     private long registrationSeconds;
+    private int minPlayersToStart;
     // Lights "all out" delay after all 5 are lit
     private double lightsOutDelaySeconds;
     // Additional random jitter [0..jitter] seconds added to lights out
@@ -138,6 +139,7 @@ public class RaceManager {
         this.enablePitPenalty = track.getRacingBoolean("enable-pit-penalty", cfg.getBoolean("racing.enable-pit-penalty", true));
         this.enableFalseStartPenalty = track.getRacingBoolean("enable-false-start-penalty", cfg.getBoolean("racing.enable-false-start-penalty", true));
         this.registrationSeconds = track.getRacingLong("registration-seconds", cfg.getLong("racing.registration-seconds", 300L));
+        this.minPlayersToStart = Math.max(1, track.getRacingInt("min-players-to-start", cfg.getInt("racing.min-players-to-start", 1)));
         this.lightsOutDelaySeconds = Math.max(0.0, track.getRacingDouble("lights-out-delay-seconds", cfg.getDouble("racing.lights-out-delay-seconds", 1.0)));
         this.lightsOutJitterSeconds = Math.max(0.0, track.getRacingDouble("lights-out-jitter-seconds", cfg.getDouble("racing.lights-out-jitter-seconds", 0.0)));
         this.mandatoryPitstops = Math.max(0, track.getRacingInt("mandatory-pitstops", cfg.getInt("racing.mandatory-pitstops", 0)));
@@ -181,6 +183,7 @@ public class RaceManager {
         return countdownLockedParticipants.contains(playerId);
     }
     public int getMandatoryPitstops() { return mandatoryPitstops; }
+    public int getMinPlayersToStart() { return minPlayersToStart; }
 
     // --- Live read-only stats for placeholders ---
     public long getLiveTimeMillis(UUID playerId) {
@@ -604,6 +607,19 @@ public class RaceManager {
             broadcast(color(plugin.msg().get("race.cancelled-no-participants")));
             return false;
         }
+        int required = Math.max(1, minPlayersToStart);
+        if (participants.size() < required) {
+            restoreLobbyForRegistered(true);
+            cancelAllBackExpiryTasks();
+            preLobbyLocations.clear();
+            preLobbyBackExpiresAt.clear();
+            broadcast(color(plugin.msg().get(
+                    "race.not-enough-players",
+                    "min", String.valueOf(required),
+                    "current", String.valueOf(participants.size())
+            )));
+            return false;
+        }
         List<Player> placed = placeAtStartsWithBoats(participants);
         if (placed.isEmpty()) {
             restoreLobbyForRegistered(true);
@@ -614,6 +630,19 @@ public class RaceManager {
             return false;
         }
         if (placed.size() < participants.size()) broadcast(color(plugin.msg().get("race.some-not-placed")));
+        if (placed.size() < required) {
+            cleanupRaceVehicles();
+            restoreLobbyForRegistered(true);
+            cancelAllBackExpiryTasks();
+            preLobbyLocations.clear();
+            preLobbyBackExpiresAt.clear();
+            broadcast(color(plugin.msg().get(
+                    "race.not-enough-players",
+                    "min", String.valueOf(required),
+                    "current", String.valueOf(placed.size())
+            )));
+            return false;
+        }
         // Keep pre-lobby locations so players can use /boatracing race back after the race.
         startRaceWithCountdown(placed);
         return true;

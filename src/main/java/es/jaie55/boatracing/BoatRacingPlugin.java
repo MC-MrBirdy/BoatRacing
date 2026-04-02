@@ -739,8 +739,24 @@ public class BoatRacingPlugin extends JavaPlugin {
                             return true;
                         }
                         rm.loadSettings();
-                        if (rm.getRegistered().isEmpty()) {
+                        java.util.List<org.bukkit.entity.Player> forceParticipants = new java.util.ArrayList<>();
+                        java.util.Set<java.util.UUID> forceRegs = new java.util.LinkedHashSet<>(rm.getRegistered());
+                        for (java.util.UUID id : forceRegs) {
+                            org.bukkit.entity.Player rp = Bukkit.getPlayer(id);
+                            if (rp != null && rp.isOnline()) forceParticipants.add(rp);
+                        }
+                        if (forceParticipants.isEmpty()) {
                             p.sendMessage(Text.colorize(prefix + msg().get("race.no-participants", "label", label)));
+                            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+                            return true;
+                        }
+                        int forceMinPlayers = rm.getMinPlayersToStart();
+                        if (forceParticipants.size() < forceMinPlayers) {
+                            p.sendMessage(Text.colorize(prefix + msg().get(
+                                    "race.not-enough-players",
+                                    "min", String.valueOf(forceMinPlayers),
+                                    "current", String.valueOf(forceParticipants.size())
+                            )));
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
                             return true;
                         }
@@ -764,8 +780,6 @@ public class BoatRacingPlugin extends JavaPlugin {
                             return true;
                         }
                         if (rm.isRunning()) { p.sendMessage(Text.colorize(prefix + msg().get("race.already-running"))); return true; }
-                        // Prevent leftover registration timers from auto-restarting races later.
-                        rm.closeRegistrationWindow();
                         rm.loadSettings();
                         // Build participants: strictly registered participants only
                         java.util.List<org.bukkit.entity.Player> participants = new java.util.ArrayList<>();
@@ -778,12 +792,16 @@ public class BoatRacingPlugin extends JavaPlugin {
                             p.sendMessage(Text.colorize(prefix + msg().get("race.no-participants", "label", label)));
                             return true;
                         }
-                        // Place with boats and start
-                        java.util.List<org.bukkit.entity.Player> placed = rm.placeAtStartsWithBoats(participants);
-                        if (placed.isEmpty()) { p.sendMessage(Text.colorize(prefix + msg().get("race.no-start-slots"))); return true; }
-                        if (placed.size() < participants.size()) { p.sendMessage(Text.colorize(prefix + msg().get("race.some-not-placed"))); }
-                        // Use start lights countdown if configured
-                        rm.startRaceWithCountdown(placed);
+                        int minPlayers = rm.getMinPlayersToStart();
+                        if (participants.size() < minPlayers) {
+                            p.sendMessage(Text.colorize(prefix + msg().get(
+                                    "race.not-enough-players",
+                                    "min", String.valueOf(minPlayers),
+                                    "current", String.valueOf(participants.size())
+                            )));
+                            return true;
+                        }
+                        rm.forceStart();
                         return true;
                     }
                     case "stop" -> {

@@ -80,7 +80,9 @@ race:
   track-load-failed: "&cFailed to load track: &f{track}"
   track-not-ready: "&cTrack is not ready: &7{requirements}"
   cannot-open-registration: "&cCannot open registration right now."
+
   no-participants: "&cNo registered participants. &7Open registration first: &f/{label} race open"
+  not-enough-players: "&cNot enough players to start the race. &7Required: &f{min}&7, current: &f{current}"
   must-be-in-team: "&cYou must be in a team to join the race."
   already-in-other-race: "&cYou are already registered or racing in another race."
   already-running: "&cRace already running."

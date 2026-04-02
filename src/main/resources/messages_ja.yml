@@ -84,7 +84,9 @@ race:
   track-load-failed: "&cトラックの読み込みに失敗しました: &f{track}"
   track-not-ready: "&cトラックの準備ができていません: &7{requirements}"
   cannot-open-registration: "&c現在は参加受付を開けません。"
+
   no-participants: "&c登録された参加者がいません。&7先に受付を開いてください: &f/{label} race open"
+  not-enough-players: "&cレース開始に必要なプレイヤー数が足りません。&7必要: &f{min}&7、現在: &f{current}"
   must-be-in-team: "&cレースに参加するにはチームに所属している必要があります。"
   already-in-other-race: "&cあなたはすでに別のレースに登録済み、または参加中です。"
   already-running: "&cレースはすでに進行中です。"

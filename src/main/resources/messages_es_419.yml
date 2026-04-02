@@ -83,7 +83,9 @@ race:
   track-load-failed: "&cFallo al cargar la pista: &f{track}"
   track-not-ready: "&cLa pista no está lista: &7{requirements}"
   cannot-open-registration: "&cNo se puede abrir el registro en este momento."
+
   no-participants: "&cSin participantes inscritos. &7Abre la inscripción primero: &f/{label} race open"
+  not-enough-players: "&cNo hay jugadores suficientes para iniciar la carrera. &7Requeridos: &f{min}&7, actuales: &f{current}"
   must-be-in-team: "&cDebes estar en un equipo para unirte a la carrera."
   already-in-other-race: "&cYa estás registrado o corriendo en otra carrera."
   already-running: "&cYa hay una carrera en curso."

@@ -163,14 +163,21 @@ public class AdminRaceGUI implements Listener {
             case "close" -> rm.cancelRegistration(true);
             case "start" -> {
                 if (rm.isRunning()) { p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.already-running"))); break; }
+                rm.loadSettings();
                 java.util.Set<java.util.UUID> regs = new java.util.LinkedHashSet<>(rm.getRegistered());
                 java.util.List<Player> participants = new java.util.ArrayList<>();
                 for (java.util.UUID id : regs) { Player op = Bukkit.getPlayer(id); if (op != null) participants.add(op); }
                 if (participants.isEmpty()) { p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.no-participants", "label", "boatracing"))); break; }
-                java.util.List<Player> placed = rm.placeAtStartsWithBoats(participants);
-                if (placed.isEmpty()) { p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.no-start-slots"))); break; }
-                if (placed.size() < participants.size()) { p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.some-not-placed"))); }
-                rm.startRaceWithCountdown(placed);
+                int minPlayers = rm.getMinPlayersToStart();
+                if (participants.size() < minPlayers) {
+                    p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get(
+                            "race.not-enough-players",
+                            "min", String.valueOf(minPlayers),
+                            "current", String.valueOf(participants.size())
+                    )));
+                    break;
+                }
+                rm.forceStart();
             }
             case "force" -> rm.forceStart();
             case "stop" -> {

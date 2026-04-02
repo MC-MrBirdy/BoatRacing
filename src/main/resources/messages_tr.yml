@@ -84,7 +84,9 @@ race:
   track-load-failed: "&cParkur yüklenemedi: &f{track}"
   track-not-ready: "&cParkur hazır değil: &7{requirements}"
   cannot-open-registration: "&cŞu anda kayıt açılamıyor."
+
   no-participants: "&cKayıtlı katılımcı yok. &7Önce kaydı aç: &f/{label} race open"
+  not-enough-players: "&cYarışı başlatmak için yeterli oyuncu yok. &7Gerekli: &f{min}&7, mevcut: &f{current}"
   must-be-in-team: "&cYarışa katılmak için bir takımda olmalısın."
   already-in-other-race: "&cZaten başka bir yarışta kayıtlısın veya yarışıyorsun."
   already-running: "&cYarış zaten devam ediyor."

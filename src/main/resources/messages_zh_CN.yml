@@ -83,7 +83,9 @@ race:
   track-load-failed: "&c无法载入赛道：&f{track}"
   track-not-ready: "&c赛道尚未就绪：&7{requirements}"
   cannot-open-registration: "&c目前无法开放报名。"
+
   no-participants: "&c没有已报名的参与者。&7请先开放报名：&f/{label} race open"
+  not-enough-players: "&c开始比赛所需玩家不足。&7需要: &f{min}&7，当前: &f{current}"
   must-be-in-team: "&c你必须加入队伍才能报名参赛。"
   already-in-other-race: "&c你已在另一场比赛中报名或正在比赛。"
   already-running: "&c比赛正在进行中。"

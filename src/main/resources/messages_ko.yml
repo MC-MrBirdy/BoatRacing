@@ -83,7 +83,9 @@ race:
   track-load-failed: "&c트랙 로드 실패: &f{track}"
   track-not-ready: "&c트랙이 준비되지 않았습니다: &7{requirements}"
   cannot-open-registration: "&c지금은 등록을 열 수 없습니다."
+
   no-participants: "&c등록된 참가자가 없습니다. &7먼저 등록을 열어주세요: &f/{label} race open"
+  not-enough-players: "&c레이스를 시작하기에 플레이어 수가 부족합니다. &7필요: &f{min}&7, 현재: &f{current}"
   must-be-in-team: "&c레이스에 참가하려면 팀에 속해야 합니다."
   already-in-other-race: "&c이미 다른 레이스에 등록했거나 참가 중입니다."
   already-running: "&c이미 진행 중인 레이스가 있습니다."

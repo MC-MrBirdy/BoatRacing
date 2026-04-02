@@ -33,6 +33,7 @@ racing:
   mandatory-pitstops: 0  # Number of mandatory pit stops per racer per race; 0 to disable
   pit-penalty-seconds: 5.0
   registration-seconds: 300
+  min-players-to-start: 1  # Minimum online registered players required to start; can be overridden per-track
   # Optional lobby while registration is open.
   # When enabled, players are teleported to this location when they join registration.
   # If they leave registration or the registration is cancelled, they are teleported back.
