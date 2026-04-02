@@ -1,11 +1,30 @@
 README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 
-## What to verify for 1.1.4
+## What to verify for 1.1.4-26.1-SNAPSHOT (snapshot-26.1-gui-fallback-01)
 - Versioning and docs:
-	- Project version is 1.1.4 in `pom.xml`.
+	- Project version is `1.1.4-26.1-SNAPSHOT` in `pom.xml`.
+	- `pom.xml` contains `boatracing.snapshot.name` set to `snapshot-26.1-gui-fallback-01`.
+	- `README.md` shows the `WARNING snapshot` badge and documents the temporary AnvilGUI fallback implementation plus GUI risk note.
+	- `CHANGELOG.md` contains a dedicated snapshot section for `1.1.4-26.1-SNAPSHOT`.
+	- `CHECKLIST.md` includes this snapshot validation block.
+- Paper 26.1 Anvil/GUI compatibility:
+	- Open Admin GUI anvil flows (`rename team`, `add member`, `set racer number`) and verify there is no `NoSuchMethodException` related to `CraftEventFactory.handleInventoryCloseEvent`.
+	- Open Tracks GUI create flow via anvil and verify submit/close works without runtime exceptions.
+	- Open Admin Race custom laps anvil flow and verify submit/invalid-input retry closes/reopens correctly.
+	- Open Vote GUI custom seconds anvil flow and verify submit/invalid-input retry works without event crash.
+	- During first fallback use, server log can show a single warning line from `Wrapper26_R1_Fixed`; repeated GUI operations should not spam warnings.
+- Regression sanity:
+	- On a stable older server target (for example 1.20.1), open the same anvil flows and verify no behavioral regression.
+	- Run one full race cycle (`open -> join -> start/force -> stop`) after anvil usage and verify race state remains stable.
+
+## What to verify for stable 1.1.4 promotion (already implemented in 1.1.4-26.1-SNAPSHOT)
+- Versioning and docs:
+	- Snapshot line is active while release is postponed: project version remains `1.1.4-26.1-SNAPSHOT` in `pom.xml`.
+	- When preparing the stable release, set project version to `1.1.4` in `pom.xml`.
+	- Confirm planned 1.1.4 features are already present in the snapshot build before tagging stable.
 	- `CHANGELOG.md` contains a 1.1.4 section with configurable minimum-player race start threshold, localized minimum-player message coverage, and consistent enforcement across command/GUI/auto-start paths.
 	- `CHECKLIST.md` includes this 1.1.4 validation block.
-	- `README.md` status shows 1.1.4.
+	- `README.md` states 1.1.4 is postponed/not released and snapshot 26.1 is the active publication channel.
 - Minimum players to start:
 	- `racing.min-players-to-start` exists in `config.yml` and defaults to `1`.
 	- With global `racing.min-players-to-start: 2`, try `race start` and `race force` with only 1 registered online player and verify start is blocked with `race.not-enough-players` (`{min}`/`{current}` rendered).

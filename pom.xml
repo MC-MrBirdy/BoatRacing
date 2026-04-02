@@ -6,7 +6,7 @@
 
     <groupId>es.jaie55</groupId>
     <artifactId>boatracing</artifactId>
-    <version>1.1.4</version>
+    <version>1.1.4-26.1-SNAPSHOT</version>
     <name>BoatRacing</name>
     <url>https://modrinth.com/plugin/boatracing</url>
     <description>An F1‑style ice boat racing plugin for Bukkit/Spigot with a clean, vanilla‑like GUI. Compatible with Paper/Purpur. Manage teams, configure tracks with the built‑in BoatRacing selection tool, run timed races with checkpoints, pit area penalties, and a guided setup wizard.</description>
@@ -15,6 +15,7 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <boatracing.snapshot.name>snapshot-26.1-gui-fallback-01</boatracing.snapshot.name>
     <paper.api.version>1.19.4-R0.1-SNAPSHOT</paper.api.version>
     </properties>
 
@@ -24,8 +25,8 @@
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
         <repository>
-            <id>codemc-snapshots</id>
-            <url>https://repo.codemc.io/repository/maven-snapshots/</url>
+            <id>mvn-wesjd-net</id>
+            <url>https://mvn.wesjd.net/</url>
         </repository>
         <repository>
             <id>codemc-public</id>
@@ -48,7 +49,7 @@
         <dependency>
             <groupId>net.wesjd</groupId>
             <artifactId>anvilgui</artifactId>
-            <version>1.10.11-SNAPSHOT</version>
+            <version>1.10.12-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.bstats</groupId>
@@ -65,7 +66,7 @@
     </dependencies>
 
     <build>
-    <finalName>BoatRacing</finalName>
+    <finalName>${project.name}-${project.version}</finalName>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -98,7 +99,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.6.1</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -124,6 +125,10 @@
                                         <include>net/wesjd/anvilgui/**</include>
                                         <include>org/bstats/**</include>
                                     </includes>
+                                    <excludes>
+                                        <exclude>net/wesjd/anvilgui/version/VersionMatcher.class</exclude>
+                                        <exclude>net/wesjd/anvilgui/version/VersionMatcher$1.class</exclude>
+                                    </excludes>
                                 </filter>
                             </filters>
                             <minimizeJar>false</minimizeJar>

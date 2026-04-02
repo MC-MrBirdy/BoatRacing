@@ -8,7 +8,7 @@
 <a id="en"></a>
 # BoatRacing
 
-[![Modrinth](https://img.shields.io/modrinth/v/boatracing?logo=modrinth&label=Modrinth)](https://modrinth.com/plugin/boatracing) [![Downloads](https://img.shields.io/modrinth/dt/boatracing?logo=modrinth&label=Downloads)](https://modrinth.com/plugin/boatracing) [![Minecraft](https://img.shields.io/badge/Minecraft-1.19--1.21.11-3b82f6)](https://modrinth.com/plugin/boatracing/versions) [![Java](https://img.shields.io/badge/Java-17%2B-22c55e)](https://adoptium.net/) [![Servers](https://img.shields.io/badge/Servers-Bukkit%20%7C%20Spigot%20%7C%20Paper%20%7C%20Purpur-f59e0b)](https://modrinth.com/plugin/boatracing)
+[![Modrinth](https://img.shields.io/modrinth/v/boatracing?logo=modrinth&label=Modrinth)](https://modrinth.com/plugin/boatracing) [![Downloads](https://img.shields.io/modrinth/dt/boatracing?logo=modrinth&label=Downloads)](https://modrinth.com/plugin/boatracing) [![Minecraft](https://img.shields.io/badge/Minecraft-1.19--26.1-3b82f6)](https://modrinth.com/plugin/boatracing/versions) [![Java](https://img.shields.io/badge/Java-17%2B-22c55e)](https://adoptium.net/) [![Servers](https://img.shields.io/badge/Servers-Bukkit%20%7C%20Spigot%20%7C%20Paper%20%7C%20Purpur-f59e0b)](https://modrinth.com/plugin/boatracing)
 
 [![Compatible with SimpleScore](https://img.shields.io/badge/Compatible%20with-SimpleScore-3fb950)](https://github.com/RuiPereiraDev/SimpleScore) [![Compatible with TAB](https://img.shields.io/badge/Compatible%20with-TAB-3fb950)](https://github.com/NEZNAMY/TAB)
 
@@ -18,14 +18,34 @@
 
 An F1‒style ice boat racing plugin for Bukkit/Spigot (compatible with Paper/Purpur) with a clean, vanilla‒like GUI. Manage teams, configure tracks with the built‒in BoatRacing selection tool, run timed races with checkpoints, pit area penalties, and a guided setup wizard.
 
-> Status: Public release (1.1.4)
+> Status: Snapshot build (1.1.4-26.1-SNAPSHOT)
+> Stable 1.1.4 is not published yet (postponed due to a GUI/Anvil compatibility issue on Paper 26.1).
+
+<a id="snapshot-261-warning"></a>
+> [!WARNING]
+> Snapshot name: **snapshot-26.1-gui-fallback-01**
+> Snapshot only for Paper 26.1.
+> If your server version is not 26.1, please wait for the stable release.
+> This build includes a temporary reflective fallback implementation for AnvilGUI, and some GUI/Anvil flows may still contain errors on certain server builds or forks.
+
+<details>
+<summary><strong>Snapshot 26.1 Note (snapshot-26.1-gui-fallback-01)</strong></summary>
+
+- Snapshot target: Paper 26.1 first validation build.
+- Implementation type: temporary reflective fallback for AnvilGUI close-event compatibility (`handleInventoryCloseEvent`).
+- Known risk: GUI/anvil interactions may still fail on some 26.1 dev builds and non-Paper forks.
+- Plan: keep this fallback until an official AnvilGUI release ships a stable 26.1 close-event fix.
+
+</details>
 
 See the changelog in [CHANGELOG.md](https://github.com/Jaie55/BoatRacing/blob/main/CHANGELOG.md).
 
 This is how we test the plugin to validate its behavior after each update: see the QA checklist in [CHECKLIST.md](CHECKLIST.md)
 
 <details>
-<summary><strong>What's New (1.1.4)</strong></summary>
+<summary><strong>Included in 1.1.4-26.1-SNAPSHOT (planned 1.1.4 features)</strong></summary>
+
+These planned 1.1.4 changes are already implemented in this snapshot build. The stable `1.1.4` tag is postponed until the GUI/Anvil compatibility path is fully stabilized.
 
 Minimum-player race start controls:
 - **Configurable minimum racers to start**: race start now respects `racing.min-players-to-start` (global), with optional per-track override in `tracks/<name>.yml` under `racing.min-players-to-start`.

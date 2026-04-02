@@ -1,15 +1,25 @@
 # Changelog
 
-## 1.1.4 — 2026-04-02
+## 1.1.4-26.1-SNAPSHOT (snapshot-26.1-gui-fallback-01) — 2026-04-02
 ### Added
+- **Snapshot channel for Paper 26.1 validation**: introduced the first 26.1 snapshot build named `snapshot-26.1-gui-fallback-01`.
+- **Snapshot warning docs/badges**: README now includes explicit `WARNING snapshot` and implementation/risk badges for this build stream.
 - **Configurable minimum racers to start**: added `racing.min-players-to-start` as a global race-start threshold, with per-track override support via `tracks/<name>.yml` under `racing.min-players-to-start`.
 - **Localized minimum-player warning**: added `race.not-enough-players` to bundled language files to report required/current participant counts when start is blocked.
 
+### Changed
+- **Project versioning for pre-release**: project version moved to `1.1.4-26.1-SNAPSHOT` in `pom.xml`.
+- **Stable tag status**: stable `1.1.4` publication is postponed due to the Paper 26.1 GUI/Anvil compatibility issue; the planned 1.1.4 feature set is delivered in this snapshot channel.
+
 ### Fixed
+- **Paper 26.1 Anvil close-event compatibility**: added a custom AnvilGUI version-matcher path plus `Wrapper26_R1_Fixed` fallback implementation that probes compatible `handleInventoryCloseEvent` signatures and applies a safe close-container fallback when upstream signature assumptions fail.
 - **Race start gating consistency**: `start`, `force`, admin race GUI start, and registration timeout auto-start now consistently enforce the configured minimum-player threshold before race launch.
 
 ### Docs
 - **Minimum-player start docs**: README/CHECKLIST now document `racing.min-players-to-start`, per-track override behavior, and validation expectations for blocked starts.
+
+### Known Issues
+- **GUI risk on evolving 26.1 builds**: because this snapshot relies on reflective compatibility over unstable internals, some GUI/Anvil flows can still fail on certain Paper 26.1 dev builds or non-Paper forks.
 
 ## 1.1.3 — 2026-03-30
 ### Added
