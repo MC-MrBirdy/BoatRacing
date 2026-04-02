@@ -1,5 +1,19 @@
 README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 
+## What to verify for 1.1.4
+- Versioning and docs:
+	- Project version is 1.1.4 in `pom.xml`.
+	- `CHANGELOG.md` contains a 1.1.4 section with configurable minimum-player race start threshold, localized minimum-player message coverage, and consistent enforcement across command/GUI/auto-start paths.
+	- `CHECKLIST.md` includes this 1.1.4 validation block.
+	- `README.md` status shows 1.1.4.
+- Minimum players to start:
+	- `racing.min-players-to-start` exists in `config.yml` and defaults to `1`.
+	- With global `racing.min-players-to-start: 2`, try `race start` and `race force` with only 1 registered online player and verify start is blocked with `race.not-enough-players` (`{min}`/`{current}` rendered).
+	- With the same global setting (`2`), let registration timeout auto-start with only 1 registered player and verify race does not start and cancellation feedback uses `race.not-enough-players`.
+	- Verify Admin Race GUI start button also respects the same threshold.
+	- Add `racing.min-players-to-start: 3` in `tracks/<name>.yml` while global stays `2` and verify per-track override takes precedence.
+	- Verify `race.not-enough-players` exists and renders in bundled EN/ES and at least one community locale.
+
 ## What to verify for 1.1.3
 - Versioning and docs:
 	- Project version is 1.1.3 in `pom.xml`.

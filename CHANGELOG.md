@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.4 — 2026-04-02
+### Added
+- **Configurable minimum racers to start**: added `racing.min-players-to-start` as a global race-start threshold, with per-track override support via `tracks/<name>.yml` under `racing.min-players-to-start`.
+- **Localized minimum-player warning**: added `race.not-enough-players` to bundled language files to report required/current participant counts when start is blocked.
+
+### Fixed
+- **Race start gating consistency**: `start`, `force`, admin race GUI start, and registration timeout auto-start now consistently enforce the configured minimum-player threshold before race launch.
+
+### Docs
+- **Minimum-player start docs**: README/CHECKLIST now document `racing.min-players-to-start`, per-track override behavior, and validation expectations for blocked starts.
+
 ## 1.1.3 — 2026-03-30
 ### Added
 - **Parallel race sessions by track**: race lifecycle commands now operate per track session, allowing multiple tracks to run registration/races at the same time.

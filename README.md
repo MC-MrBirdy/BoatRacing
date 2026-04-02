@@ -18,11 +18,21 @@
 
 An F1‒style ice boat racing plugin for Bukkit/Spigot (compatible with Paper/Purpur) with a clean, vanilla‒like GUI. Manage teams, configure tracks with the built‒in BoatRacing selection tool, run timed races with checkpoints, pit area penalties, and a guided setup wizard.
 
-> Status: Public release (1.1.3)
+> Status: Public release (1.1.4)
 
 See the changelog in [CHANGELOG.md](https://github.com/Jaie55/BoatRacing/blob/main/CHANGELOG.md).
 
 This is how we test the plugin to validate its behavior after each update: see the QA checklist in [CHECKLIST.md](CHECKLIST.md)
+
+<details>
+<summary><strong>What's New (1.1.4)</strong></summary>
+
+Minimum-player race start controls:
+- **Configurable minimum racers to start**: race start now respects `racing.min-players-to-start` (global), with optional per-track override in `tracks/<name>.yml` under `racing.min-players-to-start`.
+- **Localized minimum-player feedback**: when a start is blocked by this threshold, players/admins receive the language message key `race.not-enough-players` with `{min}` and `{current}` values.
+- **Consistent enforcement across all start paths**: command `start`, command `force`, admin race GUI start, and registration timeout auto-start all use the same minimum-player check.
+
+</details>
 
 <details>
 <summary><strong>What's New (1.1.3)</strong></summary>
@@ -373,6 +383,8 @@ Race behavior:
 - `/boatracing race vote` without `<track>` opens the vote UI when a map vote is active (same behavior as `/boatracing race voteui`).
 - `/boatracing race voteopen ...` now announces a clickable vote UI action in chat that runs `/boatracing race voteui`.
 - `start` and `force` use registered players only.
+- `start`, `force`, GUI start, and registration timeout auto-start require at least `racing.min-players-to-start` online registered players.
+- The minimum start threshold defaults to `1`, can be overridden per track via `tracks/<name>.yml` (`racing.min-players-to-start`), and shows `race.not-enough-players` when not met.
 - Grid order is: custom start slot bindings first, then best recorded track times, then players without a recorded time.
 - Boats are spawned using each player’s selected boat type with cross-version-safe material resolution.
 - If checkpoints exist, a lap only counts once all checkpoints have been collected in order.
@@ -484,6 +496,7 @@ Global racing defaults:
 - `racing.mandatory-pitstops`
 - `racing.pit-penalty-seconds`
 - `racing.registration-seconds`
+- `racing.min-players-to-start`
 - `racing.false-start-penalty-seconds`
 - `racing.enable-pit-penalty`
 - `racing.enable-false-start-penalty`
@@ -524,9 +537,11 @@ Rewards:
 Message templates:
 - Registration announce text is language-specific and lives in `messages_<lang>.yml` under `race.registration.announce`.
 - That template supports `{track}`, `{laps}`, `{cmd}`, and `{label}`.
+- Minimum-player start warning is language-specific under `race.not-enough-players` and supports `{min}` and `{current}`.
 
 Per-track overrides:
 - Track files under `plugins/BoatRacing/tracks/<name>.yml` can override `racing.*` values.
+- Common override example: `racing.min-players-to-start` for tracks that require larger grids.
 - `setup show` prints the active override set for the current track.
 
 ## Updates and Metrics
