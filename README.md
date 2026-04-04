@@ -18,7 +18,7 @@
 
 An F1‒style ice boat racing plugin for Bukkit/Spigot (compatible with Paper/Purpur) with a clean, vanilla‒like GUI. Manage teams, configure tracks with the built‒in BoatRacing selection tool, run timed races with checkpoints, pit area penalties, and a guided setup wizard.
 
-> Status: 1.1.4
+> Status: Public release (1.1.4)
 
 <a id="snapshot-261-warning"></a>
 > [!WARNING]
