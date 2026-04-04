@@ -47,8 +47,8 @@ This is how we test the plugin to validate its behavior after each update: see t
 
 This 1.1.4 release combines everything delivered in `snapshot-26.1-gui-fallback-01` plus the final release additions.
 
-- **Added (NEW 1.1.4)**: track best-record placeholders by token `%boatracing_track_best_player_<track>%`, `%boatracing_track_best_time_<track>%`, and `%boatracing_track_best_time_ms_<track>%` for per-track record labels.
-- **Added (NEW 1.1.4)**: track top-3 placeholders by token `%boatracing_track_top_1_*_<track>%`, `%boatracing_track_top_2_*_<track>%`, and `%boatracing_track_top_3_*_<track>%` (`player`, `time`, `time_ms`) for podium/leaderboard layouts.
+- **Added**: track best-record placeholders by token `%boatracing_track_best_player_<track>%`, `%boatracing_track_best_time_<track>%`, and `%boatracing_track_best_time_ms_<track>%` for per-track record labels.
+- **Added**: track top-3 placeholders by token `%boatracing_track_top_1_*_<track>%`, `%boatracing_track_top_2_*_<track>%`, and `%boatracing_track_top_3_*_<track>%` (`player`, `time`, `time_ms`) for podium/leaderboard layouts.
 - **Changed**: includes the Paper 26.1 GUI/Anvil reflective compatibility path introduced during the snapshot validation cycle.
 - **Changed**: race start respects `racing.min-players-to-start` (global), with optional per-track override in `tracks/<name>.yml` under `racing.min-players-to-start`.
 - **Changed**: blocked starts use language key `race.not-enough-players` with `{min}` and `{current}` and enforce the same threshold across `start`, `force`, admin race GUI start, and registration timeout auto-start.
