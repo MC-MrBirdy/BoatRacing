@@ -294,7 +294,8 @@ public class SetupWizard {
             "checkpoints", t.getCheckpoints().size(),
             "custom_slots", t.getCustomStartSlots().size())));
         String cur = (plugin.getTrackLibrary() != null && plugin.getTrackLibrary().getCurrent() != null) ? plugin.getTrackLibrary().getCurrent() : null;
-        String openCmd = cur != null ? "/boatracing race open " + cur : "/boatracing race open <track>";
+        // If no named track is selected yet, use the in-memory unsaved track instead of a placeholder token.
+        String openCmd = (cur != null && !cur.isBlank()) ? "/boatracing race open " + cur : "/boatracing race open unsaved";
         p.sendMessage(Text.c(plugin.msg().get("setup.next-label"))
             .append(Text.cmd(plugin.msg().get("setup.btn-open-registration"), openCmd))
             .append(Text.c(plugin.msg().get("setup.details-label")))

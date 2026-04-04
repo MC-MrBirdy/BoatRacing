@@ -5,6 +5,7 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 	- Project version is `1.1.4-26.1-SNAPSHOT` in `pom.xml`.
 	- `pom.xml` contains `boatracing.snapshot.name` set to `snapshot-26.1-gui-fallback-01`.
 	- `README.md` shows the `WARNING snapshot` badge and documents the temporary AnvilGUI fallback implementation plus GUI risk note.
+	- `README.md` placeholder table marks the new 1.1.4 track record placeholders with `NEW (1.1.4)`.
 	- `CHANGELOG.md` contains a dedicated snapshot section for `1.1.4-26.1-SNAPSHOT`.
 	- `CHECKLIST.md` includes this snapshot validation block.
 - Paper 26.1 Anvil/GUI compatibility:
@@ -32,6 +33,21 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 	- Verify Admin Race GUI start button also respects the same threshold.
 	- Add `racing.min-players-to-start: 3` in `tracks/<name>.yml` while global stays `2` and verify per-track override takes precedence.
 	- Verify `race.not-enough-players` exists and renders in bundled EN/ES and at least one community locale.
+- Track record placeholders by token (NEW 1.1.4):
+	- `%boatracing_track_best_player_<track>%`, `%boatracing_track_best_time_<track>%`, and `%boatracing_track_best_time_ms_<track>%` resolve using the requested track token (not only the currently selected track).
+	- `%boatracing_track_top_1_player_<track>%`, `%boatracing_track_top_1_time_<track>%`, `%boatracing_track_top_1_time_ms_<track>%` resolve correctly for the fastest record on that track.
+	- `%boatracing_track_top_2_player_<track>%`, `%boatracing_track_top_2_time_<track>%`, `%boatracing_track_top_2_time_ms_<track>%` resolve correctly for second place when present.
+	- `%boatracing_track_top_3_player_<track>%`, `%boatracing_track_top_3_time_<track>%`, `%boatracing_track_top_3_time_ms_<track>%` resolve correctly for third place when present.
+	- For tracks without enough records, text placeholders return `-` and `_ms` placeholders return `-1`.
+	- `README.md` shows these rows tagged with `NEW (1.1.4)` in the placeholder table.
+- Scoreboard tie-break by checkpoint arrival order (NEW 1.1.4):
+	- With 2 racers on the same lap, if racer A reaches `CP 3/5` while racer B is still `CP 2/5`, racer A appears ahead.
+	- When racer B later reaches the same `CP 3/5`, racer A must stay ahead (no swap) because racer A entered that checkpoint first.
+	- Order only changes when racer B actually advances progression (for example reaches `CP 4/5` or higher race state).
+	- `%boatracing_player_current_position%` matches the same ordering shown in the race sidebar.
+- Setup Wizard open-registration fallback (FIX):
+	- In wizard Done step, when working on in-memory track (no named track selected), clicking `[Open registration]` runs `/boatracing race open unsaved`.
+	- Confirm wizard never emits `/boatracing race open <track>` literal token and no `track not found <track>` appears.
 
 ## What to verify for 1.1.3
 - Versioning and docs:
@@ -241,7 +257,7 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 	- Configure 5 start lights and set `racing.lights-out-delay-seconds` (e.g., 1.0) and `racing.lights-out-jitter-seconds` (e.g., 0.5–1.5).
 	- Start a race and observe after the 5th light: GO occurs after the fixed delay plus a small random jitter (0..value seconds).
 - Sidebar leaderboard (top‑10):
-	- During a race, the sidebar shows up to 10 positions sorted by: finished (time), lap desc, checkpoint desc, then total time asc.
+	- During a race, the sidebar shows up to 10 positions sorted by: finished (time), lap desc, checkpoint desc, checkpoint-arrival order (first in stays ahead), then total time asc as final fallback.
 	- Finished entries show “FINISHED <time>”. Unfinished show “Lap <curr>/<total>  [CP <done>/<total>]”.
 	- The entire " - Lap X/Y [CP]" segment is centered; names are left‑aligned with compact/dynamic padding. Truncated names (with “...”) do not add extra padding after the ellipsis.
 	- Right‑side vanilla numbers are hidden when supported by the server (Paper 1.20.5+).

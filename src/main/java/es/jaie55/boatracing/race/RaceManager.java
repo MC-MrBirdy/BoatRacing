@@ -25,6 +25,7 @@ public class RaceManager {
     public static class RaceState {
         public int lap = 0;
         public int nextCheckpoint = 0;
+        public long progressOrder = Long.MAX_VALUE;
         public boolean finished = false;
         public long finishTime = -1L; // millis
         public long penaltyMillis = 0L;
@@ -107,6 +108,7 @@ public class RaceManager {
     private final Map<Integer, Map<Integer, Long>> sectorLeaderTimes = new HashMap<>();
     // Leader finish time per lap
     private final Map<Integer, Long> lapLeaderFinishTimes = new HashMap<>();
+    private long progressOrderCounter = 0L;
 
     public RaceManager(BoatRacingPlugin plugin, TrackConfig track) {
         this(plugin, track, null);
@@ -214,8 +216,7 @@ public class RaceManager {
     public int getLivePosition(UUID playerId) {
         RaceState target = states.get(playerId);
         if (target == null) return 0;
-        List<Map.Entry<UUID, RaceState>> list = new ArrayList<>(states.entrySet());
-        list.sort(Comparator.comparingLong(e -> timeFor(e.getValue())));
+        List<Map.Entry<UUID, RaceState>> list = getOrderedRaceEntries();
         for (int i = 0; i < list.size(); i++) {
             if (list.get(i).getKey().equals(playerId)) return i + 1;
         }
@@ -231,8 +232,9 @@ public class RaceManager {
         running = true;
         startTime = System.currentTimeMillis();
         states.clear();
-    sectorLeaderTimes.clear();
-    lapLeaderFinishTimes.clear();
+        sectorLeaderTimes.clear();
+        lapLeaderFinishTimes.clear();
+        progressOrderCounter = 0L;
         for (Player p : participants) {
             if (trySimpleScoreHide(p)) {
                 simpleScoreHiddenByBoatRacing.add(p.getUniqueId());
@@ -241,6 +243,7 @@ public class RaceManager {
             Long pre = enableFalseStartPenalty ? preStartPenalties.remove(p.getUniqueId()) : null;
             if (pre != null && pre > 0) st.penaltyMillis += pre;
             st.lastLapSplitMillis = 0L;
+            st.progressOrder = nextProgressOrder();
             states.put(p.getUniqueId(), st);
             setupPlayerBoard(p);
             pitCount.put(p.getUniqueId(), 0);
@@ -293,6 +296,7 @@ public class RaceManager {
             if (inside && !st.wasInCheckpoint) {
                 st.wasInCheckpoint = true;
                 st.nextCheckpoint++;
+                st.progressOrder = nextProgressOrder();
                 p.sendMessage(color(plugin.pref() + plugin.msg().get("race.checkpoint-reached", "num", String.valueOf(st.nextCheckpoint), "total", String.valueOf(track.getCheckpoints().size()))));
                 p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.7f, 1.4f);
                 // Sector gap broadcast
@@ -365,6 +369,7 @@ public class RaceManager {
                 st.lastLapSplitMillis = lapFinishMs;
                 st.lap++;
                 st.nextCheckpoint = 0;
+                st.progressOrder = nextProgressOrder();
                 st.wasInCheckpoint = false;
                 if (plugin.getStatsManager() != null && lapDurationMs > 0) {
                     plugin.getStatsManager().updatePlayerBestLap(p.getUniqueId(), lapDurationMs);
@@ -495,6 +500,38 @@ public class RaceManager {
     private long timeFor(RaceState s) {
         if (s.finishTime >= 0) return s.finishTime;
         return (System.currentTimeMillis() - startTime) + s.penaltyMillis;
+    }
+
+    private long nextProgressOrder() {
+        return ++progressOrderCounter;
+    }
+
+    private int compareRaceEntries(Map.Entry<UUID, RaceState> a, Map.Entry<UUID, RaceState> b) {
+        RaceState sa = a.getValue();
+        RaceState sb = b.getValue();
+
+        if (sa.finished && sb.finished) {
+            int byFinish = Long.compare(sa.finishTime, sb.finishTime);
+            if (byFinish != 0) return byFinish;
+        }
+        if (sa.finished != sb.finished) return sa.finished ? -1 : 1;
+
+        if (sa.lap != sb.lap) return Integer.compare(sb.lap, sa.lap);
+        if (sa.nextCheckpoint != sb.nextCheckpoint) return Integer.compare(sb.nextCheckpoint, sa.nextCheckpoint);
+
+        int byProgress = Long.compare(sa.progressOrder, sb.progressOrder);
+        if (byProgress != 0) return byProgress;
+
+        int byTime = Long.compare(timeFor(sa), timeFor(sb));
+        if (byTime != 0) return byTime;
+
+        return a.getKey().compareTo(b.getKey());
+    }
+
+    private List<Map.Entry<UUID, RaceState>> getOrderedRaceEntries() {
+        List<Map.Entry<UUID, RaceState>> ordered = new ArrayList<>(states.entrySet());
+        ordered.sort(this::compareRaceEntries);
+        return ordered;
     }
 
     private static String formatSeconds(long millis) {
@@ -1284,16 +1321,7 @@ public class RaceManager {
         if (scoreboardTask != null) return;
         scoreboardTask = SchedulerCompat.runTimer(plugin, () -> {
             // Build global ordering once per tick
-            List<Map.Entry<UUID, RaceState>> ordered = new ArrayList<>(states.entrySet());
-            ordered.sort((a, b) -> {
-                RaceState sa = a.getValue();
-                RaceState sb = b.getValue();
-                if (sa.finished && sb.finished) return Long.compare(sa.finishTime, sb.finishTime);
-                if (sa.finished != sb.finished) return sa.finished ? -1 : 1;
-                if (sa.lap != sb.lap) return Integer.compare(sb.lap, sa.lap);
-                if (sa.nextCheckpoint != sb.nextCheckpoint) return Integer.compare(sb.nextCheckpoint, sa.nextCheckpoint);
-                return Long.compare(timeFor(sa), timeFor(sb));
-            });
+            List<Map.Entry<UUID, RaceState>> ordered = getOrderedRaceEntries();
 
             int totalCPs = track.getCheckpoints().size();
 

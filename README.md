@@ -43,14 +43,18 @@ See the changelog in [CHANGELOG.md](https://github.com/Jaie55/BoatRacing/blob/ma
 This is how we test the plugin to validate its behavior after each update: see the QA checklist in [CHECKLIST.md](CHECKLIST.md)
 
 <details>
-<summary><strong>Included in 1.1.4-26.1-SNAPSHOT (planned 1.1.4 features)</strong></summary>
+<summary><strong>What's New (1.1.4)</strong></summary>
 
-These planned 1.1.4 changes are already implemented in this snapshot build. The stable `1.1.4` tag is postponed until the GUI/Anvil compatibility path is fully stabilized.
+This 1.1.4 release combines everything delivered in `snapshot-26.1-gui-fallback-01` plus the final release additions.
 
-Minimum-player race start controls:
-- **Configurable minimum racers to start**: race start now respects `racing.min-players-to-start` (global), with optional per-track override in `tracks/<name>.yml` under `racing.min-players-to-start`.
-- **Localized minimum-player feedback**: when a start is blocked by this threshold, players/admins receive the language message key `race.not-enough-players` with `{min}` and `{current}` values.
-- **Consistent enforcement across all start paths**: command `start`, command `force`, admin race GUI start, and registration timeout auto-start all use the same minimum-player check.
+- **Added (NEW 1.1.4)**: track best-record placeholders by token `%boatracing_track_best_player_<track>%`, `%boatracing_track_best_time_<track>%`, and `%boatracing_track_best_time_ms_<track>%` for per-track record labels.
+- **Added (NEW 1.1.4)**: track top-3 placeholders by token `%boatracing_track_top_1_*_<track>%`, `%boatracing_track_top_2_*_<track>%`, and `%boatracing_track_top_3_*_<track>%` (`player`, `time`, `time_ms`) for podium/leaderboard layouts.
+- **Changed**: includes the Paper 26.1 GUI/Anvil reflective compatibility path introduced during the snapshot validation cycle.
+- **Changed**: race start respects `racing.min-players-to-start` (global), with optional per-track override in `tracks/<name>.yml` under `racing.min-players-to-start`.
+- **Changed**: blocked starts use language key `race.not-enough-players` with `{min}` and `{current}` and enforce the same threshold across `start`, `force`, admin race GUI start, and registration timeout auto-start.
+- **Fixed**: scoreboard tie-break by checkpoint arrival; on the same lap/checkpoint, the racer who entered first remains ahead (no equal-checkpoint swap).
+- **Fixed**: setup wizard Done step now uses `/boatracing race open unsaved` when no named track is selected, avoiding the invalid `/boatracing race open <track>` placeholder token.
+- **Docs**: README marks track record placeholder rows as `NEW (1.1.4)` and CHECKLIST includes explicit validation steps.
 
 </details>
 
@@ -126,7 +130,7 @@ Previous versions:
 <summary><strong>What's New (1.0.9)</strong></summary>
 
 Compatibility and fixes:
-- Official support: Bukkit/Spigot/Paper/Purpur 1.19 → 1.21.11. Requires Java 17+.
+- Official support: Bukkit/Spigot/Paper/Purpur 1.19 → 26.1.1. Requires Java 17+.
 - Safer boat types across versions: dynamic Material resolution for boats/rafts (including Bamboo Raft and Pale Oak variants) avoids NoSuchFieldError on older APIs and removes CraftLegacy warnings.
 - Classified as a Bukkit/Spigot plugin on Paper (paper-plugin.yml excluded from the JAR). Paper-only APIs replaced with Bukkit-safe calls.
 - Docs: README, CHANGELOG and QA checklist updated (EN/ES).
@@ -603,6 +607,7 @@ Resolution rules:
 - `%boatracing_player_*_<player>%` uses an explicit player name or UUID and is ideal for NPCs and static holograms.
 - Team leader placeholders always resolve the current saved leader of that team.
 - Track-scoped race placeholders (`%boatracing_track_race_*_<track>%`) resolve against the race session of the requested track.
+- Track-scoped best-record placeholders (`%boatracing_track_best_*_<track>%`) resolve against the requested track token, not only the currently selected track.
 - Compatibility aliases are available: `%boatracing_track_racerunning_<track>%` and `%boatracing_track_raceregistering_<track>%`.
 - For track-scoped race placeholders, tracks without an active session resolve as `false` (`running`/`registering`) or `idle` (`status`).
 - `<track>` tokens support underscores for spaces (for example `My_Track`).
@@ -643,6 +648,10 @@ Resolution rules:
 |---|---|---|---|
 | `%boatracing_teams_count%` / `%boatracing_teams_list%` | Total number of teams and the team list | `Teams: 4` / `Teams: Sharks, Rockets, Drift, Wave` | Same for every viewer |
 | `%boatracing_track_name%` / `%boatracing_track_best_player%` / `%boatracing_track_best_time%` | Current track name and its best record | `Track: harbor` / `Track record: jaie55 - 0:58.772` | Same for every viewer |
+| `%boatracing_track_best_player_<track>%` / `%boatracing_track_best_time_<track>%` / `%boatracing_track_best_time_ms_<track>%` | Best record for a specific track token **NEW (1.1.4)** | `%boatracing_track_best_time_harbor%` -> `0:58.772` / `%boatracing_track_best_player_harbor%` -> `jaie55` | Same for every viewer |
+| `%boatracing_track_top_1_player_<track>%` / `%boatracing_track_top_1_time_<track>%` / `%boatracing_track_top_1_time_ms_<track>%` | Track top 1 holder and time **NEW (1.1.4)** | `%boatracing_track_top_1_player_harbor%` -> `jaie55` / `%boatracing_track_top_1_time_harbor%` -> `0:58.772` | Same for every viewer |
+| `%boatracing_track_top_2_player_<track>%` / `%boatracing_track_top_2_time_<track>%` / `%boatracing_track_top_2_time_ms_<track>%` | Track top 2 holder and time **NEW (1.1.4)** | `%boatracing_track_top_2_player_harbor%` -> `KiluGod` / `%boatracing_track_top_2_time_harbor%` -> `1:00.120` | Same for every viewer |
+| `%boatracing_track_top_3_player_<track>%` / `%boatracing_track_top_3_time_<track>%` / `%boatracing_track_top_3_time_ms_<track>%` | Track top 3 holder and time **NEW (1.1.4)** | `%boatracing_track_top_3_player_harbor%` -> `RacerX` / `%boatracing_track_top_3_time_harbor%` -> `1:01.004` | Same for every viewer |
 | `%boatracing_top_player_wins_name%` / `%boatracing_top_player_wins%` | Player with most wins | `Top wins: jaie55 (29)` | Same for every viewer |
 | `%boatracing_top_team_wins_name%` / `%boatracing_top_team_wins%` | Team with most wins | `Top team: Sharks (77)` | Same for every viewer |
 | `%boatracing_top_player_best_race_name%` / `%boatracing_top_player_best_race%` | Best race holder and time | `Best race: KiluGod - 1:38.404` | Same for every viewer |

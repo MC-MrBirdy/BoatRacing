@@ -1,6 +1,18 @@
-# Changelog
+﻿# Changelog
 
-## 1.1.4-26.1-SNAPSHOT (snapshot-26.1-gui-fallback-01) — 2026-04-02
+## 1.1.4 — 04/04/2026
+### Added
+- **Track best-record placeholders by token (NEW 1.1.4)**: `%boatracing_track_best_player_<track>%`, `%boatracing_track_best_time_<track>%`, and `%boatracing_track_best_time_ms_<track>%` for per-track record labels in static scoreboards/holograms.
+- **Track top-3 placeholders by token (NEW 1.1.4)**: `%boatracing_track_top_1_*_<track>%`, `%boatracing_track_top_2_*_<track>%`, and `%boatracing_track_top_3_*_<track>%` (`player`, `time`, `time_ms`) for podium/leaderboard layouts per track.
+
+### Fixed
+- **Scoreboard tie-break by checkpoint arrival order**: when racers are on the same lap and same checkpoint count, the one who reached that checkpoint first stays ahead. This avoids position swaps on equal checkpoint entry.
+- **Setup wizard open-registration fallback command**: if no named track is selected yet, wizard Done now uses `/boatracing race open unsaved` instead of an invalid placeholder token (`/boatracing race open <track>`), preventing `track not found <track>`.
+
+### Docs
+- **Placeholder docs for 1.1.4**: README placeholder table now marks `%boatracing_track_best_*_<track>%` and `%boatracing_track_top_1..3_*_<track>%` as `NEW (1.1.4)`, and CHECKLIST includes explicit QA checks for these placeholders.
+
+## 1.1.4-26.1-SNAPSHOT (snapshot-26.1-gui-fallback-01) — 02/04/2026
 ### Added
 - **Snapshot channel for Paper 26.1 validation**: introduced the first 26.1 snapshot build named `snapshot-26.1-gui-fallback-01`.
 - **Snapshot warning docs/badges**: README now includes explicit `WARNING snapshot` and implementation/risk badges for this build stream.
@@ -21,7 +33,7 @@
 ### Known Issues
 - **GUI risk on evolving 26.1 builds**: because this snapshot relies on reflective compatibility over unstable internals, some GUI/Anvil flows can still fail on certain Paper 26.1 dev builds or non-Paper forks.
 
-## 1.1.3 — 2026-03-30
+## 1.1.3 — 30/03/2026
 ### Added
 - **Parallel race sessions by track**: race lifecycle commands now operate per track session, allowing multiple tracks to run registration/races at the same time.
 - **Map vote commands**: added `/boatracing race voteopen <track1> <track2> [seconds]`, `/boatracing race vote <track>`, `/boatracing race voteui`, `/boatracing race votestatus`, and `/boatracing race voteclose`.
@@ -39,7 +51,7 @@
 - **QA additions for 1.1.3**: CHECKLIST now includes explicit validation steps for track-scoped placeholders and selected boat variant spawn reliability.
 - **Rewards schema guidance**: README/CHECKLIST now document reward command compatibility and recommend explicit `commands: []` in each position block.
 
-## 1.1.2 — 2026-03-29
+## 1.1.2 — 29/03/2026
 ### Added
 - **PlaceholderAPI integration**: BoatRacing now registers `%boatracing_*%` placeholders for holograms/scoreboards.
 - **Persistent aggregate stats**: new `stats.yml` storage for player wins, team wins, best race, and best lap values used by placeholders.
@@ -68,7 +80,7 @@
 - **Placeholder reference added**: README now documents available `%boatracing_*%` placeholders and team lookup formats.
 - **Lobby-back docs updated**: README and QA checklist now document the clickable `race back` flow and 3-minute return window as part of 1.1.2.
 
-## 1.1.1 — 2026-03-13
+## 1.1.1 — 13/03/2026
 ### Added
 - **Registration lobby mechanic (optional)**: new `racing.lobby.*` config block to send registered players to a lobby location while registration is open, with optional return to their previous location on leave/cancel.
 - **Lobby setup command**: added `/boatracing setup setlobby` to save the admin's current position as the registration lobby and enable it instantly.
@@ -91,7 +103,7 @@
 - **Explicit SimpleScore compatibility note**: docs now explicitly list compatibility with SimpleScore (GitHub: https://github.com/RuiPereiraDev/SimpleScore, Modrinth: https://modrinth.com/plugin/simplescore).
 - **Explicit TAB compatibility note**: docs now explicitly list compatibility with TAB (GitHub: https://github.com/NEZNAMY/TAB, Modrinth: https://modrinth.com/plugin/tab-was-taken).
 
-## 1.1.0 — 2026-03-12
+## 1.1.0 — 12/03/2026
 ### Added
 - **Multi-language support**: messages system now supports English (default) and Español (España). Configure the language in config.yml via the `language` setting ("en" or "es"). All user-facing text is externalized in messages_en.yml or messages_es.yml (stored in the plugin data folder after first run).
 - **New community translations**: added Traditional Chinese (`messages_zh_TW.yml`) and Russian (`messages_ru.yml`) language files. Both include a clear warning that they are unofficial translations and should be reviewed.
@@ -113,7 +125,7 @@
 - CHANGELOG and CHECKLIST updated for 1.1.0 with full feature list and verification steps.
 - Version number incremented from 1.0.9 to 1.1.0.
 
-## 1.0.9 — 2025-08-19
+## 1.0.9 — 19/08/2025
 ### Added / Changed
 - Official support range declared: 1.19 → 1.21.11 (Bukkit/Spigot compatible; works on Paper/Purpur). Requires Java 17+; plugin.yml api-version set to 1.19.
 - Documented supported servers: Purpur, Paper, Spigot, CraftBukkit (Bukkit-compatible forks may work; Folia/Sponge/Forge hybrids not supported).
@@ -125,7 +137,7 @@
 - Boat/Raft materials on mixed APIs: dynamic Material resolution for boat/raft variants (including Bamboo Raft and Pale Oak) removes NoSuchFieldError on older bases and avoids CraftLegacy warnings.
 - Command metadata on Spigot: restored by replacing Paper-only `getPluginMeta()` with Bukkit `getDescription()`.
 
-## 1.0.8 — 2025-08-16
+## 1.0.8 — 19/08/2025
 ### Added
 - Config toggles to customize the sidebar and ActionBar visibility:
 	- `racing.ui.scoreboard.show-position|show-lap|show-checkpoints|show-pitstops|show-name`
@@ -151,7 +163,7 @@
  - Setup Wizard (Pit): no longer repeats waiting for team pits when a default pit exists; the wizard now advances to Checkpoints automatically (team pits remain optional).
  - Updater: fixed missing console notice; now logs a WARN once on startup (if outdated) and also every hour while outdated. When an admin joins, a quick check runs (throttled) to notify them within seconds if a new update was just published.
 
-## 1.0.7 — 2025-08-15
+## 1.0.7 — 15/08/2025
 ### Changed
 - Update checks: removed periodic console spam; keep a single WARN shortly after startup when outdated (honors `updates.console-warn`). Periodic 5‑minute checks remain silent.
  - Scoreboard: redesigned layout with centered rows, compact labels, rank colors, and viewer highlight.
@@ -169,7 +181,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 ## [Unreleased]
 
-## [1.0.6] - 2025-08-14
+## [1.0.6] - 14/08/2025
 ### Added
 - Leaderboard sidebar: top‑10 live positions; personal stats moved to ActionBar.
 - Configurable start “lights out” delay via `racing.lights-out-delay-seconds` to slow down the transition from all lit to GO.
@@ -185,7 +197,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
  - Display name handling: prefer EssentialsX displayName when available and strip leading wrappers like [Rank]/(Rank)/{Rank} and punctuation for alignment.
 
 
-## [1.0.5] - 2025-08-13
+## [1.0.5] - 13/08/2025
 ### Fixed
 - Team member persistence: no members are lost after updates/reloads/startup; loader now restores members without enforcing capacity constraints.
 - Setup pit command: `/boatracing setup setpit [team]` now supports team names with spaces by quoting them (e.g., "/boatracing setup setpit \"Toast Peace\""); tab‑completion suggests quoted names when the input starts with a quote.
@@ -193,7 +205,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 - Boat/raft type: placed vehicles now match the racer’s selected wood variant (including chest variants); no longer always spawns OAK. Compatible across API versions with safe fallbacks.
 
 
-## [1.0.4] - 2025-08-13
+## [1.0.4] - 13/08/2025
 ### Added
 - Team-specific pit areas via unified command `/boatracing setup setpit [team]` (tab‑completion for team names). Wizard updated accordingly.
 - Mandatory pitstops via config `racing.mandatory-pitstops` (default 0). Pitstops increment on pit exit and are required to finish when > 0.
@@ -260,7 +272,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
  - Checkpoints persistence: saving as a list and loading from both list and legacy section formats; wizard and readiness checks now correctly detect added checkpoints. Fixed a false “missing checkpoint” on `race open` after setup.
  - Players wrongly blocked from `/boatracing race join` due to a global permission gate. Now join/leave/status are allowed by default and only admin actions are gated.
 
-## [1.0.3] - 2025-08-12
+## [1.0.3] - 12/08/2025
 - Public release noted in README. Core gameplay, teams, GUIs, WE/FAWE setup, racing, and update checks.
 
  [Unreleased]: https://github.com/Jaie55/BoatRacing/compare/v1.0.6...HEAD

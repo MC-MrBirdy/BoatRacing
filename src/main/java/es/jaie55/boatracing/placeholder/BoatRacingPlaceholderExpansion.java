@@ -13,6 +13,29 @@ import java.util.stream.Collectors;
 
 public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
     private final BoatRacingPlugin plugin;
+    private static final long TRACK_FILE_BEST_CACHE_TTL_MS = 3000L;
+    private final Map<String, CachedTrackBest> trackFileBestCache = new HashMap<>();
+    private final Map<String, CachedTrackTop> trackFileTopCache = new HashMap<>();
+
+    private static final class CachedTrackBest {
+        private final long loadedAtMs;
+        private final Optional<Map.Entry<UUID, Long>> value;
+
+        private CachedTrackBest(long loadedAtMs, Optional<Map.Entry<UUID, Long>> value) {
+            this.loadedAtMs = loadedAtMs;
+            this.value = value;
+        }
+    }
+
+    private static final class CachedTrackTop {
+        private final long loadedAtMs;
+        private final List<Map.Entry<UUID, Long>> value;
+
+        private CachedTrackTop(long loadedAtMs, List<Map.Entry<UUID, Long>> value) {
+            this.loadedAtMs = loadedAtMs;
+            this.value = value;
+        }
+    }
 
     public BoatRacingPlaceholderExpansion(BoatRacingPlugin plugin) {
         this.plugin = plugin;
@@ -67,6 +90,20 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         }
         if (key.equals("track_best_player")) return trackBestEntry().map(e -> safePlayerName(e.getKey())).orElse("-");
         if (key.equals("track_best_time")) return trackBestEntry().map(e -> formatMillis(e.getValue())).orElse("-");
+        if (key.startsWith("track_best_player_")) {
+            String token = params.substring("track_best_player_".length());
+            return trackBestEntryForTrackToken(token).map(e -> safePlayerName(e.getKey())).orElse("-");
+        }
+        if (key.startsWith("track_best_time_ms_")) {
+            String token = params.substring("track_best_time_ms_".length());
+            return trackBestEntryForTrackToken(token).map(e -> String.valueOf(e.getValue())).orElse("-1");
+        }
+        if (key.startsWith("track_best_time_")) {
+            String token = params.substring("track_best_time_".length());
+            return trackBestEntryForTrackToken(token).map(e -> formatMillis(e.getValue())).orElse("-");
+        }
+        String trackTopResolved = resolveTrackTopPlaceholder(key, params);
+        if (trackTopResolved != null) return trackTopResolved;
         if (key.startsWith(trackRaceRunningPrefix)) {
             String token = params.substring(trackRaceRunningPrefix.length());
             RaceManager rm = getRaceManagerForTrackToken(token);
@@ -335,7 +372,110 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
     }
 
     private Optional<Map.Entry<UUID, Long>> trackBestEntry() {
-        return plugin.getTrackConfig().getBestTimes().entrySet().stream()
+        return trackBestEntry(plugin.getTrackConfig());
+    }
+
+    private String resolveTrackTopPlaceholder(String key, String params) {
+        for (int rank = 1; rank <= 3; rank++) {
+            String playerPrefix = "track_top_" + rank + "_player_";
+            if (key.startsWith(playerPrefix)) {
+                String token = params.substring(playerPrefix.length());
+                return trackTopEntryForTrackToken(token, rank).map(e -> safePlayerName(e.getKey())).orElse("-");
+            }
+
+            String timeMsPrefix = "track_top_" + rank + "_time_ms_";
+            if (key.startsWith(timeMsPrefix)) {
+                String token = params.substring(timeMsPrefix.length());
+                return trackTopEntryForTrackToken(token, rank).map(e -> String.valueOf(e.getValue())).orElse("-1");
+            }
+
+            String timePrefix = "track_top_" + rank + "_time_";
+            if (key.startsWith(timePrefix)) {
+                String token = params.substring(timePrefix.length());
+                return trackTopEntryForTrackToken(token, rank).map(e -> formatMillis(e.getValue())).orElse("-");
+            }
+        }
+        return null;
+    }
+
+    private Optional<Map.Entry<UUID, Long>> trackBestEntryForTrackToken(String token) {
+        String requested = normalizeTrackToken(token);
+        if (requested.isEmpty()) return Optional.empty();
+
+        String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
+        if (requested.equalsIgnoreCase("unsaved") || (current != null && normalizeTrackToken(current).equalsIgnoreCase(requested))) {
+            return trackBestEntry(plugin.getTrackConfig());
+        }
+
+        RaceManager rm = plugin.getRaceManagerByTrack(requested);
+        if (rm != null) return trackBestEntry(rm.getTrack());
+
+        if (plugin.getTrackLibrary() == null || !plugin.getTrackLibrary().exists(requested)) return Optional.empty();
+
+        String cacheKey = requested.toLowerCase(Locale.ROOT);
+        long now = System.currentTimeMillis();
+        CachedTrackBest cached = trackFileBestCache.get(cacheKey);
+        if (cached != null && (now - cached.loadedAtMs) <= TRACK_FILE_BEST_CACHE_TTL_MS) return cached.value;
+
+        Optional<Map.Entry<UUID, Long>> loaded = loadTrackBestEntryFromFile(requested);
+        trackFileBestCache.put(cacheKey, new CachedTrackBest(now, loaded));
+        return loaded;
+    }
+
+    private Optional<Map.Entry<UUID, Long>> trackTopEntryForTrackToken(String token, int rank) {
+        if (rank < 1) return Optional.empty();
+        List<Map.Entry<UUID, Long>> top = trackTopEntriesForTrackToken(token, rank);
+        return top.size() >= rank ? Optional.of(top.get(rank - 1)) : Optional.empty();
+    }
+
+    private List<Map.Entry<UUID, Long>> trackTopEntriesForTrackToken(String token, int limit) {
+        if (limit <= 0) return Collections.emptyList();
+        String requested = normalizeTrackToken(token);
+        if (requested.isEmpty()) return Collections.emptyList();
+
+        String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
+        if (requested.equalsIgnoreCase("unsaved") || (current != null && normalizeTrackToken(current).equalsIgnoreCase(requested))) {
+            return trackTopEntries(plugin.getTrackConfig(), limit);
+        }
+
+        RaceManager rm = plugin.getRaceManagerByTrack(requested);
+        if (rm != null) return trackTopEntries(rm.getTrack(), limit);
+
+        if (plugin.getTrackLibrary() == null || !plugin.getTrackLibrary().exists(requested)) return Collections.emptyList();
+
+        String cacheKey = requested.toLowerCase(Locale.ROOT);
+        long now = System.currentTimeMillis();
+        CachedTrackTop cached = trackFileTopCache.get(cacheKey);
+        if (cached != null && (now - cached.loadedAtMs) <= TRACK_FILE_BEST_CACHE_TTL_MS) {
+            return cached.value.stream().limit(limit).collect(Collectors.toList());
+        }
+
+        List<Map.Entry<UUID, Long>> loaded = loadTrackTopEntriesFromFile(requested, 3);
+        trackFileTopCache.put(cacheKey, new CachedTrackTop(now, loaded));
+        return loaded.stream().limit(limit).collect(Collectors.toList());
+    }
+
+    private Optional<Map.Entry<UUID, Long>> loadTrackBestEntryFromFile(String trackToken) {
+        java.io.File trackFile = new java.io.File(new java.io.File(plugin.getDataFolder(), "tracks"), trackToken + ".yml");
+        if (!trackFile.exists()) return Optional.empty();
+
+        es.jaie55.boatracing.track.TrackConfig cfg = new es.jaie55.boatracing.track.TrackConfig(plugin.getDataFolder());
+        cfg.setBackingFile(trackFile);
+        return trackBestEntry(cfg);
+    }
+
+    private List<Map.Entry<UUID, Long>> loadTrackTopEntriesFromFile(String trackToken, int limit) {
+        java.io.File trackFile = new java.io.File(new java.io.File(plugin.getDataFolder(), "tracks"), trackToken + ".yml");
+        if (!trackFile.exists()) return Collections.emptyList();
+
+        es.jaie55.boatracing.track.TrackConfig cfg = new es.jaie55.boatracing.track.TrackConfig(plugin.getDataFolder());
+        cfg.setBackingFile(trackFile);
+        return trackTopEntries(cfg, limit);
+    }
+
+    private Optional<Map.Entry<UUID, Long>> trackBestEntry(es.jaie55.boatracing.track.TrackConfig trackConfig) {
+        if (trackConfig == null) return Optional.empty();
+        return trackConfig.getBestTimes().entrySet().stream()
                 .map(e -> {
                     try {
                         return Map.entry(UUID.fromString(e.getKey()), e.getValue());
@@ -345,6 +485,22 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
                 })
                 .filter(Objects::nonNull)
                 .min(Map.Entry.comparingByValue());
+    }
+
+    private List<Map.Entry<UUID, Long>> trackTopEntries(es.jaie55.boatracing.track.TrackConfig trackConfig, int limit) {
+        if (trackConfig == null || limit <= 0) return Collections.emptyList();
+        return trackConfig.getBestTimes().entrySet().stream()
+                .map(e -> {
+                    try {
+                        return Map.entry(UUID.fromString(e.getKey()), e.getValue());
+                    } catch (IllegalArgumentException ignored) {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .sorted(Map.Entry.comparingByValue())
+                .limit(limit)
+                .collect(Collectors.toList());
     }
 
     private String safePlayerName(UUID id) {
