@@ -49,6 +49,7 @@ Practice mode, map vote flow upgrades, and track record placeholder refresh fixe
 Added:
 - `/boatracing race practice <track>` starts a solo practice race on a ready track, so one player can train even if normal race minimum players is higher.
 - Dedicated permission `boatracing.race.practice` (default `true`) so practice can be granted/revoked independently of race-admin permissions.
+- Dedicated permission `boatracing.race.voteopen` (default `op`) so opening map votes can be granted/revoked independently of race start/stop management.
 - Practice telemetry persisted in `practice-stats.yml` (best/last run, best/last lap, best/last sector per section).
 - New practice placeholders for player current-track and explicit track tokens (run/lap/section metrics), plus track-practice state alias `%boatracing_track_practicerunning_<track>%`.
 - Bundled Swedish community translation (`messages_sv.yml`, language code `sv`).
