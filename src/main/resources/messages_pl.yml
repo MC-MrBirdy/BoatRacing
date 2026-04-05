@@ -39,8 +39,9 @@ race:
     status: "&cUżycie: /{label} race status <track>"
     force: "&cUżycie: /{label} race force <track>"
     start: "&cUżycie: /{label} race start <track>"
+    practice: "&cUżycie: /{label} race practice <track>"
     stop: "&cUżycie: /{label} race stop <track>"
-    voteopen: "&cUżycie: /{label} race voteopen <track1> <track2> [sekundy]"
+    voteopen: "&cUżycie: /{label} race voteopen [all|<track1> <track2> ...] [sekundy]"
     vote: "&cUżycie: /{label} race vote <track>"
 
   help:
@@ -48,10 +49,11 @@ race:
     join: "&7 - &f/{label} race join <track> &7(Dołącz do rejestracji na tym torze; wymagany zespół)"
     leave: "&7 - &f/{label} race leave <track> &7(Opuść rejestrację na tym torze)"
     status: "&7 - &f/{label} race status <track> &7(Pokaż status wyścigu dla toru)"
+    practice: "&7 - &f/{label} race practice <track> &7(Rozpocznij solo wyścig treningowy na tym torze)"
     vote: "&7 - &f/{label} race vote <track> &7(Oddaj głos na mapę)"
     voteui: "&7 - &f/{label} race voteui &7(Otwiera interfejs głosowania)"
     votestatus: "&7 - &f/{label} race votestatus &7(Pokaż bieżącą liczbę głosów)"
-    voteopen: "&7 - &f/{label} race voteopen <track1> <track2> [sekundy] &7(Otwórz głosowanie mapy)"
+    voteopen: "&7 - &f/{label} race voteopen [all|<track1> <track2> ...] [sekundy] &7(Otwórz głosowanie mapy)"
     voteclose: "&7 - &f/{label} race voteclose &7(Zamknij i rozstrzygnij głosowanie teraz)"
     back: "&7 - &f/{label} race back &7(Wróć do swojej zapisanej lokalizacji przed dołączeniem do poczekalní wyścigu)"
     admin: "&8Admin:&7 /{label} race open|start|force|stop <track>"
@@ -95,6 +97,20 @@ race:
   started: "&aWyścig rozpoczęty! &f{laps} okrążeń"
   starting-countdown: "&7Rozpoczęcie za &f{count}&7..."
   go: "&aStart!"
+  practice:
+    sector:
+      first: "&bSektor {section} okrążenie {lap}: &f{time} &7(pierwszy rekord sektora)"
+      new-best: "&aSektor {section} okrążenie {lap}: &f{time} &7(nowy rekord, -{improve})"
+      split: "&eSektor {section} okrążenie {lap}: &f{time} &7(+{delta} do najlepszego {best})"
+    lap:
+      first: "&bOkrążenie treningowe {lap}: &f{time} &7(pierwszy rekord okrążenia)"
+      new-best: "&aOkrążenie treningowe {lap}: &f{time} &7(nowy rekord, -{improve})"
+      completed: "&eOkrążenie treningowe {lap}: &f{time} &7(+{delta} do najlepszego {best})"
+    run:
+      first: "&bTrening ukończony: &f{time} &7(pierwszy rekord przejazdu)"
+      new-best: "&aTrening ukończony: &f{time} &7(nowy rekord, -{improve})"
+      completed: "&eTrening ukończony: &f{time} &7(+{delta} do najlepszego {best})"
+    run-completed: "&eTrening ukończony: &f{time}"
   lap-completed: "&eOkrążenie &f{lap}/{total}"
   lap-finished: "&eOkrążenie &f{num} &7ukończone: &f{player}{gap}"
   player-finished: "&a{player} ukończył(a)! &7Czas: &f{time}{gap}"
@@ -135,7 +151,7 @@ race:
     ended-no-options: "&cGłosowanie mapy zakończyło się bez opcji."
     ended-no-winner: "&cGłosowanie mapy zakończyło się bez zwycięzcy."
     ended-winner: "&aGłosowanie mapy zakończone. Zwycięzca: &f{winner} &7({votes} głosów)"
-    next-step: "&7Następny krok: &f/boatracing race open {winner}"
+    next-step: "&7Następny krok: &f/{label} race open {winner}"
     need-two-tracks: "&cMusisz podać co najmniej 2 prawidłowe tory."
     started: "&eRozpoczęto głosowanie mapy (&f{seconds}s&e)!"
     started-click: "&b[Kliknij, aby otworzyć interfejs głosowania]"

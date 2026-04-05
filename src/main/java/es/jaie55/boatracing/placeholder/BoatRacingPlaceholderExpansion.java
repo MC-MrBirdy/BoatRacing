@@ -71,6 +71,8 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         final String trackRaceRegisteringPrefix = "track_race_registering_";
         final String trackRaceRegisteringCompatPrefix = "track_raceregistering_";
         final String trackRaceStatusPrefix = "track_race_status_";
+        final String trackPracticeRunningPrefix = "track_practice_running_";
+        final String trackPracticeRunningCompatPrefix = "track_practicerunning_";
 
         if (key.equals("teams_count")) return String.valueOf(plugin.getTeamManager().getTeams().size());
         if (key.equals("teams_list")) return plugin.getTeamManager().getTeams().stream().map(Team::getName).sorted(String.CASE_INSENSITIVE_ORDER).collect(Collectors.joining(", "));
@@ -88,8 +90,8 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
             String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
             return current != null ? current : "unsaved";
         }
-        if (key.equals("track_best_player")) return trackBestEntry().map(e -> safePlayerName(e.getKey())).orElse("-");
-        if (key.equals("track_best_time")) return trackBestEntry().map(e -> formatMillis(e.getValue())).orElse("-");
+        if (key.equals("track_best_player")) return trackBestEntryForTrackToken(currentTrackToken()).map(e -> safePlayerName(e.getKey())).orElse("-");
+        if (key.equals("track_best_time")) return trackBestEntryForTrackToken(currentTrackToken()).map(e -> formatMillis(e.getValue())).orElse("-");
         if (key.startsWith("track_best_player_")) {
             String token = params.substring("track_best_player_".length());
             return trackBestEntryForTrackToken(token).map(e -> safePlayerName(e.getKey())).orElse("-");
@@ -131,6 +133,16 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
             if (rm.isRunning()) return "running";
             if (rm.isRegistering()) return "registering";
             return "idle";
+        }
+        if (key.startsWith(trackPracticeRunningPrefix)) {
+            String token = params.substring(trackPracticeRunningPrefix.length());
+            RaceManager rm = getRaceManagerForTrackToken(token);
+            return String.valueOf(rm != null && rm.isPracticeActive());
+        }
+        if (key.startsWith(trackPracticeRunningCompatPrefix)) {
+            String token = params.substring(trackPracticeRunningCompatPrefix.length());
+            RaceManager rm = getRaceManagerForTrackToken(token);
+            return String.valueOf(rm != null && rm.isPracticeActive());
         }
 
         // Targeted player placeholders (by name/uuid), useful for static NPC/holograms:
@@ -266,6 +278,8 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         UUID pid = player.getUniqueId();
         Team team = plugin.getTeamManager().getTeamByMember(pid).orElse(null);
         RaceManager playerRace = plugin.getRaceManagerForPlayer(pid);
+        es.jaie55.boatracing.util.PracticeStatsManager practiceStats = plugin.getPracticeStatsManager();
+        String currentTrack = currentTrackToken();
 
         if (key.equals("player_name")) return safePlayerName(pid);
         if (key.equals("player_team_name")) return team != null ? team.getName() : "-";
@@ -309,6 +323,86 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
 
         if (key.equals("player_race_running")) return String.valueOf(playerRace != null && playerRace.isRunning() && playerRace.isParticipant(pid));
         if (key.equals("player_race_registering")) return String.valueOf(playerRace != null && playerRace.isRegistering() && playerRace.getRegistered().contains(pid));
+        if (key.equals("player_practice_running")) {
+            return String.valueOf(playerRace != null && playerRace.isPracticeActive() && playerRace.isParticipant(pid));
+        }
+
+        if (practiceStats != null) {
+            if (key.equals("player_practice_best_lap")) return formatPracticeMillis(practiceStats.getBestLap(pid, currentTrack), false);
+            if (key.equals("player_practice_best_lap_ms")) return formatPracticeMillis(practiceStats.getBestLap(pid, currentTrack), true);
+            if (key.equals("player_practice_last_lap")) return formatPracticeMillis(practiceStats.getLastLap(pid, currentTrack), false);
+            if (key.equals("player_practice_last_lap_ms")) return formatPracticeMillis(practiceStats.getLastLap(pid, currentTrack), true);
+            if (key.equals("player_practice_best_run")) return formatPracticeMillis(practiceStats.getBestRun(pid, currentTrack), false);
+            if (key.equals("player_practice_best_run_ms")) return formatPracticeMillis(practiceStats.getBestRun(pid, currentTrack), true);
+            if (key.equals("player_practice_last_run")) return formatPracticeMillis(practiceStats.getLastRun(pid, currentTrack), false);
+            if (key.equals("player_practice_last_run_ms")) return formatPracticeMillis(practiceStats.getLastRun(pid, currentTrack), true);
+
+            if (key.startsWith("player_practice_best_lap_ms_")) {
+                String token = params.substring("player_practice_best_lap_ms_".length());
+                return formatPracticeMillis(practiceStats.getBestLap(pid, token), true);
+            }
+            if (key.startsWith("player_practice_best_lap_")) {
+                String token = params.substring("player_practice_best_lap_".length());
+                return formatPracticeMillis(practiceStats.getBestLap(pid, token), false);
+            }
+            if (key.startsWith("player_practice_last_lap_ms_")) {
+                String token = params.substring("player_practice_last_lap_ms_".length());
+                return formatPracticeMillis(practiceStats.getLastLap(pid, token), true);
+            }
+            if (key.startsWith("player_practice_last_lap_")) {
+                String token = params.substring("player_practice_last_lap_".length());
+                return formatPracticeMillis(practiceStats.getLastLap(pid, token), false);
+            }
+            if (key.startsWith("player_practice_best_run_ms_")) {
+                String token = params.substring("player_practice_best_run_ms_".length());
+                return formatPracticeMillis(practiceStats.getBestRun(pid, token), true);
+            }
+            if (key.startsWith("player_practice_best_run_")) {
+                String token = params.substring("player_practice_best_run_".length());
+                return formatPracticeMillis(practiceStats.getBestRun(pid, token), false);
+            }
+            if (key.startsWith("player_practice_last_run_ms_")) {
+                String token = params.substring("player_practice_last_run_ms_".length());
+                return formatPracticeMillis(practiceStats.getLastRun(pid, token), true);
+            }
+            if (key.startsWith("player_practice_last_run_")) {
+                String token = params.substring("player_practice_last_run_".length());
+                return formatPracticeMillis(practiceStats.getLastRun(pid, token), false);
+            }
+
+            if (key.startsWith("player_practice_best_sector_ms_")) {
+                String suffix = params.substring("player_practice_best_sector_ms_".length());
+                TrackSectionToken parsed = parseTrackSectionToken(suffix);
+                if (parsed != null) return formatPracticeMillis(practiceStats.getBestSector(pid, parsed.trackToken(), parsed.sectionIndex()), true);
+                Integer section = parsePositiveInt(suffix);
+                if (section != null) return formatPracticeMillis(practiceStats.getBestSector(pid, currentTrack, section), true);
+                return "-1";
+            }
+            if (key.startsWith("player_practice_best_sector_")) {
+                String suffix = params.substring("player_practice_best_sector_".length());
+                TrackSectionToken parsed = parseTrackSectionToken(suffix);
+                if (parsed != null) return formatPracticeMillis(practiceStats.getBestSector(pid, parsed.trackToken(), parsed.sectionIndex()), false);
+                Integer section = parsePositiveInt(suffix);
+                if (section != null) return formatPracticeMillis(practiceStats.getBestSector(pid, currentTrack, section), false);
+                return "-";
+            }
+            if (key.startsWith("player_practice_last_sector_ms_")) {
+                String suffix = params.substring("player_practice_last_sector_ms_".length());
+                TrackSectionToken parsed = parseTrackSectionToken(suffix);
+                if (parsed != null) return formatPracticeMillis(practiceStats.getLastSector(pid, parsed.trackToken(), parsed.sectionIndex()), true);
+                Integer section = parsePositiveInt(suffix);
+                if (section != null) return formatPracticeMillis(practiceStats.getLastSector(pid, currentTrack, section), true);
+                return "-1";
+            }
+            if (key.startsWith("player_practice_last_sector_")) {
+                String suffix = params.substring("player_practice_last_sector_".length());
+                TrackSectionToken parsed = parseTrackSectionToken(suffix);
+                if (parsed != null) return formatPracticeMillis(practiceStats.getLastSector(pid, parsed.trackToken(), parsed.sectionIndex()), false);
+                Integer section = parsePositiveInt(suffix);
+                if (section != null) return formatPracticeMillis(practiceStats.getLastSector(pid, currentTrack, section), false);
+                return "-";
+            }
+        }
 
         long liveMs = playerRace != null ? playerRace.getLiveTimeMillis(pid) : -1L;
         if (key.equals("player_current_time")) return formatMillis(liveMs);
@@ -402,15 +496,20 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         String requested = normalizeTrackToken(token);
         if (requested.isEmpty()) return Optional.empty();
 
-        String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
-        if (requested.equalsIgnoreCase("unsaved") || (current != null && normalizeTrackToken(current).equalsIgnoreCase(requested))) {
+        if (requested.equalsIgnoreCase("unsaved")) {
             return trackBestEntry(plugin.getTrackConfig());
         }
 
         RaceManager rm = plugin.getRaceManagerByTrack(requested);
         if (rm != null) return trackBestEntry(rm.getTrack());
 
-        if (plugin.getTrackLibrary() == null || !plugin.getTrackLibrary().exists(requested)) return Optional.empty();
+        if (plugin.getTrackLibrary() == null || !plugin.getTrackLibrary().exists(requested)) {
+            String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
+            if (current != null && normalizeTrackToken(current).equalsIgnoreCase(requested)) {
+                return trackBestEntry(plugin.getTrackConfig());
+            }
+            return Optional.empty();
+        }
 
         String cacheKey = requested.toLowerCase(Locale.ROOT);
         long now = System.currentTimeMillis();
@@ -433,15 +532,20 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         String requested = normalizeTrackToken(token);
         if (requested.isEmpty()) return Collections.emptyList();
 
-        String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
-        if (requested.equalsIgnoreCase("unsaved") || (current != null && normalizeTrackToken(current).equalsIgnoreCase(requested))) {
+        if (requested.equalsIgnoreCase("unsaved")) {
             return trackTopEntries(plugin.getTrackConfig(), limit);
         }
 
         RaceManager rm = plugin.getRaceManagerByTrack(requested);
         if (rm != null) return trackTopEntries(rm.getTrack(), limit);
 
-        if (plugin.getTrackLibrary() == null || !plugin.getTrackLibrary().exists(requested)) return Collections.emptyList();
+        if (plugin.getTrackLibrary() == null || !plugin.getTrackLibrary().exists(requested)) {
+            String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
+            if (current != null && normalizeTrackToken(current).equalsIgnoreCase(requested)) {
+                return trackTopEntries(plugin.getTrackConfig(), limit);
+            }
+            return Collections.emptyList();
+        }
 
         String cacheKey = requested.toLowerCase(Locale.ROOT);
         long now = System.currentTimeMillis();
@@ -453,6 +557,11 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         List<Map.Entry<UUID, Long>> loaded = loadTrackTopEntriesFromFile(requested, 3);
         trackFileTopCache.put(cacheKey, new CachedTrackTop(now, loaded));
         return loaded.stream().limit(limit).collect(Collectors.toList());
+    }
+
+    private String currentTrackToken() {
+        String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
+        return current != null ? current : "unsaved";
     }
 
     private Optional<Map.Entry<UUID, Long>> loadTrackBestEntryFromFile(String trackToken) {
@@ -501,6 +610,36 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
                 .sorted(Map.Entry.comparingByValue())
                 .limit(limit)
                 .collect(Collectors.toList());
+    }
+
+    private record TrackSectionToken(String trackToken, int sectionIndex) {}
+
+    private static Integer parsePositiveInt(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        try {
+            int value = Integer.parseInt(raw.trim());
+            return value > 0 ? value : null;
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private TrackSectionToken parseTrackSectionToken(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        int split = raw.lastIndexOf('_');
+        if (split <= 0 || split >= raw.length() - 1) return null;
+
+        Integer section = parsePositiveInt(raw.substring(split + 1));
+        if (section == null) return null;
+
+        String trackToken = raw.substring(0, split);
+        if (trackToken.isBlank()) return null;
+        return new TrackSectionToken(normalizeTrackToken(trackToken), section);
+    }
+
+    private static String formatPracticeMillis(Long millis, boolean rawMillis) {
+        if (rawMillis) return millis == null ? "-1" : String.valueOf(millis);
+        return millis == null ? "-" : formatMillis(millis);
     }
 
     private String safePlayerName(UUID id) {

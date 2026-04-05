@@ -39,8 +39,9 @@ race:
     status: "&cUtilisation : /{label} race status <track>"
     force: "&cUtilisation : /{label} race force <track>"
     start: "&cUtilisation : /{label} race start <track>"
+    practice: "&cUtilisation : /{label} race practice <track>"
     stop: "&cUtilisation : /{label} race stop <track>"
-    voteopen: "&cUtilisation : /{label} race voteopen <track1> <track2> [secondes]"
+    voteopen: "&cUtilisation : /{label} race voteopen [all|<track1> <track2> ...] [secondes]"
     vote: "&cUtilisation : /{label} race vote <track>"
 
   help:
@@ -48,10 +49,11 @@ race:
     join: "&7 - &f/{label} race join <track> &7(Rejoindre l'inscription sur ce circuit ; équipe requise)"
     leave: "&7 - &f/{label} race leave <track> &7(Quitter l'inscription sur ce circuit)"
     status: "&7 - &f/{label} race status <track> &7(Afficher l'état de la course pour ce circuit)"
+    practice: "&7 - &f/{label} race practice <track> &7(Lancer une course d'entraînement en solo sur ce circuit)"
     vote: "&7 - &f/{label} race vote <track> &7(Voter pour un circuit)"
     voteui: "&7 - &f/{label} race voteui &7(Ouvre l'interface de vote)"
     votestatus: "&7 - &f/{label} race votestatus &7(Afficher le nombre actuel de votes)"
-    voteopen: "&7 - &f/{label} race voteopen <track1> <track2> [secondes] &7(Ouvrir le vote de circuit)"
+    voteopen: "&7 - &f/{label} race voteopen [all|<track1> <track2> ...] [secondes] &7(Ouvrir le vote de circuit)"
     voteclose: "&7 - &f/{label} race voteclose &7(Fermer et résoudre le vote maintenant)"
     back: "&7 - &f/{label} race back &7(Revenir à votre position sauvegardée avant le lobby de course)"
     admin: "&8Admin :&7 /{label} race open|start|force|stop <track>"
@@ -95,6 +97,20 @@ race:
   started: "&aCourse commencée ! &f{laps} tour(s)"
   starting-countdown: "&7Départ dans &f{count}&7..."
   go: "&aPartez !"
+  practice:
+    sector:
+      first: "&bSecteur {section} tour {lap} : &f{time} &7(premier record de secteur)"
+      new-best: "&aSecteur {section} tour {lap} : &f{time} &7(nouveau record, -{improve})"
+      split: "&eSecteur {section} tour {lap} : &f{time} &7(+{delta} vs meilleur {best})"
+    lap:
+      first: "&bTour d'entraînement {lap} : &f{time} &7(premier record de tour)"
+      new-best: "&aTour d'entraînement {lap} : &f{time} &7(nouveau record, -{improve})"
+      completed: "&eTour d'entraînement {lap} : &f{time} &7(+{delta} vs meilleur {best})"
+    run:
+      first: "&bEntraînement terminé : &f{time} &7(premier record du run)"
+      new-best: "&aEntraînement terminé : &f{time} &7(nouveau record, -{improve})"
+      completed: "&eEntraînement terminé : &f{time} &7(+{delta} vs meilleur {best})"
+    run-completed: "&eEntraînement terminé : &f{time}"
   lap-completed: "&eTour &f{lap}/{total}"
   lap-finished: "&eTour &f{num} &7terminé : &f{player}{gap}"
   player-finished: "&a{player} a terminé ! &7Temps : &f{time}{gap}"
@@ -135,7 +151,7 @@ race:
     ended-no-options: "&cLe vote de circuit s'est terminé sans options."
     ended-no-winner: "&cLe vote de circuit s'est terminé sans gagnant."
     ended-winner: "&aVote de circuit terminé. Gagnant : &f{winner} &7({votes} votes)"
-    next-step: "&7Étape suivante : &f/boatracing race open {winner}"
+    next-step: "&7Étape suivante : &f/{label} race open {winner}"
     need-two-tracks: "&cVous devez fournir au moins 2 circuits valides."
     started: "&eVote de circuit démarré (&f{seconds}s&e) !"
     started-click: "&b[Cliquez pour ouvrir l'interface de vote]"

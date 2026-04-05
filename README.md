@@ -14,11 +14,11 @@
 
 [![bStats](https://bstats.org/signatures/bukkit/BoatRacing.svg)](https://bstats.org/plugin/bukkit/BoatRacing/26881)
 
-[![Languages](https://img.shields.io/badge/Languages-15-0ea5e9)](#available-languages) [![Official](https://img.shields.io/badge/Official-2-22c55e)](#available-languages) [![Community](https://img.shields.io/badge/Community-13-f59e0b)](#available-languages)
+[![Languages](https://img.shields.io/badge/Languages-16-0ea5e9)](#available-languages) [![Official](https://img.shields.io/badge/Official-2-22c55e)](#available-languages) [![Community](https://img.shields.io/badge/Community-14-f59e0b)](#available-languages)
 
 An F1‒style ice boat racing plugin for Bukkit/Spigot (compatible with Paper/Purpur) with a clean, vanilla‒like GUI. Manage teams, configure tracks with the built‒in BoatRacing selection tool, run timed races with checkpoints, pit area penalties, and a guided setup wizard.
 
-> Status: Public release (1.1.4)
+> Status: Public release (1.1.5)
 
 <a id="snapshot-261-warning"></a>
 > [!WARNING]
@@ -42,6 +42,31 @@ See the changelog in [CHANGELOG.md](https://github.com/Jaie55/BoatRacing/blob/ma
 This is how we test the plugin to validate its behavior after each update: see the QA checklist in [CHECKLIST.md](CHECKLIST.md)
 
 <details>
+<summary><strong>What's New (1.1.5)</strong></summary>
+
+Practice mode, map vote flow upgrades, and track record placeholder refresh fixes:
+
+Added:
+- `/boatracing race practice <track>` starts a solo practice race on a ready track, so one player can train even if normal race minimum players is higher.
+- Dedicated permission `boatracing.race.practice` (default `true`) so practice can be granted/revoked independently of race-admin permissions.
+- Practice telemetry persisted in `practice-stats.yml` (best/last run, best/last lap, best/last sector per section).
+- New practice placeholders for player current-track and explicit track tokens (run/lap/section metrics), plus track-practice state alias `%boatracing_track_practicerunning_<track>%`.
+- Bundled Swedish community translation (`messages_sv.yml`, language code `sv`).
+
+Changed:
+- Same-track race/practice mutual lock now also applies during pre-start countdown, while other tracks remain independent (you can still practice on track2 if track1 has a race).
+- Practice countdown/race split/lap/result messages are private to the practicing player (no global race-style broadcasts).
+- `/boatracing race voteopen` now supports opening a vote with all saved tracks via `all` (or no explicit track list).
+- Vote-start broadcast now includes both clickable UI (`/boatracing race voteui`) and a plain typed command instruction (`/{label} race vote <track>`) for mixed/Bedrock clients.
+- When vote ends (timeout or `voteclose`), winner resolution now attempts to auto-open winner registration; if auto-open is not possible, fallback next-step command remains in chat.
+
+Fixed:
+- `%boatracing_track_best_*_<track>%` and `%boatracing_track_top_1..3_*_<track>%` now use the freshest available track data (live race session first, then track file), avoiding stale best-time values.
+- `%boatracing_track_best_player%` and `%boatracing_track_best_time%` now follow the same resolution path as token placeholders so current-track records update after an improved race time.
+
+</details>
+
+<details>
 <summary><strong>What's New (1.1.4)</strong></summary>
 
 This 1.1.4 release combines everything delivered in `snapshot-26.1-gui-fallback-01` plus the final release additions.
@@ -53,7 +78,7 @@ This 1.1.4 release combines everything delivered in `snapshot-26.1-gui-fallback-
 - **Changed**: blocked starts use language key `race.not-enough-players` with `{min}` and `{current}` and enforce the same threshold across `start`, `force`, admin race GUI start, and registration timeout auto-start.
 - **Fixed**: scoreboard tie-break by checkpoint arrival; on the same lap/checkpoint, the racer who entered first remains ahead (no equal-checkpoint swap).
 - **Fixed**: setup wizard Done step now uses `/boatracing race open unsaved` when no named track is selected, avoiding the invalid `/boatracing race open <track>` placeholder token.
-- **Docs**: README marks track record placeholder rows as `NEW (1.1.4)` and CHECKLIST includes explicit validation steps.
+- **Docs**: README documents track record placeholder rows and CHECKLIST includes explicit validation steps.
 
 </details>
 
@@ -65,7 +90,7 @@ Track-aware placeholders and spawn reliability improvements:
 - **Compatibility aliases for prior naming**: `%boatracing_track_racerunning_<track>%` and `%boatracing_track_raceregistering_<track>%` map to the same values.
 - **Parallel race sessions by track**: races are now managed per track session, so different tracks can run registration/races at the same time.
 - **Map vote command flow**: added `/boatracing race voteopen`, `vote`, `voteui`, `votestatus`, and `voteclose` to coordinate map selection in chat.
-- **Clickable vote UI prompt on vote start**: when a map vote opens, players receive a clickable chat action that runs `/boatracing race voteui` directly instead of a plain typed-command instruction.
+- **Vote-start instructions for mixed clients**: when a map vote opens, players receive both a clickable `/boatracing race voteui` action and a plain typed-command instruction (`/{label} race vote <track>`) for clients where chat click actions are unavailable.
 - **Selected boat variant reliability**: race boat/raft variants now re-apply after spawn with delayed retries to reduce cases where selected variants appear as default OAK.
 - **No dismount during pre-start and race**: racers are now prevented from manually exiting boats/rafts during the 5-light countdown and while the race is active.
 - **Reward command compatibility hardening**: reward parsing now supports both `commands` (list) and legacy `command` (single string), with safer fallback behavior for missing per-position keys (including 1st place).
@@ -114,7 +139,7 @@ Explicit compatibility:
 <summary><strong>What's New (1.1.0)</strong></summary>
 
 Languages and player controls:
-- **Multi-language support**: messages are now fully translatable. Configure language in config.yml (`language`). Bundled options are `en`, `es`, `es_419`, `fr`, `pt_BR`, `pt_PT`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, `zh_TW`, `zh_CN`, and `ru`, and custom bundles are also supported by adding `messages_<lang>.yml` to the plugin folder. Reload with `/boatracing reload` to switch languages without restart.
+- **Multi-language support**: messages are now fully translatable. Configure language in config.yml (`language`). Bundled options are `en`, `es`, `es_419`, `fr`, `pt_BR`, `pt_PT`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, `sv`, `zh_TW`, `zh_CN`, and `ru`, and custom bundles are also supported by adding `messages_<lang>.yml` to the plugin folder. Reload with `/boatracing reload` to switch languages without restart.
 - **Player-controlled race management**: new config option `player-actions.allow-player-race-start` (default: false) lets non-admin players open, start, force-start and stop races. Can be overridden per-track via `racing.allow-player-start: true` in individual track configs.
 - **Reward system**: full customizable race-end rewards. Configure under `racing.rewards` with position-specific commands, messages and broadcasts. Supports placeholders: {player}, {position}, {time}, {track}, {laps}. Per-track rewards override the global config.
 - **Performance**: PlayerMoveEvent throttle — checkpoint detection now only triggers when entering a new block, not every sub-meter movement.
@@ -254,8 +279,8 @@ Fixes and polish:
 Official translations: <img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" width="16" height="16" alt="English" /> <img src="https://hatscripts.github.io/circle-flags/flags/es.svg" width="16" height="16" alt="Espanol" />
 [![en official](https://img.shields.io/badge/en-official-22c55e)](#available-languages) [![es official](https://img.shields.io/badge/es-official-22c55e)](#available-languages)
 
-Community translations: <img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" width="16" height="16" alt="French" /> <img src="https://hatscripts.github.io/circle-flags/flags/br.svg" width="16" height="16" alt="Portuguese Brazil" /> <img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" width="16" height="16" alt="Portuguese Portugal" /> <img src="https://hatscripts.github.io/circle-flags/flags/mx.svg" width="16" height="16" alt="Spanish Latin America" /> <img src="https://hatscripts.github.io/circle-flags/flags/de.svg" width="16" height="16" alt="German" /> <img src="https://hatscripts.github.io/circle-flags/flags/it.svg" width="16" height="16" alt="Italian" /> <img src="https://hatscripts.github.io/circle-flags/flags/pl.svg" width="16" height="16" alt="Polish" /> <img src="https://hatscripts.github.io/circle-flags/flags/tr.svg" width="16" height="16" alt="Turkish" /> <img src="https://hatscripts.github.io/circle-flags/flags/jp.svg" width="16" height="16" alt="Japanese" /> <img src="https://hatscripts.github.io/circle-flags/flags/kr.svg" width="16" height="16" alt="Korean" /> <img src="https://hatscripts.github.io/circle-flags/flags/tw.svg" width="16" height="16" alt="Chinese (Taiwan, Traditional)" /> <img src="https://hatscripts.github.io/circle-flags/flags/cn.svg" width="16" height="16" alt="Chinese (Mainland, Simplified)" /> <img src="https://hatscripts.github.io/circle-flags/flags/ru.svg" width="16" height="16" alt="Russian" />
-[![fr community](https://img.shields.io/badge/fr-community-f59e0b)](#available-languages) [![pt_BR community](https://img.shields.io/badge/pt_BR-community-f59e0b)](#available-languages) [![pt_PT community](https://img.shields.io/badge/pt_PT-community-f59e0b)](#available-languages) [![es_419 community](https://img.shields.io/badge/es_419-community-f59e0b)](#available-languages) [![de community](https://img.shields.io/badge/de-community-f59e0b)](#available-languages) [![it community](https://img.shields.io/badge/it-community-f59e0b)](#available-languages) [![pl community](https://img.shields.io/badge/pl-community-f59e0b)](#available-languages) [![tr community](https://img.shields.io/badge/tr-community-f59e0b)](#available-languages) [![ja community](https://img.shields.io/badge/ja-community-f59e0b)](#available-languages) [![ko community](https://img.shields.io/badge/ko-community-f59e0b)](#available-languages) [![zh_TW community](https://img.shields.io/badge/zh_TW-community-f59e0b)](#available-languages) [![zh_CN community](https://img.shields.io/badge/zh_CN-community-f59e0b)](#available-languages) [![ru community](https://img.shields.io/badge/ru-community-f59e0b)](#available-languages)
+Community translations: <img src="https://hatscripts.github.io/circle-flags/flags/fr.svg" width="16" height="16" alt="French" /> <img src="https://hatscripts.github.io/circle-flags/flags/br.svg" width="16" height="16" alt="Portuguese Brazil" /> <img src="https://hatscripts.github.io/circle-flags/flags/pt.svg" width="16" height="16" alt="Portuguese Portugal" /> <img src="https://hatscripts.github.io/circle-flags/flags/mx.svg" width="16" height="16" alt="Spanish Latin America" /> <img src="https://hatscripts.github.io/circle-flags/flags/de.svg" width="16" height="16" alt="German" /> <img src="https://hatscripts.github.io/circle-flags/flags/it.svg" width="16" height="16" alt="Italian" /> <img src="https://hatscripts.github.io/circle-flags/flags/pl.svg" width="16" height="16" alt="Polish" /> <img src="https://hatscripts.github.io/circle-flags/flags/tr.svg" width="16" height="16" alt="Turkish" /> <img src="https://hatscripts.github.io/circle-flags/flags/jp.svg" width="16" height="16" alt="Japanese" /> <img src="https://hatscripts.github.io/circle-flags/flags/kr.svg" width="16" height="16" alt="Korean" /> <img src="https://hatscripts.github.io/circle-flags/flags/se.svg" width="16" height="16" alt="Swedish" /> <img src="https://hatscripts.github.io/circle-flags/flags/tw.svg" width="16" height="16" alt="Chinese (Taiwan, Traditional)" /> <img src="https://hatscripts.github.io/circle-flags/flags/cn.svg" width="16" height="16" alt="Chinese (Mainland, Simplified)" /> <img src="https://hatscripts.github.io/circle-flags/flags/ru.svg" width="16" height="16" alt="Russian" />
+[![fr community](https://img.shields.io/badge/fr-community-f59e0b)](#available-languages) [![pt_BR community](https://img.shields.io/badge/pt_BR-community-f59e0b)](#available-languages) [![pt_PT community](https://img.shields.io/badge/pt_PT-community-f59e0b)](#available-languages) [![es_419 community](https://img.shields.io/badge/es_419-community-f59e0b)](#available-languages) [![de community](https://img.shields.io/badge/de-community-f59e0b)](#available-languages) [![it community](https://img.shields.io/badge/it-community-f59e0b)](#available-languages) [![pl community](https://img.shields.io/badge/pl-community-f59e0b)](#available-languages) [![tr community](https://img.shields.io/badge/tr-community-f59e0b)](#available-languages) [![ja community](https://img.shields.io/badge/ja-community-f59e0b)](#available-languages) [![ko community](https://img.shields.io/badge/ko-community-f59e0b)](#available-languages) [![sv community](https://img.shields.io/badge/sv-community-f59e0b)](#available-languages) [![zh_TW community](https://img.shields.io/badge/zh_TW-community-f59e0b)](#available-languages) [![zh_CN community](https://img.shields.io/badge/zh_CN-community-f59e0b)](#available-languages) [![ru community](https://img.shields.io/badge/ru-community-f59e0b)](#available-languages)
 
 Available codes and names:
 - `en` English (official)
@@ -270,6 +295,7 @@ Available codes and names:
 - `tr` Turkce
 - `ja` Japanese
 - `ko` Korean
+- `sv` Svenska
 - `zh_TW` Chinese (Taiwan, Traditional)
 - `zh_CN` Chinese (Mainland, Simplified)
 - `ru` Russian
@@ -284,7 +310,7 @@ Available codes and names:
 - Multi-track race orchestration: independent race sessions per track and map-vote commands for admins/players in chat.
 - HUD and scoreboard: in-race sidebar plus ActionBar with per-section config toggles, safe scoreboard restoration after races, and compatibility flow for external scoreboards.
 - Persistent stats: `stats.yml` stores wins, best race and best lap so PlaceholderAPI, holograms, scoreboards, and NPCs can show live and historical data.
-- i18n: bundled message packs for `en`, `es`, `es_419`, `fr`, `pt_BR`, `pt_PT`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, `zh_TW`, `zh_CN`, and `ru`; `en`/`es` are official and the rest are community translations. All are hot-reloadable with `/boatracing reload`.
+- i18n: bundled message packs for `en`, `es`, `es_419`, `fr`, `pt_BR`, `pt_PT`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, `sv`, `zh_TW`, `zh_CN`, and `ru`; `en`/`es` are official and the rest are community translations. All are hot-reloadable with `/boatracing reload`.
 - Rewards, updates, and metrics: per-position race rewards, Modrinth update checks, and optional bStats metrics.
 
 ## Requirements
@@ -389,9 +415,10 @@ Race commands:
 - `/boatracing race back`
 - `/boatracing race start <track>`
 - `/boatracing race force <track>`
+- `/boatracing race practice <track>`
 - `/boatracing race stop <track>`
 - `/boatracing race status <track>`
-- `/boatracing race voteopen <track1> <track2> [seconds]`
+- `/boatracing race voteopen [all|<track1> <track2> ...] [seconds]`
 - `/boatracing race vote <track>`
 - `/boatracing race voteui`
 - `/boatracing race votestatus`
@@ -404,9 +431,13 @@ Race behavior:
 - A player can only be registered/racing in one session at a time.
 - Tab-complete includes `vote`, `voteui`, and `votestatus` for players, plus `voteopen` and `voteclose` for admins.
 - `/boatracing race vote` without `<track>` opens the vote UI when a map vote is active (same behavior as `/boatracing race voteui`).
-- `/boatracing race voteopen ...` now announces a clickable vote UI action in chat that runs `/boatracing race voteui`.
+- `/boatracing race voteopen all [seconds]` (or `/boatracing race voteopen [seconds]`) opens a vote with all saved tracks.
+- Opening a vote with `/boatracing race voteopen ...` requires `boatracing.race.voteopen` (also granted by `boatracing.race.admin` or `boatracing.setup`).
+- `/boatracing race voteopen ...` announces both a clickable vote UI action (`/boatracing race voteui`) and a plain vote command instruction (`/{label} race vote <track>`).
+- When map voting ends, the winning track registration is opened automatically (if the track is ready and not busy), so players immediately receive the normal join command announcement.
 - `start` and `force` use registered players only.
 - `start`, `force`, GUI start, and registration timeout auto-start require at least `racing.min-players-to-start` online registered players.
+- `practice` starts a solo race directly on the selected track (ready track required), without waiting for registration/min-player checks.
 - The minimum start threshold defaults to `1`, can be overridden per track via `tracks/<name>.yml` (`racing.min-players-to-start`), and shows `race.not-enough-players` when not met.
 - Grid order is: custom start slot bindings first, then best recorded track times, then players without a recorded time.
 - Boats are spawned using each player’s selected boat type with cross-version-safe material resolution.
@@ -436,10 +467,12 @@ Teams suggestions:
 - `boat` suggests supported boat and chest-boat variants, plus bamboo rafts.
 
 Race suggestions:
-- Everyone sees `help`, `join`, `leave`, `status`.
+- Everyone sees `help`, `join`, `leave`, `status`, `vote`, `voteui`, `votestatus`.
 - Players with `boatracing.race.back` also see `back`.
-- Admin-capable users also see `open`, `start`, `force`, `stop`.
-- Track-taking subcommands suggest existing named tracks.
+- Players with `boatracing.race.practice` also see `practice`.
+- Players with `boatracing.race.voteopen` (or admin-capable users) also see `voteopen`.
+- Admin-capable users also see `open`, `start`, `force`, `stop`, `voteclose`.
+- Track-taking subcommands (`open`, `join`, `leave`, `force`, `start`, `practice`, `stop`, `status`, `vote`) suggest existing named tracks.
 
 Setup suggestions:
 - `help`, `addstart`, `clearstarts`, `setfinish`, `setpit`, `addcheckpoint`, `clearcheckpoints`, `addlight`, `clearlights`, `setlaps`, `setpitstops`, `setlobby`, `setpos`, `clearpos`, `show`, `selinfo`, `wand`, `wizard`
@@ -486,7 +519,9 @@ Command equivalents:
 - `boatracing.race.leave` (default: true): leave registration.
 - `boatracing.race.back` (default: true): return to the saved pre-lobby location.
 - `boatracing.race.status` (default: true): check track race status.
-- `boatracing.race.admin` (default: op): manage races with `open`, `start`, `force`, and `stop`.
+- `boatracing.race.practice` (default: true): start solo practice mode on a ready track.
+- `boatracing.race.voteopen` (default: op): open map voting with `/boatracing race voteopen`.
+- `boatracing.race.admin` (default: op): manage races with `open`, `start`, `force`, `stop`, and `voteclose`.
 
 Permission notes:
 - `boatracing.admin` grants the other plugin permissions through explicit children.
@@ -496,7 +531,7 @@ Permission notes:
 ## Configuration
 Core:
 - `prefix`: chat prefix.
-- `language`: bundled values are `en`, `es`, `zh_TW`, `zh_CN`, and `ru`.
+- `language`: bundled values are `en`, `es`, `es_419`, `fr`, `pt_BR`, `pt_PT`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, `sv`, `zh_TW`, `zh_CN`, and `ru`.
 - `max-members-per-team`: team size limit.
 
 Player actions:
@@ -592,8 +627,8 @@ Legacy migration:
 - Optional PlaceholderAPI support through a soft dependency
 - SimpleScore compatibility hook for hiding/restoring external sidebars during races
 - Compatible with TAB environments for scoreboard usage, without requiring a TAB-specific dependency
-- Bundled languages: English, Spanish, French, Portuguese (Brazil), German, Italian, Polish, Turkish, Japanese, Korean, Chinese (Taiwan, Traditional), Chinese (Mainland, Simplified), Russian
-- Note: `pt_BR`, `de`, `it`, `pl`, `tr`, `ja`, and `ko` are bundled starter files and may still require translation review.
+- Bundled languages: English, Spanish, French, Portuguese (Brazil), Portuguese (Portugal), German, Italian, Polish, Turkish, Japanese, Korean, Swedish, Chinese (Taiwan, Traditional), Chinese (Mainland, Simplified), Russian
+- Note: `pt_BR`, `pt_PT`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, and `sv` are bundled community files and may still require translation review.
 - Custom languages are supported via `messages_<lang>.yml` in the plugin data folder and can be selected with `language: "<lang>"`.
 
 ## Placeholders (PlaceholderAPI)
@@ -606,8 +641,10 @@ Resolution rules:
 - `%boatracing_player_*_<player>%` uses an explicit player name or UUID and is ideal for NPCs and static holograms.
 - Team leader placeholders always resolve the current saved leader of that team.
 - Track-scoped race placeholders (`%boatracing_track_race_*_<track>%`) resolve against the race session of the requested track.
+- Track-scoped practice placeholders (`%boatracing_track_practice_running_<track>%`) resolve whether the requested track is currently in practice mode (including countdown).
 - Track-scoped best-record placeholders (`%boatracing_track_best_*_<track>%`) resolve against the requested track token, not only the currently selected track.
 - Compatibility aliases are available: `%boatracing_track_racerunning_<track>%` and `%boatracing_track_raceregistering_<track>%`.
+- Compatibility alias is available for practice-running: `%boatracing_track_practicerunning_<track>%`.
 - For track-scoped race placeholders, tracks without an active session resolve as `false` (`running`/`registering`) or `idle` (`status`).
 - `<track>` tokens support underscores for spaces (for example `My_Track`).
 
@@ -626,11 +663,30 @@ Resolution rules:
 | Placeholder(s) | What it shows | Example text on screen | Visibility |
 |---|---|---|---|
 | `%boatracing_player_race_running%` / `%boatracing_player_race_registering%` | Whether the viewer is currently racing or currently registered in their own race session | `Running: true` / `Registering: false` | Viewer context |
+| `%boatracing_player_practice_running%` | Whether the viewer is currently in a solo practice session | `Practice running: true` | Viewer context |
 | `%boatracing_track_race_running_<track>%` / `%boatracing_track_race_registering_<track>%` / `%boatracing_track_race_status_<track>%` | Track-scoped race state (`running`, `registering`, `idle`) for a specific track token | `Harbor running: true` / `Harbor status: running` / `Desert status: idle` | Same for every viewer |
 | `%boatracing_track_racerunning_<track>%` / `%boatracing_track_raceregistering_<track>%` | Backward-compatible aliases for track running/registering booleans | `Harbor running(alias): true` / `Desert registering(alias): false` | Same for every viewer |
+| `%boatracing_track_practice_running_<track>%` / `%boatracing_track_practicerunning_<track>%` | Track-scoped practice state (true while practice countdown or run is active) | `Harbor practice: true` / `Harbor practice(alias): true` | Same for every viewer |
 | `%boatracing_player_current_time%` / `%boatracing_player_current_time_ms%` | Live timer for the viewer | `Time: 1:42.355` / `TimeMs: 102355` | Viewer context |
 | `%boatracing_player_current_lap%` / `%boatracing_player_current_checkpoint%` | Viewer lap and next checkpoint progression | `Lap: 2` / `Checkpoint: 5` | Viewer context |
 | `%boatracing_player_current_position%` / `%boatracing_player_current_pitstops%` / `%boatracing_player_finished%` | Viewer live position, pit count, and finish state | `Pos: 1` / `Pit stops: 0` / `Finished: false` | Viewer context |
+
+### Category: Viewer Practice Stats
+
+| Placeholder(s) | What it shows | Example text on screen | Visibility |
+|---|---|---|---|
+| `%boatracing_player_practice_best_run%` / `%boatracing_player_practice_best_run_ms%` | Viewer best complete practice run on current track | `Practice best run: 1:10.245` | Viewer context |
+| `%boatracing_player_practice_last_run%` / `%boatracing_player_practice_last_run_ms%` | Viewer last complete practice run on current track | `Practice last run: 1:12.040` | Viewer context |
+| `%boatracing_player_practice_best_lap%` / `%boatracing_player_practice_best_lap_ms%` | Viewer best practice lap on current track | `Practice best lap: 0:33.112` | Viewer context |
+| `%boatracing_player_practice_last_lap%` / `%boatracing_player_practice_last_lap_ms%` | Viewer last practice lap on current track | `Practice last lap: 0:34.506` | Viewer context |
+| `%boatracing_player_practice_best_sector_<section>%` / `%boatracing_player_practice_best_sector_ms_<section>%` | Viewer best section split for current track | `%boatracing_player_practice_best_sector_2%` -> `0:10.820` | Viewer context |
+| `%boatracing_player_practice_last_sector_<section>%` / `%boatracing_player_practice_last_sector_ms_<section>%` | Viewer last section split for current track | `%boatracing_player_practice_last_sector_2%` -> `0:11.064` | Viewer context |
+| `%boatracing_player_practice_best_run_<track>%` / `%boatracing_player_practice_best_run_ms_<track>%` | Viewer best complete practice run for a specific track token | `%boatracing_player_practice_best_run_harbor%` -> `1:10.245` | Viewer context |
+| `%boatracing_player_practice_last_run_<track>%` / `%boatracing_player_practice_last_run_ms_<track>%` | Viewer last complete practice run for a specific track token | `%boatracing_player_practice_last_run_harbor%` -> `1:12.040` | Viewer context |
+| `%boatracing_player_practice_best_lap_<track>%` / `%boatracing_player_practice_best_lap_ms_<track>%` | Viewer best lap for a specific track token | `%boatracing_player_practice_best_lap_harbor%` -> `0:33.112` | Viewer context |
+| `%boatracing_player_practice_last_lap_<track>%` / `%boatracing_player_practice_last_lap_ms_<track>%` | Viewer last lap for a specific track token | `%boatracing_player_practice_last_lap_harbor%` -> `0:34.506` | Viewer context |
+| `%boatracing_player_practice_best_sector_<track>_<section>%` / `%boatracing_player_practice_best_sector_ms_<track>_<section>%` | Viewer best section split for a specific track token | `%boatracing_player_practice_best_sector_harbor_3%` -> `0:12.404` | Viewer context |
+| `%boatracing_player_practice_last_sector_<track>_<section>%` / `%boatracing_player_practice_last_sector_ms_<track>_<section>%` | Viewer last section split for a specific track token | `%boatracing_player_practice_last_sector_harbor_3%` -> `0:12.980` | Viewer context |
 
 ### Category: Viewer Records and Wins
 
@@ -647,10 +703,11 @@ Resolution rules:
 |---|---|---|---|
 | `%boatracing_teams_count%` / `%boatracing_teams_list%` | Total number of teams and the team list | `Teams: 4` / `Teams: Sharks, Rockets, Drift, Wave` | Same for every viewer |
 | `%boatracing_track_name%` / `%boatracing_track_best_player%` / `%boatracing_track_best_time%` | Current track name and its best record | `Track: harbor` / `Track record: jaie55 - 0:58.772` | Same for every viewer |
-| `%boatracing_track_best_player_<track>%` / `%boatracing_track_best_time_<track>%` / `%boatracing_track_best_time_ms_<track>%` | Best record for a specific track token **NEW (1.1.4)** | `%boatracing_track_best_time_harbor%` -> `0:58.772` / `%boatracing_track_best_player_harbor%` -> `jaie55` | Same for every viewer |
-| `%boatracing_track_top_1_player_<track>%` / `%boatracing_track_top_1_time_<track>%` / `%boatracing_track_top_1_time_ms_<track>%` | Track top 1 holder and time **NEW (1.1.4)** | `%boatracing_track_top_1_player_harbor%` -> `jaie55` / `%boatracing_track_top_1_time_harbor%` -> `0:58.772` | Same for every viewer |
-| `%boatracing_track_top_2_player_<track>%` / `%boatracing_track_top_2_time_<track>%` / `%boatracing_track_top_2_time_ms_<track>%` | Track top 2 holder and time **NEW (1.1.4)** | `%boatracing_track_top_2_player_harbor%` -> `KiluGod` / `%boatracing_track_top_2_time_harbor%` -> `1:00.120` | Same for every viewer |
-| `%boatracing_track_top_3_player_<track>%` / `%boatracing_track_top_3_time_<track>%` / `%boatracing_track_top_3_time_ms_<track>%` | Track top 3 holder and time **NEW (1.1.4)** | `%boatracing_track_top_3_player_harbor%` -> `RacerX` / `%boatracing_track_top_3_time_harbor%` -> `1:01.004` | Same for every viewer |
+| `%boatracing_track_best_player_<track>%` / `%boatracing_track_best_time_<track>%` / `%boatracing_track_best_time_ms_<track>%` | Best record for a specific track token | `%boatracing_track_best_time_harbor%` -> `0:58.772` / `%boatracing_track_best_player_harbor%` -> `jaie55` | Same for every viewer |
+| `%boatracing_track_top_1_player_<track>%` / `%boatracing_track_top_1_time_<track>%` / `%boatracing_track_top_1_time_ms_<track>%` | Track top 1 holder and time | `%boatracing_track_top_1_player_harbor%` -> `jaie55` / `%boatracing_track_top_1_time_harbor%` -> `0:58.772` | Same for every viewer |
+| `%boatracing_track_top_2_player_<track>%` / `%boatracing_track_top_2_time_<track>%` / `%boatracing_track_top_2_time_ms_<track>%` | Track top 2 holder and time | `%boatracing_track_top_2_player_harbor%` -> `KiluGod` / `%boatracing_track_top_2_time_harbor%` -> `1:00.120` | Same for every viewer |
+| `%boatracing_track_top_3_player_<track>%` / `%boatracing_track_top_3_time_<track>%` / `%boatracing_track_top_3_time_ms_<track>%` | Track top 3 holder and time | `%boatracing_track_top_3_player_harbor%` -> `RacerX` / `%boatracing_track_top_3_time_harbor%` -> `1:01.004` | Same for every viewer |
+| `%boatracing_track_practice_running_<track>%` / `%boatracing_track_practicerunning_<track>%` | Practice-running state for a specific track token | `%boatracing_track_practice_running_harbor%` -> `true` | Same for every viewer |
 | `%boatracing_top_player_wins_name%` / `%boatracing_top_player_wins%` | Player with most wins | `Top wins: jaie55 (29)` | Same for every viewer |
 | `%boatracing_top_team_wins_name%` / `%boatracing_top_team_wins%` | Team with most wins | `Top team: Sharks (77)` | Same for every viewer |
 | `%boatracing_top_player_best_race_name%` / `%boatracing_top_player_best_race%` | Best race holder and time | `Best race: KiluGod - 1:38.404` | Same for every viewer |

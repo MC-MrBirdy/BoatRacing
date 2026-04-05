@@ -36,8 +36,9 @@ race:
     status: "&cUsage: /{label} race status <track>"
     force: "&cUsage: /{label} race force <track>"
     start: "&cUsage: /{label} race start <track>"
+    practice: "&cUsage: /{label} race practice <track>"
     stop: "&cUsage: /{label} race stop <track>"
-    voteopen: "&cUsage: /{label} race voteopen <track1> <track2> [seconds]"
+    voteopen: "&cUsage: /{label} race voteopen [all|<track1> <track2> ...] [seconds]"
     vote: "&cUsage: /{label} race vote <track>"
 
   help:
@@ -45,10 +46,11 @@ race:
     join: "&7 - &f/{label} race join <track> &7(Join the registration on that track; team required)"
     leave: "&7 - &f/{label} race leave <track> &7(Leave the registration on that track)"
     status: "&7 - &f/{label} race status <track> &7(Show race status for the track)"
+    practice: "&7 - &f/{label} race practice <track> &7(Start a solo practice race on that track)"
     vote: "&7 - &f/{label} race vote <track> &7(Cast your map vote)"
     voteui: "&7 - &f/{label} race voteui &7(Open the vote panel UI)"
     votestatus: "&7 - &f/{label} race votestatus &7(Show current vote counts)"
-    voteopen: "&7 - &f/{label} race voteopen <track1> <track2> [seconds] &7(Open map vote)"
+    voteopen: "&7 - &f/{label} race voteopen [all|<track1> <track2> ...] [seconds] &7(Open map vote; with no tracks it opens all)"
     voteclose: "&7 - &f/{label} race voteclose &7(Close and resolve vote now)"
     back: "&7 - &f/{label} race back &7(Return to your saved location before joining the race lobby)"
     admin: "&8Admin:&7 /{label} race open|start|force|stop <track>"
@@ -92,6 +94,20 @@ race:
   started: "&aRace started! &f{laps} laps"
   starting-countdown: "&7Starting in &f{count}&7..."
   go: "&aGo!"
+  practice:
+    sector:
+      first: "&bSection {section} lap {lap}: &f{time} &7(first split record)"
+      new-best: "&aSection {section} lap {lap}: &f{time} &7(new best, -{improve})"
+      split: "&eSection {section} lap {lap}: &f{time} &7(+{delta} vs best {best})"
+    lap:
+      first: "&bPractice lap {lap}: &f{time} &7(first lap record)"
+      new-best: "&aPractice lap {lap}: &f{time} &7(new best, -{improve})"
+      completed: "&ePractice lap {lap}: &f{time} &7(+{delta} vs best {best})"
+    run:
+      first: "&bPractice run finished: &f{time} &7(first run record)"
+      new-best: "&aPractice run finished: &f{time} &7(new best, -{improve})"
+      completed: "&ePractice run finished: &f{time} &7(+{delta} vs best {best})"
+    run-completed: "&ePractice run finished: &f{time}"
   lap-completed: "&eLap &f{lap}/{total}"
   lap-finished: "&eLap &f{num} &7finished: &f{player}{gap}"
   player-finished: "&a{player} finished! &7Time: &f{time}{gap}"
@@ -132,7 +148,7 @@ race:
     ended-no-options: "&cMap vote ended with no options."
     ended-no-winner: "&cMap vote ended without a winner."
     ended-winner: "&aMap vote ended. Winner: &f{winner} &7({votes} votes)"
-    next-step: "&7Next step: &f/boatracing race open {winner}"
+    next-step: "&7If it did not open automatically, run: &f/{label} race open {winner}"
     need-two-tracks: "&cYou must provide at least 2 valid tracks."
     started: "&eMap vote started (&f{seconds}s&e)!"
     started-click: "&b[Click to open vote UI]"

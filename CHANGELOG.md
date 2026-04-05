@@ -1,5 +1,24 @@
 ﻿# Changelog
 
+## 1.1.5 — Unreleased
+### Added
+- **Solo practice mode command**: added `/boatracing race practice <track>` to start a one-player practice race on a ready track without requiring the minimum race player threshold.
+- **Practice permission node**: added `boatracing.race.practice` with default `true`, so servers can grant/restrict solo practice independently from race-admin permissions.
+- **Persistent practice telemetry**: added `practice-stats.yml` storing per-player/per-track practice metrics (best/last run, best/last lap, best/last sector split).
+- **Practice placeholders**: added `%boatracing_player_practice_*%` placeholders (current-track and `<track>` token variants) and `%boatracing_track_practice_running_<track>%` for practice state displays.
+- **Practice placeholder compatibility alias**: added `%boatracing_track_practicerunning_<track>%` as alias for track practice-running state.
+- **Swedish language bundle**: added bundled `messages_sv.yml` as an unofficial community translation (`sv`) with full message coverage and preserved placeholders/color codes.
+
+### Changed
+- **Same-track race/practice locking during countdown**: a track now stays busy while practice countdown is active, preventing race open/start/force on that same track until practice ends (other tracks remain independent).
+- **Practice chat scope**: practice countdown/split/lap/result updates are now private to the practicing player instead of global race-style broadcasts.
+- **Map vote flow for mixed clients**: `/boatracing race voteopen` now supports opening all saved tracks (`all` or no explicit track list), broadcasts a plain vote command hint (`/{label} race vote <track>`) alongside clickable UI, and auto-opens registration on the voted winner when possible.
+- **Map vote command syntax and tab-complete**: admin usage/help and tab suggestions now include `voteopen [all|<track1> <track2> ...] [seconds]` with `all`/`*` support.
+
+### Fixed
+- **Track record placeholders not refreshing after improved times**: `%boatracing_track_best_*_<track>%` and `%boatracing_track_top_1..3_*_<track>%` now prefer live race-session data (or track file data) instead of stale in-memory selected-track data, so better race times update correctly.
+- **Current-track best placeholders consistency**: `%boatracing_track_best_player%` and `%boatracing_track_best_time%` now resolve through the same track-token path to avoid stale values when races run in separate track sessions.
+
 ## 1.1.4 — 04/04/2026
 ### Added
 - **Track best-record placeholders by token (NEW 1.1.4)**: `%boatracing_track_best_player_<track>%`, `%boatracing_track_best_time_<track>%`, and `%boatracing_track_best_time_ms_<track>%` for per-track record labels in static scoreboards/holograms.

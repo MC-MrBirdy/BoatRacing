@@ -39,8 +39,9 @@ race:
     status: "&c用法：/{label} race status <賽道>"
     force: "&c用法：/{label} race force <賽道>"
     start: "&c用法：/{label} race start <賽道>"
+    practice: "&c用法：/{label} race practice <賽道>"
     stop: "&c用法：/{label} race stop <賽道>"
-    voteopen: "&c用法：/{label} race voteopen <track1> <track2> [秒]"
+    voteopen: "&c用法：/{label} race voteopen [all|<track1> <track2> ...] [秒]"
     vote: "&c用法：/{label} race vote <track>"
 
   help:
@@ -48,10 +49,11 @@ race:
     join: "&7 - &f/{label} race join <賽道> &7（加入該賽道的報名；需要所在隊伍）"
     leave: "&7 - &f/{label} race leave <賽道> &7（退出該賽道的報名）"
     status: "&7 - &f/{label} race status <賽道> &7（顯示賽道比賽狀態）"
+    practice: "&7 - &f/{label} race practice <賽道> &7（在該賽道開始單人練習賽）"
     vote: "&7 - &f/{label} race vote <track> &7（投票選擇地圖）"
     voteui: "&7 - &f/{label} race voteui &7（開啟投票介面）"
     votestatus: "&7 - &f/{label} race votestatus &7（顯示目前票數）"
-    voteopen: "&7 - &f/{label} race voteopen <track1> <track2> [秒] &7（開啟地圖投票）"
+    voteopen: "&7 - &f/{label} race voteopen [all|<track1> <track2> ...] [秒] &7（開啟地圖投票）"
     voteclose: "&7 - &f/{label} race voteclose &7（立即關閉並結算投票）"
     back: "&7 - &f/{label} race back &7（返回你加入賽事大廳前儲存的位置）"
     admin: "&8管理員：&7/{label} race open|start|force|stop <賽道>"
@@ -95,6 +97,20 @@ race:
   started: "&a比賽開始！&f{laps} 圈"
   starting-countdown: "&7將在 &f{count}&7 秒後開始…"
   go: "&a出發！"
+  practice:
+    sector:
+      first: "&b分段 {section} 圈 {lap}: &f{time} &7（首次分段紀錄）"
+      new-best: "&a分段 {section} 圈 {lap}: &f{time} &7（新最佳，-{improve}）"
+      split: "&e分段 {section} 圈 {lap}: &f{time} &7（比最佳 {best} 慢 +{delta}）"
+    lap:
+      first: "&b練習圈 {lap}: &f{time} &7（首次圈速紀錄）"
+      new-best: "&a練習圈 {lap}: &f{time} &7（新最佳，-{improve}）"
+      completed: "&e練習圈 {lap}: &f{time} &7（比最佳 {best} 慢 +{delta}）"
+    run:
+      first: "&b練習完成: &f{time} &7（首次成績紀錄）"
+      new-best: "&a練習完成: &f{time} &7（新最佳，-{improve}）"
+      completed: "&e練習完成: &f{time} &7（比最佳 {best} 慢 +{delta}）"
+    run-completed: "&e練習完成: &f{time}"
   lap-completed: "&e第 &f{lap}/{total} &e圈"
   lap-finished: "&e第 &f{num} &7圈完成：&f{player}{gap}"
   player-finished: "&a{player} 完成！&7用時：&f{time}{gap}"
@@ -135,7 +151,7 @@ race:
     ended-no-options: "&c地圖投票已結束，但沒有可用選項。"
     ended-no-winner: "&c地圖投票已結束，但沒有獲勝者。"
     ended-winner: "&a地圖投票結束。獲勝者：&f{winner} &7（{votes} 票）"
-    next-step: "&7下一步：&f/boatracing race open {winner}"
+    next-step: "&7下一步：&f/{label} race open {winner}"
     need-two-tracks: "&c你必須提供至少 2 條有效賽道。"
     started: "&e地圖投票已開始（&f{seconds}s&e）！"
     started-click: "&b[點擊開啟投票介面]"

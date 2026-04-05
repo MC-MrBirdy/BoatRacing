@@ -4,6 +4,7 @@ import es.jaie55.boatracing.BoatRacingPlugin;
 import es.jaie55.boatracing.team.Team;
 import es.jaie55.boatracing.track.Region;
 import es.jaie55.boatracing.track.TrackConfig;
+import es.jaie55.boatracing.util.PracticeStatsManager;
 import es.jaie55.boatracing.util.SchedulerCompat;
 import es.jaie55.boatracing.util.Text;
 import org.bukkit.Bukkit;
@@ -30,6 +31,7 @@ public class RaceManager {
         public long finishTime = -1L; // millis
         public long penaltyMillis = 0L;
         public long lastLapSplitMillis = 0L;
+        public long lastCheckpointSplitMillis = 0L;
         public boolean wasInFinish = false;
         public boolean wasInPit = false;
         public boolean wasInCheckpoint = false; // for current next checkpoint only
@@ -46,6 +48,8 @@ public class RaceManager {
     private final String trackName;
     private boolean running = false;
     private boolean registering = false;
+    private boolean practiceMode = false;
+    private UUID practicePlayerId;
     private int totalLaps;
     private final Map<UUID, RaceState> states = new HashMap<>();
     private long startTime;
@@ -172,6 +176,9 @@ public class RaceManager {
 
     public boolean isRunning() { return running; }
     public boolean isRegistering() { return registering; }
+    public boolean isCountdownActive() { return !countdownLockedParticipants.isEmpty(); }
+    public boolean isPracticeMode() { return practiceMode; }
+    public boolean isPracticeActive() { return practiceMode && (running || isCountdownActive()); }
     public int getTotalLaps() { return totalLaps; }
     public void setTotalLaps(int laps) { this.totalLaps = Math.max(1, laps); }
     public TrackConfig getTrack() { return track; }
@@ -225,10 +232,18 @@ public class RaceManager {
 
     // --- Race lifecycle ---
     public void startRace(Collection<Player> participants) {
+        startRace(participants, false);
+    }
+
+    private void startRace(Collection<Player> participants, boolean practice) {
         if (track.getFinish() == null) throw new IllegalStateException("Finish region is not set");
         // Starting a race must always close any registration window/timer first.
         closeRegistrationWindow();
         clearCountdownLock();
+        practiceMode = practice;
+        practicePlayerId = (practice && participants != null && !participants.isEmpty())
+                ? participants.iterator().next().getUniqueId()
+                : null;
         running = true;
         startTime = System.currentTimeMillis();
         states.clear();
@@ -243,12 +258,13 @@ public class RaceManager {
             Long pre = enableFalseStartPenalty ? preStartPenalties.remove(p.getUniqueId()) : null;
             if (pre != null && pre > 0) st.penaltyMillis += pre;
             st.lastLapSplitMillis = 0L;
+            st.lastCheckpointSplitMillis = 0L;
             st.progressOrder = nextProgressOrder();
             states.put(p.getUniqueId(), st);
             setupPlayerBoard(p);
             pitCount.put(p.getUniqueId(), 0);
         }
-        for (Player p : participantsAndAdmins(participants)) {
+        for (Player p : raceAudience(participants)) {
             p.sendMessage(color(plugin.pref() + plugin.msg().get("race.started", "laps", String.valueOf(totalLaps))));
         }
         startScoreboard();
@@ -261,6 +277,7 @@ public class RaceManager {
         cleanupRaceVehicles();
         sendParticipantsToLobbyAfterRace();
         stopScoreboard();
+        clearPracticeSessionState();
     }
 
     public void reset() {
@@ -276,6 +293,7 @@ public class RaceManager {
         preLobbyLocations.clear();
         preLobbyBackExpiresAt.clear();
         stopScoreboard();
+        clearPracticeSessionState();
     }
 
     // Called on player movement to update crossing events
@@ -299,17 +317,26 @@ public class RaceManager {
                 st.progressOrder = nextProgressOrder();
                 p.sendMessage(color(plugin.pref() + plugin.msg().get("race.checkpoint-reached", "num", String.valueOf(st.nextCheckpoint), "total", String.valueOf(track.getCheckpoints().size()))));
                 p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.7f, 1.4f);
-                // Sector gap broadcast
                 int lapNumber = st.lap + 1; // current lap number (1-based)
                 int cpIndex = st.nextCheckpoint; // already incremented above
                 long nowMs = timeFor(st);
-                Map<Integer, Long> lapMap = sectorLeaderTimes.computeIfAbsent(lapNumber, k -> new HashMap<>());
-                if (!lapMap.containsKey(cpIndex)) {
-                    lapMap.put(cpIndex, nowMs);
+                if (practiceMode) {
+                    long sectorMillis = Math.max(0L, nowMs - st.lastCheckpointSplitMillis);
+                    st.lastCheckpointSplitMillis = nowMs;
+                    PracticeStatsManager stats = plugin.getPracticeStatsManager();
+                    if (stats != null) {
+                        PracticeStatsManager.PracticeUpdate update = stats.recordSector(p.getUniqueId(), getTrackName(), cpIndex, sectorMillis);
+                        sendPracticeSectorFeedback(p, lapNumber, cpIndex, update);
+                    }
                 } else {
-                    long gap = Math.max(0L, nowMs - lapMap.get(cpIndex));
-                    String msg = plugin.msg().get("race.sector-gap", "cp", String.valueOf(cpIndex), "lap", String.valueOf(lapNumber), "player", p.getName(), "gap", formatSeconds(gap));
-                    for (Player r : participantsAndAdmins(statesToPlayers())) r.sendMessage(color(msg));
+                    Map<Integer, Long> lapMap = sectorLeaderTimes.computeIfAbsent(lapNumber, k -> new HashMap<>());
+                    if (!lapMap.containsKey(cpIndex)) {
+                        lapMap.put(cpIndex, nowMs);
+                    } else {
+                        long gap = Math.max(0L, nowMs - lapMap.get(cpIndex));
+                        String msg = plugin.msg().get("race.sector-gap", "cp", String.valueOf(cpIndex), "lap", String.valueOf(lapNumber), "player", p.getName(), "gap", formatSeconds(gap));
+                        for (Player r : raceAudience(statesToPlayers())) r.sendMessage(color(msg));
+                    }
                 }
             } else if (!inside && st.wasInCheckpoint) {
                 st.wasInCheckpoint = false;
@@ -367,12 +394,20 @@ public class RaceManager {
                 long lapFinishMs = (System.currentTimeMillis() - startTime) + st.penaltyMillis;
                 long lapDurationMs = Math.max(0L, lapFinishMs - st.lastLapSplitMillis);
                 st.lastLapSplitMillis = lapFinishMs;
+                st.lastCheckpointSplitMillis = lapFinishMs;
                 st.lap++;
                 st.nextCheckpoint = 0;
                 st.progressOrder = nextProgressOrder();
                 st.wasInCheckpoint = false;
                 if (plugin.getStatsManager() != null && lapDurationMs > 0) {
                     plugin.getStatsManager().updatePlayerBestLap(p.getUniqueId(), lapDurationMs);
+                }
+                PracticeStatsManager.PracticeUpdate lapPracticeUpdate = null;
+                if (practiceMode) {
+                    PracticeStatsManager practiceStats = plugin.getPracticeStatsManager();
+                    if (practiceStats != null && lapDurationMs > 0L) {
+                        lapPracticeUpdate = practiceStats.recordLap(p.getUniqueId(), getTrackName(), lapDurationMs);
+                    }
                 }
                 // Do not reset pit counter; mandatory pitstops apply for the whole race
                 if (st.lap >= totalLaps) {
@@ -383,40 +418,60 @@ public class RaceManager {
                     if (plugin.getStatsManager() != null) {
                         plugin.getStatsManager().updatePlayerBestRace(p.getUniqueId(), st.finishTime);
                     }
-                    // Winner reference and gap to winner (same line)
-                    Long winnerMs = lapLeaderFinishTimes.get(lapCompleted);
-                    if (winnerMs == null) {
-                        lapLeaderFinishTimes.put(lapCompleted, lapFinishMs);
+                    if (practiceMode) {
+                        PracticeStatsManager practiceStats = plugin.getPracticeStatsManager();
+                        if (practiceStats != null) {
+                            PracticeStatsManager.PracticeUpdate runUpdate = practiceStats.recordRun(p.getUniqueId(), getTrackName(), st.finishTime);
+                            sendPracticeRunFeedback(p, runUpdate);
+                        } else {
+                            p.sendMessage(color(plugin.pref() + plugin.msg().get("race.practice.run-completed", "time", formatSeconds(st.finishTime))));
+                        }
+                        p.playSound(p.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.3f);
+                    } else {
+                        // Winner reference and gap to winner (same line)
+                        Long winnerMs = lapLeaderFinishTimes.get(lapCompleted);
+                        if (winnerMs == null) {
+                            lapLeaderFinishTimes.put(lapCompleted, lapFinishMs);
+                        }
+                        String gapSuffix = "";
+                        if (winnerMs != null) {
+                            long gapF = Math.max(0L, lapFinishMs - winnerMs);
+                            gapSuffix = " &7(+" + formatSeconds(gapF) + " to winner)";
+                        }
+                        // Announce the finisher's total time to all race participants and admins (English)
+                        String finMsg = plugin.msg().get("race.player-finished", "player", p.getName(), "time", formatSeconds(st.finishTime), "gap", gapSuffix);
+                        for (Player r : raceAudience(statesToPlayers())) r.sendMessage(color(finMsg));
+                        p.playSound(p.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.3f);
                     }
-                    String gapSuffix = "";
-                    if (winnerMs != null) {
-                        long gapF = Math.max(0L, lapFinishMs - winnerMs);
-                        gapSuffix = " &7(+" + formatSeconds(gapF) + " to winner)";
-                    }
-                    // Announce the finisher's total time to all race participants and admins (English)
-                    String finMsg = plugin.msg().get("race.player-finished", "player", p.getName(), "time", formatSeconds(st.finishTime), "gap", gapSuffix);
-                    for (Player r : participantsAndAdmins(statesToPlayers())) r.sendMessage(color(finMsg));
-                    p.playSound(p.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.3f);
 
                     // Move finished racers to waiting lobby immediately.
                     sendParticipantToLobbyAfterRace(p.getUniqueId(), p);
 
                     checkAllFinished();
                 } else {
-                    // Lap finish broadcast (always). First finisher sets baseline; others show +gap to leader
-                    Long leaderLapMs = lapLeaderFinishTimes.get(lapCompleted);
-                    if (leaderLapMs == null) {
-                        lapLeaderFinishTimes.put(lapCompleted, lapFinishMs);
+                    if (practiceMode) {
+                        if (lapPracticeUpdate != null) {
+                            sendPracticeLapFeedback(p, lapCompleted, lapPracticeUpdate);
+                        } else {
+                            p.sendMessage(color(plugin.pref() + plugin.msg().get("race.lap-completed", "lap", String.valueOf(st.lap), "total", String.valueOf(totalLaps))));
+                        }
+                        p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.7f, 1.2f);
+                    } else {
+                        // Lap finish broadcast (always). First finisher sets baseline; others show +gap to leader
+                        Long leaderLapMs = lapLeaderFinishTimes.get(lapCompleted);
+                        if (leaderLapMs == null) {
+                            lapLeaderFinishTimes.put(lapCompleted, lapFinishMs);
+                        }
+                        String gapLapSuffix = "";
+                        if (leaderLapMs != null) {
+                            long gap = Math.max(0L, lapFinishMs - leaderLapMs);
+                            gapLapSuffix = " &7(+" + formatSeconds(gap) + " to leader)";
+                        }
+                        String lapMsg = plugin.msg().get("race.lap-finished", "num", String.valueOf(lapCompleted), "player", p.getName(), "gap", gapLapSuffix);
+                        for (Player r : raceAudience(statesToPlayers())) r.sendMessage(color(lapMsg));
+                        p.sendMessage(color(plugin.pref() + plugin.msg().get("race.lap-completed", "lap", String.valueOf(st.lap), "total", String.valueOf(totalLaps))));
+                        p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.7f, 1.2f);
                     }
-                    String gapLapSuffix = "";
-                    if (leaderLapMs != null) {
-                        long gap = Math.max(0L, lapFinishMs - leaderLapMs);
-                        gapLapSuffix = " &7(+" + formatSeconds(gap) + " to leader)";
-                    }
-                    String lapMsg = plugin.msg().get("race.lap-finished", "num", String.valueOf(lapCompleted), "player", p.getName(), "gap", gapLapSuffix);
-                    for (Player r : participantsAndAdmins(statesToPlayers())) r.sendMessage(color(lapMsg));
-                    p.sendMessage(color(plugin.pref() + plugin.msg().get("race.lap-completed", "lap", String.valueOf(st.lap), "total", String.valueOf(totalLaps))));
-                    p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.7f, 1.2f);
                 }
             } else {
                 // Tried to finish without checkpoints or missing mandatory pitstops
@@ -445,14 +500,26 @@ public class RaceManager {
         List<Map.Entry<UUID, RaceState>> list = new ArrayList<>(states.entrySet());
         list.sort(Comparator.comparingLong(e -> timeFor(e.getValue())));
 
+        Collection<Player> recipients;
+        if (practiceMode) {
+            Player runner = practicePlayer();
+            if (runner == null || !runner.isOnline()) {
+                recipients = statesToPlayers();
+            } else {
+                recipients = Collections.singletonList(runner);
+            }
+        } else {
+            recipients = new ArrayList<>(Bukkit.getOnlinePlayers());
+        }
+
         // Persist winner stats for placeholders/holograms
-        if (!list.isEmpty() && plugin.getStatsManager() != null) {
+        if (!practiceMode && !list.isEmpty() && plugin.getStatsManager() != null) {
             UUID winner = list.get(0).getKey();
             plugin.getStatsManager().addPlayerWin(winner);
             plugin.getTeamManager().getTeamByMember(winner).ifPresent(t -> plugin.getStatsManager().addTeamWin(t.getId()));
         }
 
-        for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(color(plugin.msg().get("race.results.header")));
+        for (Player p : recipients) p.sendMessage(color(plugin.msg().get("race.results.header")));
         int pos = 1;
         for (Map.Entry<UUID, RaceState> e : list) {
             UUID id = e.getKey();
@@ -478,22 +545,24 @@ public class RaceManager {
             String line = plugin.msg().get(msgKey, "pos", String.valueOf(pos), "player", name, "time", formatSeconds(t), "penalty", penaltyStr);
 
             pos++;
-            for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(color(line));
+            for (Player p : recipients) p.sendMessage(color(line));
         }
 
         // Distribute rewards
-        try {
-            es.jaie55.boatracing.reward.RewardManager rm = plugin.getRewardManager();
-            if (rm != null && rm.isEnabled()) {
-                String trackName = getTrackName();
-                List<Map.Entry<UUID, Long>> results = new ArrayList<>();
-                for (Map.Entry<UUID, RaceState> e : list) {
-                    results.add(new AbstractMap.SimpleEntry<>(e.getKey(), timeFor(e.getValue())));
+        if (!practiceMode) {
+            try {
+                es.jaie55.boatracing.reward.RewardManager rm = plugin.getRewardManager();
+                if (rm != null && rm.isEnabled()) {
+                    String trackName = getTrackName();
+                    List<Map.Entry<UUID, Long>> results = new ArrayList<>();
+                    for (Map.Entry<UUID, RaceState> e : list) {
+                        results.add(new AbstractMap.SimpleEntry<>(e.getKey(), timeFor(e.getValue())));
+                    }
+                    rm.giveRewards(results, trackName, totalLaps);
                 }
-                rm.giveRewards(results, trackName, totalLaps);
+            } catch (Exception ex) {
+                plugin.getLogger().warning("Failed to distribute rewards: " + ex.getMessage());
             }
-        } catch (Exception ex) {
-            plugin.getLogger().warning("Failed to distribute rewards: " + ex.getMessage());
         }
     }
 
@@ -541,11 +610,120 @@ public class RaceManager {
         return String.format("%d:%02d.%03d", m, s, ms);
     }
 
+    private void clearPracticeSessionState() {
+        practiceMode = false;
+        practicePlayerId = null;
+    }
+
+    private Player practicePlayer() {
+        return practicePlayerId != null ? Bukkit.getPlayer(practicePlayerId) : null;
+    }
+
+    private Collection<Player> raceAudience(Collection<Player> participants) {
+        if (!practiceMode) return participantsAndAdmins(participants);
+
+        LinkedHashSet<Player> set = new LinkedHashSet<>();
+        if (participants != null) {
+            for (Player p : participants) {
+                if (p != null && p.isOnline()) set.add(p);
+            }
+        }
+        if (set.isEmpty()) {
+            Player owner = practicePlayer();
+            if (owner != null && owner.isOnline()) set.add(owner);
+        }
+        return set;
+    }
+
+    private void sendPracticeSectorFeedback(Player player, int lapNumber, int sectionIndex, PracticeStatsManager.PracticeUpdate update) {
+        if (player == null || update == null) return;
+        if (update.isFirstRecord()) {
+            player.sendMessage(color(plugin.pref() + plugin.msg().get(
+                    "race.practice.sector.first",
+                    "lap", String.valueOf(lapNumber),
+                    "section", String.valueOf(sectionIndex),
+                    "time", formatSeconds(update.getValueMillis())
+            )));
+            return;
+        }
+        if (update.isImproved()) {
+            player.sendMessage(color(plugin.pref() + plugin.msg().get(
+                    "race.practice.sector.new-best",
+                    "lap", String.valueOf(lapNumber),
+                    "section", String.valueOf(sectionIndex),
+                    "time", formatSeconds(update.getValueMillis()),
+                    "improve", formatSeconds(update.getImprovementMillis())
+            )));
+            return;
+        }
+        player.sendMessage(color(plugin.pref() + plugin.msg().get(
+                "race.practice.sector.split",
+                "lap", String.valueOf(lapNumber),
+                "section", String.valueOf(sectionIndex),
+                "time", formatSeconds(update.getValueMillis()),
+                "delta", formatSeconds(update.getGapToBestMillis()),
+                "best", formatSeconds(update.getBestMillis())
+        )));
+    }
+
+    private void sendPracticeLapFeedback(Player player, int lapNumber, PracticeStatsManager.PracticeUpdate update) {
+        if (player == null || update == null) return;
+        if (update.isFirstRecord()) {
+            player.sendMessage(color(plugin.pref() + plugin.msg().get(
+                    "race.practice.lap.first",
+                    "lap", String.valueOf(lapNumber),
+                    "time", formatSeconds(update.getValueMillis())
+            )));
+            return;
+        }
+        if (update.isImproved()) {
+            player.sendMessage(color(plugin.pref() + plugin.msg().get(
+                    "race.practice.lap.new-best",
+                    "lap", String.valueOf(lapNumber),
+                    "time", formatSeconds(update.getValueMillis()),
+                    "improve", formatSeconds(update.getImprovementMillis())
+            )));
+            return;
+        }
+        player.sendMessage(color(plugin.pref() + plugin.msg().get(
+                "race.practice.lap.completed",
+                "lap", String.valueOf(lapNumber),
+                "time", formatSeconds(update.getValueMillis()),
+                "delta", formatSeconds(update.getGapToBestMillis()),
+                "best", formatSeconds(update.getBestMillis())
+        )));
+    }
+
+    private void sendPracticeRunFeedback(Player player, PracticeStatsManager.PracticeUpdate update) {
+        if (player == null || update == null) return;
+        if (update.isFirstRecord()) {
+            player.sendMessage(color(plugin.pref() + plugin.msg().get(
+                    "race.practice.run.first",
+                    "time", formatSeconds(update.getValueMillis())
+            )));
+            return;
+        }
+        if (update.isImproved()) {
+            player.sendMessage(color(plugin.pref() + plugin.msg().get(
+                    "race.practice.run.new-best",
+                    "time", formatSeconds(update.getValueMillis()),
+                    "improve", formatSeconds(update.getImprovementMillis())
+            )));
+            return;
+        }
+        player.sendMessage(color(plugin.pref() + plugin.msg().get(
+                "race.practice.run.completed",
+                "time", formatSeconds(update.getValueMillis()),
+                "delta", formatSeconds(update.getGapToBestMillis()),
+                "best", formatSeconds(update.getBestMillis())
+        )));
+    }
+
     private static String color(String s) { return es.jaie55.boatracing.util.Text.colorize(s); }
 
     // --- Registration ---
     public boolean openRegistration(int laps, Long secondsOverride) {
-        if (running || registering) return false;
+        if (running || registering || isCountdownActive()) return false;
         stopRegistrationTimer();
         setTotalLaps(laps);
         registered.clear();
@@ -619,9 +797,23 @@ public class RaceManager {
     }
 
     public boolean forceStart() {
-        if (running) return false;
+        if (running || isCountdownActive()) return false;
         closeRegistrationWindow();
         return startFromRegistered();
+    }
+
+    public boolean startPractice(Player player) {
+        if (player == null || !player.isOnline()) return false;
+        if (running || registering || isCountdownActive()) return false;
+
+        List<Player> participants = new ArrayList<>();
+        participants.add(player);
+
+        List<Player> placed = placeAtStartsWithBoats(participants);
+        if (placed.isEmpty()) return false;
+
+        startRaceWithCountdown(placed, true);
+        return true;
     }
 
     public void closeRegistrationWindow() {
@@ -630,7 +822,7 @@ public class RaceManager {
     }
 
     private boolean startFromRegistered() {
-        if (running) return false;
+        if (running || isCountdownActive()) return false;
         List<Player> participants = new ArrayList<>();
         for (UUID id : registered) {
             Player p = Bukkit.getPlayer(id);
@@ -681,20 +873,24 @@ public class RaceManager {
             return false;
         }
         // Keep pre-lobby locations so players can use /boatracing race back after the race.
-        startRaceWithCountdown(placed);
+        startRaceWithCountdown(placed, false);
         return true;
     }
 
     public boolean cancelRace() {
         if (!running) return false;
+        Collection<Player> recips = raceAudience(statesToPlayers());
         running = false;
         closeRegistrationWindow();
         clearCountdownLock();
         cleanupRaceVehicles();
         sendParticipantsToLobbyAfterRace();
         states.clear();
-        broadcast(color(plugin.msg().get("race.cancelled-general")));
+        for (Player p : recips) {
+            p.sendMessage(color(plugin.msg().get("race.cancelled-general")));
+        }
         stopScoreboard();
+        clearPracticeSessionState();
         return true;
     }
 
@@ -1137,10 +1333,18 @@ public class RaceManager {
 
     // --- Countdown with 5 start lights and false-start check ---
     public void startRaceWithCountdown(List<Player> participants) {
+        startRaceWithCountdown(participants, false);
+    }
+
+    public void startRaceWithCountdown(List<Player> participants, boolean practice) {
+        practiceMode = practice;
+        practicePlayerId = (practice && participants != null && !participants.isEmpty())
+                ? participants.get(0).getUniqueId()
+                : null;
         List<TrackConfig.LightPos> ls = track.getLights();
         if (ls.size() != 5) {
             clearCountdownLock();
-            startRace(participants);
+            startRace(participants, practice);
             return;
         }
         setCountdownLock(participants);
@@ -1191,7 +1395,9 @@ public class RaceManager {
                         long add = (long) Math.round(falseStartPenaltySeconds * 1000.0);
                         preStartPenalties.merge(p.getUniqueId(), add, Long::sum);
                         p.sendMessage(color(plugin.pref() + plugin.msg().get("race.false-start", "time", formatSeconds(add))));
-                        broadcast(color(plugin.msg().get("race.false-start-broadcast", "player", p.getName(), "time", formatSeconds(add))));
+                        if (!practiceMode) {
+                            broadcast(color(plugin.msg().get("race.false-start-broadcast", "player", p.getName(), "time", formatSeconds(add))));
+                        }
                         p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.8f);
                     }
                 }
@@ -1218,10 +1424,10 @@ public class RaceManager {
                     }
                     if (checkTaskRef[0] != null) checkTaskRef[0].cancel();
                     clearCountdownLock();
-                    Collection<Player> recipsGo = participantsAndAdmins(participants);
+                    Collection<Player> recipsGo = raceAudience(participants);
                     for (Player p : recipsGo) p.sendMessage(color(plugin.msg().get("race.go")));
                     for (Player p : recipsGo) p.playSound(p.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.2f);
-                    startRace(participants);
+                    startRace(participants, practice);
                 }, delayTicks);
                 return;
             }
@@ -1235,7 +1441,7 @@ public class RaceManager {
                 }
             }
             int remaining = ls.size() - idx[0];
-            Collection<Player> recips = participantsAndAdmins(participants);
+            Collection<Player> recips = raceAudience(participants);
             for (Player p : recips) p.sendMessage(color(plugin.msg().get("race.starting-countdown", "count", String.valueOf(remaining))));
             for (Player p : recips) p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_HAT, 0.9f, 1.6f);
             idx[0]++;

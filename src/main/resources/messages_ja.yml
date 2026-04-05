@@ -40,8 +40,9 @@ race:
     status: "&c使用法: /{label} race status <track>"
     force: "&c使用法: /{label} race force <track>"
     start: "&c使用法: /{label} race start <track>"
+    practice: "&c使用法: /{label} race practice <track>"
     stop: "&c使用法: /{label} race stop <track>"
-    voteopen: "&c使用法: /{label} race voteopen <track1> <track2> [秒]"
+    voteopen: "&c使用法: /{label} race voteopen [all|<track1> <track2> ...] [秒]"
     vote: "&c使用法: /{label} race vote <track>"
 
   help:
@@ -49,10 +50,11 @@ race:
     join: "&7 - &f/{label} race join <track> &7(このトラックの参加受付に参加します。チーム必須)"
     leave: "&7 - &f/{label} race leave <track> &7(このトラックの参加受付から離脱します)"
     status: "&7 - &f/{label} race status <track> &7(トラックのレース状態を表示します)"
+    practice: "&7 - &f/{label} race practice <track> &7(このトラックでソロ練習レースを開始します)"
     vote: "&7 - &f/{label} race vote <track> &7(マップ投票を行います)"
     voteui: "&7 - &f/{label} race voteui &7(投票UIを開きます)"
     votestatus: "&7 - &f/{label} race votestatus &7(現在の投票数を表示します)"
-    voteopen: "&7 - &f/{label} race voteopen <track1> <track2> [秒] &7(マップ投票を開始します)"
+    voteopen: "&7 - &f/{label} race voteopen [all|<track1> <track2> ...] [秒] &7(マップ投票を開始します)"
     voteclose: "&7 - &f/{label} race voteclose &7(投票を今すぐ締め切って確定します)"
     back: "&7 - &f/{label} race back &7(レースロビーに入る前の保存位置へ戻ります)"
     admin: "&8Admin:&7 /{label} race open|start|force|stop <track>"
@@ -96,6 +98,20 @@ race:
   started: "&aレース開始! &f{laps} 周"
   starting-countdown: "&7開始まで &f{count}&7..."
   go: "&aスタート!"
+  practice:
+    sector:
+      first: "&bセクター {section} ラップ {lap}: &f{time} &7(初回セクターレコード)"
+      new-best: "&aセクター {section} ラップ {lap}: &f{time} &7(新ベスト, -{improve})"
+      split: "&eセクター {section} ラップ {lap}: &f{time} &7(ベスト {best} に対して +{delta})"
+    lap:
+      first: "&b練習ラップ {lap}: &f{time} &7(初回ラップレコード)"
+      new-best: "&a練習ラップ {lap}: &f{time} &7(新ベスト, -{improve})"
+      completed: "&e練習ラップ {lap}: &f{time} &7(ベスト {best} に対して +{delta})"
+    run:
+      first: "&b練習走行終了: &f{time} &7(初回ランレコード)"
+      new-best: "&a練習走行終了: &f{time} &7(新ベスト, -{improve})"
+      completed: "&e練習走行終了: &f{time} &7(ベスト {best} に対して +{delta})"
+    run-completed: "&e練習走行終了: &f{time}"
   lap-completed: "&e周回 &f{lap}/{total}"
   lap-finished: "&e周回 &f{num} &7完了: &f{player}{gap}"
   player-finished: "&a{player} がフィニッシュ! &7タイム: &f{time}{gap}"
@@ -136,7 +152,7 @@ race:
     ended-no-options: "&cマップ投票は選択肢なしで終了しました。"
     ended-no-winner: "&cマップ投票は勝者なしで終了しました。"
     ended-winner: "&aマップ投票が終了しました。勝者: &f{winner} &7({votes} 票)"
-    next-step: "&7次の手順: &f/boatracing race open {winner}"
+    next-step: "&7次の手順: &f/{label} race open {winner}"
     need-two-tracks: "&c少なくとも2つの有効なトラックを指定してください。"
     started: "&eマップ投票を開始しました (&f{seconds}s&e)!"
     started-click: "&b[クリックして投票UIを開く]"

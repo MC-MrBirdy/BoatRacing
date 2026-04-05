@@ -39,8 +39,9 @@ race:
     status: "&cИспользование: /{label} race status <трасса>"
     force: "&cИспользование: /{label} race force <трасса>"
     start: "&cИспользование: /{label} race start <трасса>"
+    practice: "&cИспользование: /{label} race practice <трасса>"
     stop: "&cИспользование: /{label} race stop <трасса>"
-    voteopen: "&cИспользование: /{label} race voteopen <track1> <track2> [секунды]"
+    voteopen: "&cИспользование: /{label} race voteopen [all|<track1> <track2> ...] [секунды]"
     vote: "&cИспользование: /{label} race vote <трасса>"
 
   help:
@@ -48,10 +49,11 @@ race:
     join: "&7 - &f/{label} race join <трасса> &7(Зарегистрироваться на гонку; требуется команда)"
     leave: "&7 - &f/{label} race leave <трасса> &7(Отменить регистрацию)"
     status: "&7 - &f/{label} race status <трасса> &7(Статус гонки)"
+    practice: "&7 - &f/{label} race practice <трасса> &7(Запустить одиночную тренировочную гонку на этой трассе)"
     vote: "&7 - &f/{label} race vote <трасса> &7(Отдать голос за карту)"
     voteui: "&7 - &f/{label} race voteui &7(Открыть интерфейс голосования)"
     votestatus: "&7 - &f/{label} race votestatus &7(Показать текущее количество голосов)"
-    voteopen: "&7 - &f/{label} race voteopen <track1> <track2> [секунды] &7(Открыть голосование за карту)"
+    voteopen: "&7 - &f/{label} race voteopen [all|<track1> <track2> ...] [секунды] &7(Открыть голосование за карту)"
     voteclose: "&7 - &f/{label} race voteclose &7(Закрыть и сразу завершить голосование)"
     back: "&7 - &f/{label} race back &7(Вернуться в сохранённую точку до входа в лобби гонки)"
     admin: "&8Администратор:&7 /{label} race open|start|force|stop <трасса>"
@@ -95,6 +97,20 @@ race:
   started: "&aГонка началась! &f{laps} кругов"
   starting-countdown: "&7Старт через &f{count}&7..."
   go: "&aВперёд!"
+  practice:
+    sector:
+      first: "&bСектор {section} круг {lap}: &f{time} &7(первый рекорд сектора)"
+      new-best: "&aСектор {section} круг {lap}: &f{time} &7(новый рекорд, -{improve})"
+      split: "&eСектор {section} круг {lap}: &f{time} &7(+{delta} к лучшему {best})"
+    lap:
+      first: "&bТренировочный круг {lap}: &f{time} &7(первый рекорд круга)"
+      new-best: "&aТренировочный круг {lap}: &f{time} &7(новый рекорд, -{improve})"
+      completed: "&eТренировочный круг {lap}: &f{time} &7(+{delta} к лучшему {best})"
+    run:
+      first: "&bТренировка завершена: &f{time} &7(первый рекорд заезда)"
+      new-best: "&aТренировка завершена: &f{time} &7(новый рекорд, -{improve})"
+      completed: "&eТренировка завершена: &f{time} &7(+{delta} к лучшему {best})"
+    run-completed: "&eТренировка завершена: &f{time}"
   lap-completed: "&eКруг &f{lap}/{total}"
   lap-finished: "&eКруг &f{num} &7завершён: &f{player}{gap}"
   player-finished: "&a{player} финишировал! &7Время: &f{time}{gap}"
@@ -135,7 +151,7 @@ race:
     ended-no-options: "&cГолосование за карту завершилось без вариантов."
     ended-no-winner: "&cГолосование за карту завершилось без победителя."
     ended-winner: "&aГолосование за карту завершено. Победитель: &f{winner} &7({votes} голосов)"
-    next-step: "&7Следующий шаг: &f/boatracing race open {winner}"
+    next-step: "&7Следующий шаг: &f/{label} race open {winner}"
     need-two-tracks: "&cНужно указать как минимум 2 действительные трассы."
     started: "&eГолосование за карту началось (&f{seconds}s&e)!"
     started-click: "&b[Нажмите, чтобы открыть интерфейс голосования]"

@@ -36,8 +36,9 @@ race:
     status: "&cUso: /{label} race status <track>"
     force: "&cUso: /{label} race force <track>"
     start: "&cUso: /{label} race start <track>"
+    practice: "&cUso: /{label} race practice <track>"
     stop: "&cUso: /{label} race stop <track>"
-    voteopen: "&cUso: /{label} race voteopen <track1> <track2> [seconds]"
+    voteopen: "&cUso: /{label} race voteopen [all|<track1> <track2> ...] [seconds]"
     vote: "&cUso: /{label} race vote <track>"
 
   help:
@@ -45,10 +46,11 @@ race:
     join: "&7 - &f/{label} race join <track> &7(Únete al registro en esa pista; se requiere equipo)"
     leave: "&7 - &f/{label} race leave <track> &7(Abandona el registro en esa pista)"
     status: "&7 - &f/{label} race status <track> &7(Muestra el estado de la carrera en la pista)"
+    practice: "&7 - &f/{label} race practice <track> &7(Inicia una carrera de práctica en solitario en esa pista)"
     vote: "&7 - &f/{label} race vote <track> &7(Vota por un mapa)"
     voteui: "&7 - &f/{label} race voteui &7(Abre la interfaz de votación)"
     votestatus: "&7 - &f/{label} race votestatus &7(Muestra el recuento actual de votos)"
-    voteopen: "&7 - &f/{label} race voteopen <track1> <track2> [seconds] &7(Abre la votación de mapa)"
+    voteopen: "&7 - &f/{label} race voteopen [all|<track1> <track2> ...] [seconds] &7(Abre la votación de mapa; sin pistas abre todas)"
     voteclose: "&7 - &f/{label} race voteclose &7(Cierra y resuelve la votación ahora)"
     back: "&7 - &f/{label} race back &7(Vuelve a tu ubicación guardada antes de entrar al lobby de carrera)"
     admin: "&8Admin:&7 /{label} race open|start|force|stop <track>"
@@ -92,6 +94,20 @@ race:
   started: "&aCarrera iniciada. &f{laps} vueltas"
   starting-countdown: "&7Iniciando en &f{count}&7..."
   go: "&a¡Ya!"
+  practice:
+    sector:
+      first: "&bSección {section} vuelta {lap}: &f{time} &7(primer registro)"
+      new-best: "&aSección {section} vuelta {lap}: &f{time} &7(nuevo mejor, -{improve})"
+      split: "&eSección {section} vuelta {lap}: &f{time} &7(+{delta} vs mejor {best})"
+    lap:
+      first: "&bVuelta de práctica {lap}: &f{time} &7(primer mejor de vuelta)"
+      new-best: "&aVuelta de práctica {lap}: &f{time} &7(nuevo mejor, -{improve})"
+      completed: "&eVuelta de práctica {lap}: &f{time} &7(+{delta} vs mejor {best})"
+    run:
+      first: "&bPráctica finalizada: &f{time} &7(primer mejor tiempo)"
+      new-best: "&aPráctica finalizada: &f{time} &7(nuevo mejor, -{improve})"
+      completed: "&ePráctica finalizada: &f{time} &7(+{delta} vs mejor {best})"
+    run-completed: "&ePráctica finalizada: &f{time}"
   lap-completed: "&eVuelta &f{lap}/{total}"
   lap-finished: "&eVuelta &f{num} &7finalizada: &f{player}{gap}"
   player-finished: "&a{player} ¡ha terminado! &7Tiempo: &f{time}{gap}"
@@ -132,7 +148,7 @@ race:
     ended-no-options: "&cLa votación de mapa terminó sin opciones."
     ended-no-winner: "&cLa votación de mapa terminó sin ganador."
     ended-winner: "&aVotación de mapa finalizada. Ganador: &f{winner} &7({votes} votos)"
-    next-step: "&7Siguiente paso: &f/boatracing race open {winner}"
+    next-step: "&7Si no se abrió automáticamente, usa: &f/{label} race open {winner}"
     need-two-tracks: "&cDebes proporcionar al menos 2 pistas válidas."
     started: "&e¡Votación de mapa iniciada (&f{seconds}s&e)!"
     started-click: "&b[Haz clic para abrir la interfaz de voto]"

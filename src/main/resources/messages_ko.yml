@@ -39,8 +39,9 @@ race:
     status: "&c사용법: /{label} race status <track>"
     force: "&c사용법: /{label} race force <track>"
     start: "&c사용법: /{label} race start <track>"
+    practice: "&c사용법: /{label} race practice <track>"
     stop: "&c사용법: /{label} race stop <track>"
-    voteopen: "&c사용법: /{label} race voteopen <track1> <track2> [초]"
+    voteopen: "&c사용법: /{label} race voteopen [all|<track1> <track2> ...] [초]"
     vote: "&c사용법: /{label} race vote <track>"
 
   help:
@@ -48,10 +49,11 @@ race:
     join: "&7 - &f/{label} race join <track> &7(해당 트랙에 등록, 팀 필수)"
     leave: "&7 - &f/{label} race leave <track> &7(해당 트랙에서 등록 탈퇴)"
     status: "&7 - &f/{label} race status <track> &7(트랙의 레이스 상태 표시)"
+    practice: "&7 - &f/{label} race practice <track> &7(해당 트랙에서 솔로 연습 레이스를 시작합니다)"
     vote: "&7 - &f/{label} race vote <track> &7(맵 투표하기)"
     voteui: "&7 - &f/{label} race voteui &7(투표 UI를 엽니다)"
     votestatus: "&7 - &f/{label} race votestatus &7(현재 투표 수 보기)"
-    voteopen: "&7 - &f/{label} race voteopen <track1> <track2> [초] &7(맵 투표 열기)"
+    voteopen: "&7 - &f/{label} race voteopen [all|<track1> <track2> ...] [초] &7(맵 투표 열기)"
     voteclose: "&7 - &f/{label} race voteclose &7(투표를 즉시 종료하고 결과 확정)"
     back: "&7 - &f/{label} race back &7(레이스 로비 입장 전 저장된 위치로 복귀)"
     admin: "&8관리자:&7 /{label} race open|start|force|stop <track>"
@@ -95,6 +97,20 @@ race:
   started: "&a레이스 시작! &f{laps} 랩"
   starting-countdown: "&7&f{count}&7초 후 시작..."
   go: "&a출발!"
+  practice:
+    sector:
+      first: "&b섹터 {section} 랩 {lap}: &f{time} &7(첫 섹터 기록)"
+      new-best: "&a섹터 {section} 랩 {lap}: &f{time} &7(신기록, -{improve})"
+      split: "&e섹터 {section} 랩 {lap}: &f{time} &7(베스트 {best} 대비 +{delta})"
+    lap:
+      first: "&b연습 랩 {lap}: &f{time} &7(첫 랩 기록)"
+      new-best: "&a연습 랩 {lap}: &f{time} &7(신기록, -{improve})"
+      completed: "&e연습 랩 {lap}: &f{time} &7(베스트 {best} 대비 +{delta})"
+    run:
+      first: "&b연습 주행 완료: &f{time} &7(첫 주행 기록)"
+      new-best: "&a연습 주행 완료: &f{time} &7(신기록, -{improve})"
+      completed: "&e연습 주행 완료: &f{time} &7(베스트 {best} 대비 +{delta})"
+    run-completed: "&e연습 주행 완료: &f{time}"
   lap-completed: "&e랩 &f{lap}/{total}"
   lap-finished: "&e랩 &f{num} &7완료: &f{player}{gap}"
   player-finished: "&a{player} 완료! &7시간: &f{time}{gap}"
@@ -135,7 +151,7 @@ race:
     ended-no-options: "&c맵 투표가 선택지 없이 종료되었습니다."
     ended-no-winner: "&c맵 투표가 승자 없이 종료되었습니다."
     ended-winner: "&a맵 투표 종료. 승자: &f{winner} &7({votes}표)"
-    next-step: "&7다음 단계: &f/boatracing race open {winner}"
+    next-step: "&7다음 단계: &f/{label} race open {winner}"
     need-two-tracks: "&c최소 2개의 유효한 트랙을 입력해야 합니다."
     started: "&e맵 투표가 시작되었습니다 (&f{seconds}s&e)!"
     started-click: "&b[클릭하여 투표 UI 열기]"

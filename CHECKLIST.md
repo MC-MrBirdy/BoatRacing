@@ -1,5 +1,44 @@
 README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 
+## What to verify for 1.1.5
+- Solo practice mode:
+	- Permission defaults: `boatracing.race.practice` is granted by default to non-op players.
+	- Revoke `boatracing.race.practice` from a test player and verify `/boatracing race practice <track>` is denied with no-permission feedback.
+	- Set `racing.min-players-to-start: 2` (or higher) and verify normal `race start/force` still requires the configured minimum.
+	- Run `/boatracing race practice <track>` with one online player on a ready track and verify race starts (countdown/lights + boat placement) without requiring a second player.
+	- While a practice countdown/run is active on track A, verify `race open/start/force` on track A is blocked.
+	- While practice is active on track A, verify race operations and practice can still run on track B independently.
+	- Verify practice countdown/split/lap/result messages are visible only to the practicing player (not global chat).
+	- Verify practice command appears in `/boatracing race help` and tab-completion for users with `boatracing.race.practice`.
+- Practice telemetry and placeholders:
+	- After a practice run, verify `plugins/BoatRacing/practice-stats.yml` is created and contains entries under `tracks.<track>.players.<uuid>`.
+	- In a new lap, beat a previous section split and verify section feedback marks a new best for that section.
+	- Beat a previous lap time and verify lap feedback reports improvement (`-{improve}`), then run a slower lap and verify positive delta vs best.
+	- Verify `%boatracing_player_practice_running%` toggles true during practice countdown/run and false after finish.
+	- Verify `%boatracing_track_practice_running_<track>%` (and alias `%boatracing_track_practicerunning_<track>%`) reflect same-track practice state.
+	- Verify `%boatracing_player_practice_best_run%`, `%boatracing_player_practice_last_run%`, `%boatracing_player_practice_best_lap%`, `%boatracing_player_practice_last_lap%` return expected values.
+	- Verify section placeholders `%boatracing_player_practice_best_sector_<section>%` / `%..._last_sector_<section>%` match recorded section splits.
+	- Verify track-token variants (for example `%boatracing_player_practice_best_lap_<track>%` and `%boatracing_player_practice_best_sector_<track>_<section>%`) resolve correctly.
+- Track record placeholders refresh after improved race time:
+	- On the same track, set an initial best (for example `9:33.555`) and verify `%boatracing_track_best_time_<track>%` shows it.
+	- Beat that time on a later race and verify `%boatracing_track_best_time_<track>%` updates to the new lower value.
+	- Verify `%boatracing_track_best_player_<track>%` and `%boatracing_track_best_time_ms_<track>%` update consistently with the improved result.
+	- Verify current-track placeholders `%boatracing_track_best_player%` and `%boatracing_track_best_time%` also reflect the improved record.
+	- Verify `%boatracing_track_top_1_time_<track>%` / `%boatracing_track_top_1_time_ms_<track>%` stay aligned with the same updated best time.
+	- Confirm values remain correct before/after reloading hologram plugin(s) and `/boatracing reload`.
+- Map vote flow improvements:
+	- `/boatracing race voteopen [all|<track1> <track2> ...] [seconds]` accepts either explicit track list or `all`.
+	- `/boatracing race voteopen [seconds]` (no explicit tracks) opens vote with all saved tracks.
+	- Vote-open chat includes both clickable `/boatracing race voteui` and plain typed instruction `/{label} race vote <track>`.
+	- On vote timeout, winner is announced and plugin attempts to auto-open winner registration.
+	- On manual `/boatracing race voteclose`, winner resolution follows the same auto-open behavior.
+	- If winner registration cannot auto-open (track not ready/busy), fallback next-step command `/{label} race open {winner}` is shown.
+	- Tab-complete for `race voteopen` suggests `all` and supports optional trailing seconds.
+- Swedish bundle (`sv`):
+	- Set `language: "sv"` and reload; all user-facing messages should resolve from `messages_sv.yml` without raw keys.
+	- Verify key 1.1.5 texts in Swedish: practice usage/help, private practice feedback (sector/lap/run), and vote-start instruction line.
+	- Confirm placeholders and color codes render correctly in Swedish messages (no broken `{placeholder}` tokens).
+
 ## What to verify for 1.1.4-26.1-SNAPSHOT (snapshot-26.1-gui-fallback-01)
 - Versioning and docs:
 	- Project version is `1.1.4-26.1-SNAPSHOT` in `pom.xml`.
@@ -65,13 +104,14 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 	- Verify a player cannot join/register in track B while already registered or racing in track A.
 	- During parallel races, movement/lap progression and no-dismount lock apply correctly in each player’s own race session.
 - Map vote commands:
-	- `/boatracing race voteopen <track1> <track2> [seconds]` opens a vote with valid options and broadcast instructions.
-	- Vote-open announcement includes a clickable chat action that runs `/boatracing race voteui` for players.
+	- `/boatracing race voteopen [all|<track1> <track2> ...] [seconds]` opens a vote with valid options and broadcast instructions.
+	- `/boatracing race voteopen all [seconds]` and `/boatracing race voteopen [seconds]` open a vote with all saved tracks.
+	- Vote-open announcement includes both a clickable chat action (`/boatracing race voteui`) and a plain typed-command instruction (`/{label} race vote <track>`).
 	- `/boatracing race vote <track>` registers or changes a player vote correctly.
 	- `/boatracing race vote` (without `<track>`) opens the vote UI for the player when a vote is active.
 	- `/boatracing race voteui` opens the vote UI for the player when a vote is active.
 	- `/boatracing race votestatus` shows current counts.
-	- `/boatracing race voteclose` ends vote immediately and announces winner resolution.
+	- When vote ends (`timeout` or `voteclose`), winner resolution attempts to auto-open winner registration; on failure, fallback command hint is shown.
 - Rewards command compatibility:
 	- With `racing.rewards.enabled: true`, first place executes configured reward commands under `racing.rewards.positions.1.commands`.
 	- If a position section uses legacy `command: "..."` (single string), it is still executed.
@@ -167,11 +207,12 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 	- With `language: "tr"`, plugin loads messages_tr.yml.
 	- With `language: "ja"`, plugin loads messages_ja.yml.
 	- With `language: "ko"`, plugin loads messages_ko.yml.
+	- With `language: "sv"`, all messages appear in Swedish; plugin loads messages_sv.yml.
 	- With `language: "zh_TW"`, all messages appear in Traditional Chinese (Taiwan); plugin loads messages_zh_TW.yml.
 	- With `language: "zh_CN"`, all messages appear in Simplified Chinese (Mainland); plugin loads messages_zh_CN.yml.
 	- With `language: "ru"`, all messages appear in Russian; plugin loads messages_ru.yml.
 	- In `messages_en.yml` and `messages_es.yml`, header comments indicate official translations.
-	- In `messages_es_419.yml`, `messages_fr.yml`, `messages_pt_BR.yml`, `messages_pt_PT.yml`, `messages_de.yml`, `messages_it.yml`, `messages_pl.yml`, `messages_tr.yml`, `messages_ja.yml`, `messages_ko.yml`, `messages_zh_TW.yml`, `messages_zh_CN.yml`, and `messages_ru.yml`, header comments indicate unofficial community translations and recommend review.
+	- In `messages_es_419.yml`, `messages_fr.yml`, `messages_pt_BR.yml`, `messages_pt_PT.yml`, `messages_de.yml`, `messages_it.yml`, `messages_pl.yml`, `messages_tr.yml`, `messages_ja.yml`, `messages_ko.yml`, `messages_sv.yml`, `messages_zh_TW.yml`, `messages_zh_CN.yml`, and `messages_ru.yml`, header comments indicate unofficial community translations and recommend review.
 	- Bundled language files exist in the data folder after first run. `/boatracing reload` switches language without restart.
 	- Custom language bundles work: set `language: "eo"` (or another code), create `messages_eo.yml` in the plugin folder, reload, and messages are read from that file.
 	- Invalid language values fall back to English.

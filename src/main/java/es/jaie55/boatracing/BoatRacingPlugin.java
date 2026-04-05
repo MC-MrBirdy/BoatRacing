@@ -27,6 +27,7 @@ import es.jaie55.boatracing.race.RaceManager;
 import es.jaie55.boatracing.reward.RewardManager;
 import es.jaie55.boatracing.setup.SetupWizard;
 import es.jaie55.boatracing.util.MessageManager;
+import es.jaie55.boatracing.util.PracticeStatsManager;
 import es.jaie55.boatracing.util.StatsManager;
 import es.jaie55.boatracing.placeholder.BoatRacingPlaceholderExpansion;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -48,10 +49,12 @@ public class BoatRacingPlugin extends JavaPlugin {
     private final java.util.Map<String, Integer> mapVoteCounts = new java.util.LinkedHashMap<>();
     private final java.util.Map<java.util.UUID, String> mapVotesByPlayer = new java.util.HashMap<>();
     private SchedulerCompat.TaskHandle mapVoteTask;
+    private String mapVoteCommandLabel = "boatracing";
     private RewardManager rewardManager;
     private SetupWizard setupWizard;
     private MessageManager messageManager;
     private StatsManager statsManager;
+    private PracticeStatsManager practiceStatsManager;
     private BoatRacingPlaceholderExpansion placeholderExpansion;
     private es.jaie55.boatracing.ui.AdminTracksGUI tracksGUI;
     private es.jaie55.boatracing.ui.VoteGUI voteGUI;
@@ -76,6 +79,7 @@ public class BoatRacingPlugin extends JavaPlugin {
     public es.jaie55.boatracing.ui.VoteGUI getVoteGUI() { return voteGUI; }
     public MessageManager msg() { return messageManager; }
     public StatsManager getStatsManager() { return statsManager; }
+    public PracticeStatsManager getPracticeStatsManager() { return practiceStatsManager; }
     public java.util.Collection<RaceManager> getAllRaceManagers() {
         java.util.List<RaceManager> out = new java.util.ArrayList<>();
         out.addAll(raceSessions.values());
@@ -116,6 +120,12 @@ public class BoatRacingPlugin extends JavaPlugin {
         if (p.hasPermission("boatracing.race.admin") || p.hasPermission("boatracing.setup")) return true;
         boolean global = getConfig().getBoolean("player-actions.allow-player-race-start", false);
         return raceTrack != null && raceTrack.getRacingBoolean("allow-player-start", global);
+    }
+
+    private boolean canOpenMapVote(Player p) {
+        return p.hasPermission("boatracing.race.voteopen")
+                || p.hasPermission("boatracing.race.admin")
+                || p.hasPermission("boatracing.setup");
     }
 
     private boolean isActiveTrackRequest(String name) {
@@ -191,6 +201,16 @@ public class BoatRacingPlugin extends JavaPlugin {
         return false;
     }
 
+    private boolean openVotedTrackRegistration(String trackName) {
+        if (!trackExistsForRace(trackName)) return false;
+        RaceManager rm = getOrCreateRaceSession(trackName);
+        if (rm == null || rm.getTrack() == null || !rm.getTrack().isReady()) return false;
+
+        rm.loadSettings();
+        int laps = rm.getTotalLaps();
+        return rm.openRegistration(laps, null);
+    }
+
     private void closeMapVote(boolean announceResult) {
         if (!mapVoteOpen) return;
         mapVoteOpen = false;
@@ -202,12 +222,15 @@ public class BoatRacingPlugin extends JavaPlugin {
         if (!announceResult) {
             mapVoteCounts.clear();
             mapVotesByPlayer.clear();
+            mapVoteCommandLabel = "boatracing";
             return;
         }
 
         if (mapVoteCounts.isEmpty()) {
             Bukkit.broadcastMessage(Text.colorize(pref() + msg().get("race.vote.ended-no-options")));
+            mapVoteCounts.clear();
             mapVotesByPlayer.clear();
+            mapVoteCommandLabel = "boatracing";
             return;
         }
 
@@ -232,11 +255,14 @@ public class BoatRacingPlugin extends JavaPlugin {
                 try { trackLibrary.select(winner); } catch (Exception ignored) { getLogger().finer("Could not select voted track: " + ignored.getMessage()); }
             }
             Bukkit.broadcastMessage(Text.colorize(pref() + msg().get("race.vote.ended-winner", "winner", winner, "votes", String.valueOf(max))));
-            Bukkit.broadcastMessage(Text.colorize(pref() + msg().get("race.vote.next-step", "winner", winner)));
+            if (!openVotedTrackRegistration(winner)) {
+                Bukkit.broadcastMessage(Text.colorize(pref() + msg().get("race.vote.next-step", "winner", winner, "label", mapVoteCommandLabel)));
+            }
         }
 
         mapVoteCounts.clear();
         mapVotesByPlayer.clear();
+        mapVoteCommandLabel = "boatracing";
     }
 
     public boolean isMapVoteOpen() {
@@ -260,19 +286,22 @@ public class BoatRacingPlugin extends JavaPlugin {
         }
 
         long safeSeconds = Math.max(10L, seconds);
+        String safeLabel = (label == null || label.isBlank()) ? "boatracing" : label;
 
         closeMapVote(false);
         mapVoteOpen = true;
+        mapVoteCommandLabel = safeLabel;
         mapVoteCounts.clear();
         for (String opt : options) mapVoteCounts.put(opt, 0);
         mapVotesByPlayer.clear();
 
         Bukkit.broadcastMessage(Text.colorize(prefix + msg().get("race.vote.started", "seconds", String.valueOf(safeSeconds))));
-        String voteUiCommand = "/" + label + " race voteui";
+        String voteUiCommand = "/" + safeLabel + " race voteui";
         net.kyori.adventure.text.Component voteUiClickable = Text.cmd(msg().get("race.vote.started-click"), voteUiCommand);
         for (Player online : Bukkit.getOnlinePlayers()) {
             online.sendMessage(voteUiClickable);
         }
+        Bukkit.broadcastMessage(Text.colorize(prefix + msg().get("race.vote.started-instructions", "label", safeLabel)));
         Bukkit.broadcastMessage(Text.colorize(prefix + msg().get("race.vote.started-options", "options", String.join("&7, &f", options))));
 
         mapVoteTask = SchedulerCompat.runLater(this, () -> closeMapVote(true), Math.max(20L, safeSeconds * 20L));
@@ -344,7 +373,8 @@ public class BoatRacingPlugin extends JavaPlugin {
         this.messageManager = new MessageManager(this);
         this.teamManager = new TeamManager(this);
         this.statsManager = new StatsManager(this);
-    this.teamGUI = new TeamGUI(this);
+        this.practiceStatsManager = new PracticeStatsManager(this);
+        this.teamGUI = new TeamGUI(this);
     this.adminGUI = new es.jaie55.boatracing.ui.AdminGUI(this);
     this.adminRaceGUI = new es.jaie55.boatracing.ui.AdminRaceGUI(this);
     this.trackConfig = new TrackConfig(getDataFolder());
@@ -531,6 +561,7 @@ public class BoatRacingPlugin extends JavaPlugin {
     public void onDisable() {
         if (teamManager != null) teamManager.save();
         if (statsManager != null) statsManager.save();
+        if (practiceStatsManager != null) practiceStatsManager.save();
         if (placeholderExpansion != null) placeholderExpansion.unregister();
     }
 
@@ -600,6 +631,8 @@ public class BoatRacingPlugin extends JavaPlugin {
                 this.teamManager = new TeamManager(this);
                 if (this.statsManager == null) this.statsManager = new StatsManager(this);
                 else this.statsManager.reload();
+                if (this.practiceStatsManager == null) this.practiceStatsManager = new PracticeStatsManager(this);
+                else this.practiceStatsManager.reload();
                 // ViaVersion integration removed; nothing to re-apply
                 p.sendMessage(Text.colorize(prefix + msg().get("plugin.reloaded")));
                 p.playSound(p.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.9f, 1.1f);
@@ -618,10 +651,17 @@ public class BoatRacingPlugin extends JavaPlugin {
                     if (p.hasPermission("boatracing.race.back")) {
                         p.sendMessage(Text.colorize(msg().get("race.help.back", "label", label)));
                     }
+                    if (p.hasPermission("boatracing.race.practice")) {
+                        p.sendMessage(Text.colorize(msg().get("race.help.practice", "label", label)));
+                    }
                     if (p.hasPermission("boatracing.race.admin") || p.hasPermission("boatracing.setup")
                             || getConfig().getBoolean("player-actions.allow-player-race-start", false)) {
                         p.sendMessage(Text.colorize(msg().get("race.help.admin", "label", label)));
+                    }
+                    if (canOpenMapVote(p)) {
                         p.sendMessage(Text.colorize(msg().get("race.help.voteopen", "label", label)));
+                    }
+                    if (p.hasPermission("boatracing.race.admin") || p.hasPermission("boatracing.setup")) {
                         p.sendMessage(Text.colorize(msg().get("race.help.voteclose", "label", label)));
                     }
                     return true;
@@ -760,7 +800,9 @@ public class BoatRacingPlugin extends JavaPlugin {
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
                             return true;
                         }
-                        rm.forceStart();
+                        if (!rm.forceStart()) {
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.already-running")));
+                        }
                         return true;
                     }
                     case "start" -> {
@@ -779,7 +821,10 @@ public class BoatRacingPlugin extends JavaPlugin {
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
                             return true;
                         }
-                        if (rm.isRunning()) { p.sendMessage(Text.colorize(prefix + msg().get("race.already-running"))); return true; }
+                        if (rm.isRunning() || rm.isCountdownActive()) {
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.already-running")));
+                            return true;
+                        }
                         rm.loadSettings();
                         // Build participants: strictly registered participants only
                         java.util.List<org.bukkit.entity.Player> participants = new java.util.ArrayList<>();
@@ -801,7 +846,45 @@ public class BoatRacingPlugin extends JavaPlugin {
                             )));
                             return true;
                         }
-                        rm.forceStart();
+                        if (!rm.forceStart()) {
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.already-running")));
+                        }
+                        return true;
+                    }
+                    case "practice" -> {
+                        if (args.length < 3) { p.sendMessage(Text.colorize(prefix + msg().get("race.usage.practice", "label", label))); return true; }
+                        if (!p.hasPermission("boatracing.race.practice")) {
+                            p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
+                            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+                            return true;
+                        }
+                        String tname = args[2];
+                        if (!trackExistsForRace(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
+                        RaceManager rm = getOrCreateRaceSession(tname);
+                        if (rm == null) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
+                        if (!rm.getTrack().isReady()) {
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-ready", "requirements", String.join(", ", rm.getTrack().missingRequirements()))));
+                            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+                            return true;
+                        }
+                        if (rm.isRunning() || rm.isCountdownActive()) {
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.already-running")));
+                            return true;
+                        }
+                        if (rm.isRegistering()) {
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.cannot-open-registration")));
+                            return true;
+                        }
+                        if (isPlayerBusyInAnyOtherRace(p.getUniqueId(), rm)) {
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.already-in-other-race")));
+                            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+                            return true;
+                        }
+                        rm.loadSettings();
+                        if (!rm.startPractice(p)) {
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.no-start-slots")));
+                            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+                        }
                         return true;
                     }
                     case "stop" -> {
@@ -864,19 +947,14 @@ public class BoatRacingPlugin extends JavaPlugin {
                         return true;
                     }
                     case "voteopen" -> {
-                        if (!(p.hasPermission("boatracing.race.admin") || p.hasPermission("boatracing.setup"))) {
+                        if (!canOpenMapVote(p)) {
                             p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
                             return true;
                         }
-                        if (args.length < 4) {
-                            p.sendMessage(Text.colorize(prefix + msg().get("race.usage.voteopen", "label", label)));
-                            return true;
-                        }
-
                         int endIndex = args.length;
                         long seconds = 30L;
-                        if (args.length >= 5) {
+                        if (args.length >= 3) {
                             String maybeSeconds = args[args.length - 1];
                             if (maybeSeconds.matches("\\d+")) {
                                 seconds = Math.max(10L, Long.parseLong(maybeSeconds));
@@ -885,10 +963,24 @@ public class BoatRacingPlugin extends JavaPlugin {
                         }
 
                         java.util.LinkedHashSet<String> options = new java.util.LinkedHashSet<>();
+                        boolean useAllTracks = (args.length == 2) || (endIndex <= 2);
                         for (int i = 2; i < endIndex; i++) {
-                            String opt = normalizeTrackKey(args[i]);
+                            String raw = args[i];
+                            if (raw.equalsIgnoreCase("all") || raw.equals("*")) {
+                                useAllTracks = true;
+                                continue;
+                            }
+                            String opt = normalizeTrackKey(raw);
                             if (trackExistsForRace(opt)) options.add(opt);
                         }
+
+                        if (useAllTracks && trackLibrary != null) {
+                            for (String trackName : trackLibrary.list()) {
+                                String opt = normalizeTrackKey(trackName);
+                                if (trackExistsForRace(opt)) options.add(opt);
+                            }
+                        }
+
                         startMapVote(p, options, seconds, label);
                         return true;
                     }
@@ -1704,15 +1796,26 @@ public class BoatRacingPlugin extends JavaPlugin {
                     subs.add("join"); subs.add("leave"); subs.add("status");
                     subs.add("vote"); subs.add("voteui"); subs.add("votestatus");
                     if (sender.hasPermission("boatracing.race.back")) subs.add("back");
-                    if (sender.hasPermission("boatracing.race.admin") || sender.hasPermission("boatracing.setup")) {
+                    if (sender.hasPermission("boatracing.race.practice")) subs.add("practice");
+                    if (sender.hasPermission("boatracing.race.admin") || sender.hasPermission("boatracing.setup")
+                            || getConfig().getBoolean("player-actions.allow-player-race-start", false)) {
                         subs.add("open"); subs.add("start"); subs.add("force"); subs.add("stop");
-                        subs.add("voteopen"); subs.add("voteclose");
+                    }
+                    if (sender.hasPermission("boatracing.race.voteopen") || sender.hasPermission("boatracing.race.admin") || sender.hasPermission("boatracing.setup")) {
+                        subs.add("voteopen");
+                    }
+                    if (sender.hasPermission("boatracing.race.admin") || sender.hasPermission("boatracing.setup")) {
+                        subs.add("voteclose");
                     }
                     String pref = args[1] == null ? "" : args[1].toLowerCase();
                     return subs.stream().filter(s -> s.startsWith(pref)).toList();
                 }
                 // For subcommands that take <track>, suggest track names from library
-                if (args.length == 3 && java.util.Arrays.asList("open","join","leave","force","start","stop","status","vote").contains(args[1].toLowerCase())) {
+                String raceSub = args[1].toLowerCase();
+                if (raceSub.equals("practice") && !sender.hasPermission("boatracing.race.practice")) {
+                    return java.util.Collections.emptyList();
+                }
+                if (args.length == 3 && java.util.Arrays.asList("open","join","leave","force","start","practice","stop","status","vote").contains(raceSub)) {
                     String prefix = args[2] == null ? "" : args[2].toLowerCase();
                     java.util.List<String> names = new java.util.ArrayList<>();
                     if (trackLibrary != null) {
@@ -1722,17 +1825,22 @@ public class BoatRacingPlugin extends JavaPlugin {
                     return names;
                 }
                 if (args.length >= 3 && args[1].equalsIgnoreCase("voteopen")) {
-                    // voteopen <track1> <track2> [seconds]
-                    if (args.length >= 5 && args[args.length - 1].matches("\\d+")) {
+                    if (!(sender.hasPermission("boatracing.race.voteopen") || sender.hasPermission("boatracing.race.admin") || sender.hasPermission("boatracing.setup"))) {
+                        return java.util.Collections.emptyList();
+                    }
+                    // voteopen [all|<track1> <track2> ...] [seconds]
+                    if (args.length >= 4 && args[args.length - 1].matches("\\d+")) {
                         return java.util.Collections.emptyList();
                     }
                     String prefix = args[args.length - 1] == null ? "" : args[args.length - 1].toLowerCase();
                     java.util.List<String> names = new java.util.ArrayList<>();
+                    if ("all".startsWith(prefix)) names.add("all");
+                    if ("*".startsWith(prefix)) names.add("*");
                     if (trackLibrary != null) {
                         for (String n : trackLibrary.list()) if (n.toLowerCase().startsWith(prefix)) names.add(n);
                     }
                     if ("unsaved".startsWith(prefix)) names.add("unsaved");
-                    if (args.length >= 4) names.add("30");
+                    if ("30".startsWith(prefix)) names.add("30");
                     return names;
                 }
                 return java.util.Collections.emptyList();

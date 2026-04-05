@@ -26,7 +26,9 @@ permissions:
       boatracing.race.join: true
       boatracing.race.leave: true
       boatracing.race.back: true
+      boatracing.race.practice: true
       boatracing.race.status: true
+      boatracing.race.voteopen: true
       boatracing.race.admin: true
   boatracing.use:
     description: Meta permission for BoatRacing base usage
@@ -37,6 +39,7 @@ permissions:
       boatracing.race.join: true
       boatracing.race.leave: true
       boatracing.race.back: true
+      boatracing.race.practice: true
       boatracing.race.status: true
   boatracing.teams:
     description: Use /boatracing teams
@@ -66,7 +69,9 @@ permissions:
       boatracing.race.join: true
       boatracing.race.leave: true
       boatracing.race.back: true
+      boatracing.race.practice: true
       boatracing.race.status: true
+      boatracing.race.voteopen: true
       boatracing.race.admin: true
   boatracing.race.join:
     description: Join a race registration
@@ -77,9 +82,15 @@ permissions:
   boatracing.race.back:
     description: Return to your saved pre-lobby location
     default: true
+  boatracing.race.practice:
+    description: Start a solo practice race
+    default: true
   boatracing.race.status:
     description: View race status for a track
     default: true
+  boatracing.race.voteopen:
+    description: Open map voting with /boatracing race voteopen
+    default: op
   boatracing.race.admin:
-    description: Manage races (open/start/force/stop)
+    description: Manage races (open/start/force/stop) and close map votes
     default: op

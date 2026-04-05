@@ -40,8 +40,9 @@ race:
     status: "&cKullanım: /{label} race status <track>"
     force: "&cKullanım: /{label} race force <track>"
     start: "&cKullanım: /{label} race start <track>"
+    practice: "&cKullanım: /{label} race practice <track>"
     stop: "&cKullanım: /{label} race stop <track>"
-    voteopen: "&cKullanım: /{label} race voteopen <track1> <track2> [saniye]"
+    voteopen: "&cKullanım: /{label} race voteopen [all|<track1> <track2> ...] [saniye]"
     vote: "&cKullanım: /{label} race vote <track>"
 
   help:
@@ -49,10 +50,11 @@ race:
     join: "&7 - &f/{label} race join <track> &7(Bu parkurdaki kayda katıl; takım gerekli)"
     leave: "&7 - &f/{label} race leave <track> &7(Bu parkurdaki kayıttan ayrıl)"
     status: "&7 - &f/{label} race status <track> &7(Parkur için yarış durumunu göster)"
+    practice: "&7 - &f/{label} race practice <track> &7(Bu parkurda tek kisilik antrenman yarisini baslat)"
     vote: "&7 - &f/{label} race vote <track> &7(Harita oyu ver)"
     voteui: "&7 - &f/{label} race voteui &7(Oylama arayüzünü açar)"
     votestatus: "&7 - &f/{label} race votestatus &7(Mevcut oy sayılarını göster)"
-    voteopen: "&7 - &f/{label} race voteopen <track1> <track2> [saniye] &7(Harita oylamasını aç)"
+    voteopen: "&7 - &f/{label} race voteopen [all|<track1> <track2> ...] [saniye] &7(Harita oylamasını aç)"
     voteclose: "&7 - &f/{label} race voteclose &7(Oylamayı şimdi kapat ve sonuçlandır)"
     back: "&7 - &f/{label} race back &7(Yarış lobisine katılmadan önceki kayıtlı konumuna dön)"
     admin: "&8Yönetici:&7 /{label} race open|start|force|stop <track>"
@@ -96,6 +98,20 @@ race:
   started: "&aYarış başladı! &f{laps} tur"
   starting-countdown: "&7Başlangıca &f{count}&7..."
   go: "&aBaşla!"
+  practice:
+    sector:
+      first: "&bSektor {section} tur {lap}: &f{time} &7(ilk sektor rekoru)"
+      new-best: "&aSektor {section} tur {lap}: &f{time} &7(yeni en iyi, -{improve})"
+      split: "&eSektor {section} tur {lap}: &f{time} &7(en iyi {best} degerine gore +{delta})"
+    lap:
+      first: "&bAntrenman turu {lap}: &f{time} &7(ilk tur rekoru)"
+      new-best: "&aAntrenman turu {lap}: &f{time} &7(yeni en iyi, -{improve})"
+      completed: "&eAntrenman turu {lap}: &f{time} &7(en iyi {best} degerine gore +{delta})"
+    run:
+      first: "&bAntrenman tamamlandi: &f{time} &7(ilk kosu rekoru)"
+      new-best: "&aAntrenman tamamlandi: &f{time} &7(yeni en iyi, -{improve})"
+      completed: "&eAntrenman tamamlandi: &f{time} &7(en iyi {best} degerine gore +{delta})"
+    run-completed: "&eAntrenman tamamlandi: &f{time}"
   lap-completed: "&eTur &f{lap}/{total}"
   lap-finished: "&eTur &f{num} &7bitti: &f{player}{gap}"
   player-finished: "&a{player} bitirdi! &7Süre: &f{time}{gap}"
@@ -136,7 +152,7 @@ race:
     ended-no-options: "&cHarita oylamasi secenek olmadan bitti."
     ended-no-winner: "&cHarita oylamasi kazanan olmadan bitti."
     ended-winner: "&aHarita oylamasi bitti. Kazanan: &f{winner} &7({votes} oy)"
-    next-step: "&7Sonraki adim: &f/boatracing race open {winner}"
+    next-step: "&7Sonraki adim: &f/{label} race open {winner}"
     need-two-tracks: "&cEn az 2 gecerli parkur belirtmelisin."
     started: "&eHarita oylamasi basladi (&f{seconds}s&e)!"
     started-click: "&b[Oylama arayuzunu acmak icin tikla]"
