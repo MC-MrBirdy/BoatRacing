@@ -1,6 +1,6 @@
 ﻿# Changelog
 
-## 1.1.5 — Unreleased
+## 1.1.5 — 06/04/2026
 ### Added
 - **Solo practice mode command**: added `/boatracing race practice <track>` to start a one-player practice race on a ready track without requiring the minimum race player threshold.
 - **Player stats command**: added `/boatracing stats [player]` to show competitive position counts by place (showing only non-zero places) and practice snapshots (best/last run/lap/sectors) for self or target player.
