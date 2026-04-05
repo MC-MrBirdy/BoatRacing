@@ -29,6 +29,30 @@ update:
   up-to-date: "&aVous utilisez la dernière version (&f{version}&a)."
   info: "&7Dernière : &f{latest} &7| Versions : &f{url}"
 
+stats:
+  usage: "&cUtilisation : /{label} stats [joueur]"
+  player-not-found: "&cJoueur introuvable : &f{player}"
+  header-self: "&eVos statistiques BoatRacing :"
+  header-other: "&eStatistiques BoatRacing de &f{player}&e :"
+  line-player: "&7Joueur : &f{player}"
+  line-team: "&7Équipe : &f{team}"
+  line-best-race: "&7Meilleure course : &f{time}"
+  line-best-lap: "&7Meilleur tour : &f{time}"
+  positions-header: "&eRésumé des positions en course :"
+  positions-none: "&7Aucune position enregistrée pour le moment."
+  position-line: "&7Nombre de fois en position &f{position}&7 : &f{count}"
+  position:
+    first: "1re"
+    second: "2e"
+    third: "3e"
+    nth: "{n}e"
+  practice-header: "&eStatistiques d'entraînement par circuit :"
+  practice-none: "&7Aucune statistique d'entraînement enregistrée."
+  practice-track: "&7[{track}] &fEssai &7(Meilleur : &f{best_run}&7, Dernier : &f{last_run}&7) &8| &fTour &7(Meilleur : &f{best_lap}&7, Dernier : &f{last_lap}&7)"
+  practice-sectors-best: "&8  Meilleurs secteurs : &f{sectors}"
+  practice-sectors-last: "&8  Derniers secteurs : &f{sectors}"
+  sectors-none: "aucun"
+
 race:
   usage:
     main: "&cUtilisation : /{label} teams|setup|reload|version"
@@ -43,6 +67,15 @@ race:
     stop: "&cUtilisation : /{label} race stop <track>"
     voteopen: "&cUtilisation : /{label} race voteopen [all|<track1> <track2> ...] [secondes]"
     vote: "&cUtilisation : /{label} race vote <track>"
+
+  scoreboard:
+    practice-label: "ENTRAINEMENT"
+    practice-status: "TU T'ENTRAINES"
+    practice-current: "Essai actuel"
+    practice-best-run: "Meilleur essai"
+    practice-last-run: "Dernier essai"
+    practice-best-lap: "Meilleur tour"
+    practice-last-lap: "Dernier tour"
 
   help:
     header: "&eCommandes de course :"
@@ -84,6 +117,9 @@ race:
   track-not-found: "&cCircuit introuvable : &f{track}"
   track-load-failed: "&cÉchec du chargement du circuit : &f{track}"
   track-not-ready: "&cLe circuit n'est pas prêt : &7{requirements}"
+  requirements:
+    finish: "ligne d'arrivée"
+    start-slot-min: "au moins 1 emplacement de départ"
   cannot-open-registration: "&cImpossible d'ouvrir les inscriptions maintenant."
 
   no-participants: "&cAucun participant inscrit. &7Ouvrez d'abord les inscriptions : &f/{label} race open"
@@ -213,6 +249,13 @@ setup:
   light-fail: "&cImpossible d'ajouter le feu. Utilisez une lampe Redstone, évitez les doublons, max 5."
   light-added: "&aFeu de départ ajouté &7({x}, {y}, {z})"
   lights-cleared: "&aTous les feux de départ ont été supprimés."
+
+  language-current: "&7Langue actuelle : &f{lang}"
+  language-available: "&7Langues disponibles : &f{langs}"
+  language-invalid-code: "&cCode de langue invalide : &f{code}"
+  language-not-found: "&cLangue introuvable : &f{code}"
+  language-already-set: "&eLa langue est déjà définie sur &f{lang}&e."
+  language-updated: "&aLangue changée de &f{old} &aà &f{new}&a."
   laps-set: "&aNombre de tours défini à &f{laps}{track_info}"
   pitstops-set: "&aArrêts au stand obligatoires définis à &f{count}{track_info}"
   lobby-set: "&aLobby d'inscription défini à &f{x}, {y}, {z} &7({world})&a et activé."
@@ -407,6 +450,10 @@ admin:
     player-setnumber: "&7 - &f/{label} admin player setnumber <player> <1-99>"
     player-setboat: "&7 - &f/{label} admin player setboat <player> <BoatType>"
     tracks: "&7 - &f/{label} admin tracks &7(Gérer les circuits nommés via GUI)"
+
+    language: "&cUtilisation : /{label} admin language <code>"
+
+    language: "&7 - &f/{label} admin language <code> &7(Changer la langue du plugin et recharger les messages instantanément)"
   usage:
     admin-help: "&cUtilisation : /{label} admin help"
     team-main: "&cUtilisation : /{label} admin team <create|delete|rename|color|add|remove>"
@@ -420,6 +467,8 @@ admin:
     player-setteam: "&cUtilisation : /{label} admin player setteam <player> <team|none>"
     player-setnumber: "&cUtilisation : /{label} admin player setnumber <player> <1-99>"
     player-setboat: "&cUtilisation : /{label} admin player setboat <player> <BoatType>"
+
+    language: "&cUtilisation : /{label} admin language <code>"
   invalid-color: "&cCouleur invalide."
   invalid-boat: "&cType de bateau invalide."
   player-not-member: "&cLe joueur n'est pas membre de cette équipe."
@@ -457,6 +506,13 @@ admin:
   racer-number-set: "&aNuméro de pilote de &f{player} &adéfini à &f{num}"
   racer-number-changed-notify: "&eUn administrateur a changé votre numéro de pilote en &f{num}&e."
   laps-set: "&aTours définis à &f{laps}"
+
+  language-current: "&7Langue actuelle : &f{lang}"
+  language-available: "&7Langues disponibles : &f{langs}"
+  language-invalid-code: "&cCode de langue invalide : &f{code}"
+  language-not-found: "&cLangue introuvable : &f{code}"
+  language-already-set: "&eLa langue est déjà définie sur &f{lang}&e."
+  language-updated: "&aLangue changée de &f{old} &aà &f{new}&a."
 
   track:
     exists: "&cUn circuit avec ce nom existe déjà."
@@ -583,6 +639,7 @@ gui:
     title-confirm: "Supprimer le circuit ?"
     lore-selected: " &7(sélectionné)"
     lore-click-load: "&7Clic : &fCharger"
+    lore-right-rename: "&7Clic droit : &eRenommer"
     lore-shift-delete: "&7Shift-clic droit : &cSupprimer"
     btn-create: "&a&lCréer et sélectionner"
     lore-create: "&7Crée un nouveau circuit vide et le sélectionne."
@@ -640,3 +697,4 @@ gui:
     btn-leave-now: "&c&lQuitter maintenant"
     anvil-team-name: "Nom d'équipe"
     anvil-racer-number: "Numéro de pilote"
+

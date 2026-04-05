@@ -15,6 +15,38 @@ import java.util.UUID;
  * Stored in practice-stats.yml to keep race stats separated from competitive data.
  */
 public class PracticeStatsManager {
+    public static final class PlayerTrackStatsView {
+        private final Long bestLapMillis;
+        private final Long lastLapMillis;
+        private final Long bestRunMillis;
+        private final Long lastRunMillis;
+        private final Map<Integer, Long> bestSectorMillis;
+        private final Map<Integer, Long> lastSectorMillis;
+
+        private PlayerTrackStatsView(
+                Long bestLapMillis,
+                Long lastLapMillis,
+                Long bestRunMillis,
+                Long lastRunMillis,
+                Map<Integer, Long> bestSectorMillis,
+                Map<Integer, Long> lastSectorMillis
+        ) {
+            this.bestLapMillis = bestLapMillis;
+            this.lastLapMillis = lastLapMillis;
+            this.bestRunMillis = bestRunMillis;
+            this.lastRunMillis = lastRunMillis;
+            this.bestSectorMillis = java.util.Collections.unmodifiableMap(bestSectorMillis);
+            this.lastSectorMillis = java.util.Collections.unmodifiableMap(lastSectorMillis);
+        }
+
+        public Long getBestLapMillis() { return bestLapMillis; }
+        public Long getLastLapMillis() { return lastLapMillis; }
+        public Long getBestRunMillis() { return bestRunMillis; }
+        public Long getLastRunMillis() { return lastRunMillis; }
+        public Map<Integer, Long> getBestSectorMillis() { return bestSectorMillis; }
+        public Map<Integer, Long> getLastSectorMillis() { return lastSectorMillis; }
+    }
+
     public static final class PracticeUpdate {
         private final long valueMillis;
         private final Long previousBestMillis;
@@ -237,6 +269,30 @@ public class PracticeStatsManager {
         if (sectionIndex <= 0) return null;
         PlayerPracticeStats stats = getPlayerStats(playerId, trackToken);
         return stats != null ? stats.lastSectorMillis.get(sectionIndex) : null;
+    }
+
+    public synchronized Map<String, PlayerTrackStatsView> getAllTrackStats(UUID playerId) {
+        if (playerId == null) return java.util.Collections.emptyMap();
+
+        Map<String, PlayerTrackStatsView> out = new java.util.LinkedHashMap<>();
+        java.util.TreeSet<String> sortedTracks = new java.util.TreeSet<>(data.keySet());
+        for (String trackToken : sortedTracks) {
+            Map<UUID, PlayerPracticeStats> perTrack = data.get(trackToken);
+            if (perTrack == null) continue;
+
+            PlayerPracticeStats stats = perTrack.get(playerId);
+            if (stats == null) continue;
+
+            out.put(trackToken, new PlayerTrackStatsView(
+                    stats.bestLapMillis,
+                    stats.lastLapMillis,
+                    stats.bestRunMillis,
+                    stats.lastRunMillis,
+                    new java.util.LinkedHashMap<>(new java.util.TreeMap<>(stats.bestSectorMillis)),
+                    new java.util.LinkedHashMap<>(new java.util.TreeMap<>(stats.lastSectorMillis))
+            ));
+        }
+        return out;
     }
 
     private PlayerPracticeStats ensurePlayerStats(UUID playerId, String trackToken) {

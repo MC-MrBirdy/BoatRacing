@@ -29,6 +29,30 @@ update:
   up-to-date: "&aВы используете последнюю версию (&f{version}&a)."
   info: "&7Последняя: &f{latest} &7| Релизы: &f{url}"
 
+stats:
+  usage: "&cИспользование: /{label} stats [игрок]"
+  player-not-found: "&cИгрок не найден: &f{player}"
+  header-self: "&eВаша статистика BoatRacing:"
+  header-other: "&eСтатистика BoatRacing игрока &f{player}&e:"
+  line-player: "&7Игрок: &f{player}"
+  line-team: "&7Команда: &f{team}"
+  line-best-race: "&7Лучший заезд: &f{time}"
+  line-best-lap: "&7Лучший круг: &f{time}"
+  positions-header: "&eСводка позиций в гонках:"
+  positions-none: "&7Записей о позициях в гонках пока нет."
+  position-line: "&7Раз на месте &f{position}&7: &f{count}"
+  position:
+    first: "1"
+    second: "2"
+    third: "3"
+    nth: "{n}"
+  practice-header: "&eСтатистика тренировки по трассам:"
+  practice-none: "&7Пока нет записанной статистики тренировок."
+  practice-track: "&7[{track}] &fЗаезд &7(Лучший: &f{best_run}&7, Последний: &f{last_run}&7) &8| &fКруг &7(Лучший: &f{best_lap}&7, Последний: &f{last_lap}&7)"
+  practice-sectors-best: "&8  Лучшие сектора: &f{sectors}"
+  practice-sectors-last: "&8  Последние сектора: &f{sectors}"
+  sectors-none: "нет"
+
 race:
   usage:
     main: "&cИспользование: /{label} teams|setup|reload|version"
@@ -43,6 +67,15 @@ race:
     stop: "&cИспользование: /{label} race stop <трасса>"
     voteopen: "&cИспользование: /{label} race voteopen [all|<track1> <track2> ...] [секунды]"
     vote: "&cИспользование: /{label} race vote <трасса>"
+
+  scoreboard:
+    practice-label: "ПРАКТИКА"
+    practice-status: "ТЫ ТРЕНИРУЕШЬСЯ"
+    practice-current: "Текущий заезд"
+    practice-best-run: "Лучший заезд"
+    practice-last-run: "Последний заезд"
+    practice-best-lap: "Лучший круг"
+    practice-last-lap: "Последний круг"
 
   help:
     header: "&eКоманды гонки:"
@@ -84,6 +117,9 @@ race:
   track-not-found: "&cТрасса не найдена: &f{track}"
   track-load-failed: "&cНе удалось загрузить трассу: &f{track}"
   track-not-ready: "&cТрасса не готова: &7{requirements}"
+  requirements:
+    finish: "финишная линия"
+    start-slot-min: "как минимум 1 стартовый слот"
   cannot-open-registration: "&cНевозможно открыть регистрацию сейчас."
 
   no-participants: "&cНет зарегистрированных участников. &7Сначала откройте регистрацию: &f/{label} race open"
@@ -213,7 +249,14 @@ setup:
   light-fail: "&cНе удалось добавить огонь. Используйте лампу из красного камня, без дублирования, макс. 5."
   light-added: "&aСтартовый огонь добавлен &7({x}, {y}, {z})"
   lights-cleared: "&aВсе стартовые огни удалены."
-  laps-set: "&aКол-во кругов установлено: &f{laps}{track_info}"
+
+  language-current: "&7Текущий язык: &f{lang}"
+  language-available: "&7Доступные языки: &f{langs}"
+  language-invalid-code: "&cНеверный код языка: &f{code}"
+  language-not-found: "&cЯзык не найден: &f{code}"
+  language-already-set: "&eЯзык уже установлен на &f{lang}&e."
+  language-updated: "&aЯзык изменён с &f{old} &aна &f{new}&a."
+  laps-set: "&aКруги установлены на &f{laps}{track_info}"
   pitstops-set: "&aОбязательных пит-стопов: &f{count}{track_info}"
   lobby-set: "&aЛобби регистрации установлено в точку &f{x}, {y}, {z} &7({world})&a и включено."
   track-info: " &7(трасса: {track})"
@@ -407,6 +450,10 @@ admin:
     player-setnumber: "&7 - &f/{label} admin player setnumber <игрок> <1-99>"
     player-setboat: "&7 - &f/{label} admin player setboat <игрок> <тип лодки>"
     tracks: "&7 - &f/{label} admin tracks &7(Управление трассами через GUI)"
+
+    language: "&cИспользование: /{label} admin language <code>"
+
+    language: "&7 - &f/{label} admin language <code> &7(Изменить язык плагина и мгновенно перезагрузить сообщения)"
   usage:
     admin-help: "&cИспользование: /{label} admin help"
     team-main: "&cИспользование: /{label} admin team <create|delete|rename|color|add|remove>"
@@ -420,6 +467,8 @@ admin:
     player-setteam: "&cИспользование: /{label} admin player setteam <игрок> <команда|none>"
     player-setnumber: "&cИспользование: /{label} admin player setnumber <игрок> <1-99>"
     player-setboat: "&cИспользование: /{label} admin player setboat <игрок> <тип лодки>"
+
+    language: "&cИспользование: /{label} admin language <code>"
   invalid-color: "&cНеверный цвет."
   invalid-boat: "&cНеверный тип лодки."
   player-not-member: "&cИгрок не является участником этой команды."
@@ -456,7 +505,14 @@ admin:
   player-no-team: "&cИгрок не состоит ни в одной команде."
   racer-number-set: "&aНомер гонщика &f{player} &aустановлен: &f{num}"
   racer-number-changed-notify: "&eАдминистратор изменил ваш номер гонщика на &f{num}&e."
-  laps-set: "&aКол-во кругов: &f{laps}"
+  laps-set: "&aКруги установлены на &f{laps}"
+
+  language-current: "&7Текущий язык: &f{lang}"
+  language-available: "&7Доступные языки: &f{langs}"
+  language-invalid-code: "&cНеверный код языка: &f{code}"
+  language-not-found: "&cЯзык не найден: &f{code}"
+  language-already-set: "&eЯзык уже установлен на &f{lang}&e."
+  language-updated: "&aЯзык изменён с &f{old} &aна &f{new}&a."
 
   track:
     exists: "&cТрасса с таким названием уже существует."
@@ -583,6 +639,7 @@ gui:
     title-confirm: "Удалить трассу?"
     lore-selected: " &7(выбрана)"
     lore-click-load: "&7Нажмите: &fЗагрузить"
+    lore-right-rename: "&7ПКМ: &eПереименовать"
     lore-shift-delete: "&7Shift+ПКМ: &cУдалить"
     btn-create: "&a&lСоздать и выбрать"
     lore-create: "&7Создать новую пустую трассу и выбрать её."
@@ -640,3 +697,4 @@ gui:
     btn-leave-now: "&c&lПокинуть сейчас"
     anvil-team-name: "Название команды"
     anvil-racer-number: "Номер гонщика"
+

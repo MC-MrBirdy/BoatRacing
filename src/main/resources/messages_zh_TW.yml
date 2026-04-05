@@ -29,9 +29,33 @@ update:
   up-to-date: "&a你正在使用最新版本（&f{version}&a）。"
   info: "&7最新版本：&f{latest} &7| 版本頁面：&f{url}"
 
+stats:
+  usage: "&c用法：/{label} stats [玩家]"
+  player-not-found: "&c找不到玩家：&f{player}"
+  header-self: "&e你的 BoatRacing 統計："
+  header-other: "&e玩家 &f{player}&e 的 BoatRacing 統計："
+  line-player: "&7玩家：&f{player}"
+  line-team: "&7隊伍：&f{team}"
+  line-best-race: "&7最佳比賽：&f{time}"
+  line-best-lap: "&7最佳單圈：&f{time}"
+  positions-header: "&e比賽名次統計："
+  positions-none: "&7尚無比賽名次紀錄。"
+  position-line: "&7獲得第 &f{position}&7 名次次數：&f{count}"
+  position:
+    first: "1"
+    second: "2"
+    third: "3"
+    nth: "{n}"
+  practice-header: "&e依賽道統計的練習數據："
+  practice-none: "&7尚無練習統計紀錄。"
+  practice-track: "&7[{track}] &f跑次 &7(最佳：&f{best_run}&7，最近：&f{last_run}&7) &8| &f單圈 &7(最佳：&f{best_lap}&7，最近：&f{last_lap}&7)"
+  practice-sectors-best: "&8  最佳分段：&f{sectors}"
+  practice-sectors-last: "&8  最近分段：&f{sectors}"
+  sectors-none: "無"
+
 race:
   usage:
-    main: "&c用法：/{label} teams|setup|reload|version"
+    main: "&c用法：/{label} teams|race|stats|setup|admin|reload|version"
     open: "&c用法：/{label} race open <賽道>"
     join: "&c用法：/{label} race join <賽道>"
     leave: "&c用法：/{label} race leave <賽道>"
@@ -43,6 +67,15 @@ race:
     stop: "&c用法：/{label} race stop <賽道>"
     voteopen: "&c用法：/{label} race voteopen [all|<track1> <track2> ...] [秒]"
     vote: "&c用法：/{label} race vote <track>"
+
+  scoreboard:
+    practice-label: "練習"
+    practice-status: "你正在練習"
+    practice-current: "目前跑次"
+    practice-best-run: "最佳跑次"
+    practice-last-run: "最近跑次"
+    practice-best-lap: "最佳單圈"
+    practice-last-lap: "最近單圈"
 
   help:
     header: "&e賽車指令："
@@ -84,6 +117,9 @@ race:
   track-not-found: "&c找不到賽道：&f{track}"
   track-load-failed: "&c無法載入賽道：&f{track}"
   track-not-ready: "&c賽道尚未就緒：&7{requirements}"
+  requirements:
+    finish: "終點線"
+    start-slot-min: "至少 1 個起點槽位"
   cannot-open-registration: "&c目前無法開放報名。"
 
   no-participants: "&c沒有已報名的參與者。&7請先開放報名：&f/{label} race open"
@@ -213,6 +249,13 @@ setup:
   light-fail: "&c無法新增起跑燈。請使用紅石燈，避免重複，且最多 5 個。"
   light-added: "&a已新增起跑燈 &7（{x}, {y}, {z}）"
   lights-cleared: "&a已清除所有起跑燈。"
+
+  language-current: "&7目前語言：&f{lang}"
+  language-available: "&7可用語言：&f{langs}"
+  language-invalid-code: "&c無效的語言代碼：&f{code}"
+  language-not-found: "&c找不到語言：&f{code}"
+  language-already-set: "&e語言已經是 &f{lang}&e。"
+  language-updated: "&a語言已從 &f{old} &a切換為 &f{new}&a。"
   laps-set: "&a圈數已設定為 &f{laps}{track_info}"
   pitstops-set: "&a強制維修站停靠次數已設定為 &f{count}{track_info}"
   lobby-set: "&a報名大廳已設定為 &f{x}, {y}, {z} &7（{world}）&a 並已啟用。"
@@ -407,6 +450,7 @@ admin:
     player-setnumber: "&7 - &f/{label} admin player setnumber <玩家> <1-99>"
     player-setboat: "&7 - &f/{label} admin player setboat <玩家> <船隻類型>"
     tracks: "&7 - &f/{label} admin tracks &7（透過 GUI 管理命名的賽道）"
+    language: "&7 - &f/{label} admin language <code> &7（變更外掛語言並立即重載訊息）"
   usage:
     admin-help: "&c用法：/{label} admin help"
     team-main: "&c用法：/{label} admin team <create|delete|rename|color|add|remove>"
@@ -420,6 +464,7 @@ admin:
     player-setteam: "&c用法：/{label} admin player setteam <玩家> <隊伍|none>"
     player-setnumber: "&c用法：/{label} admin player setnumber <玩家> <1-99>"
     player-setboat: "&c用法：/{label} admin player setboat <玩家> <船隻類型>"
+    language: "&c用法：/{label} admin language <code>"
   invalid-color: "&c無效的顏色。"
   invalid-boat: "&c無效的船隻類型。"
   player-not-member: "&c該玩家不是該隊伍的成員。"
@@ -456,6 +501,13 @@ admin:
   player-no-team: "&c該玩家不在任何隊伍中。"
   racer-number-set: "&a已將 &f{player} &a的賽車編號設定為 &f{num}"
   racer-number-changed-notify: "&e管理員已將你的賽車編號更改為 &f{num}&e。"
+
+  language-current: "&7目前語言：&f{lang}"
+  language-available: "&7可用語言：&f{langs}"
+  language-invalid-code: "&c無效的語言代碼：&f{code}"
+  language-not-found: "&c找不到語言：&f{code}"
+  language-already-set: "&e語言已經是 &f{lang}&e。"
+  language-updated: "&a語言已從 &f{old} &a切換為 &f{new}&a。"
   laps-set: "&a圈數已設定為 &f{laps}"
 
   track:
@@ -583,6 +635,7 @@ gui:
     title-confirm: "刪除賽道？"
     lore-selected: " &7（已選定）"
     lore-click-load: "&7點擊：&f載入"
+    lore-right-rename: "&7右鍵點擊：&e重新命名"
     lore-shift-delete: "&7Shift+右鍵點擊：&c刪除"
     btn-create: "&a&l建立並選定"
     lore-create: "&7建立新的空白賽道並選定。"

@@ -53,6 +53,7 @@ public class AdminTracksGUI implements Listener {
                 im.displayName(Text.item("&f" + n + (current != null && current.equalsIgnoreCase(n) ? plugin.msg().get("gui.tracks.lore-selected") : "")));
                 java.util.List<String> lore = new java.util.ArrayList<>();
                 lore.add(plugin.msg().get("gui.tracks.lore-click-load"));
+                lore.add(plugin.msg().get("gui.tracks.lore-right-rename"));
                 lore.add(plugin.msg().get("gui.tracks.lore-shift-delete"));
                 im.lore(Text.lore(lore));
                 im.addItemFlags(ItemFlag.values());
@@ -118,9 +119,13 @@ public class AdminTracksGUI implements Listener {
         ItemMeta im = it.getItemMeta(); if (im == null) return;
         String name = im.getPersistentDataContainer().get(KEY_NAME, org.bukkit.persistence.PersistentDataType.STRING);
         if (name == null) return;
-        // Click: load; Shift-right-click: delete (with confirmation)
+        // Click: load; right-click: rename; shift-right-click: delete (with confirmation)
         if (e.getClick() == org.bukkit.event.inventory.ClickType.SHIFT_RIGHT) {
             openDeleteConfirm(p, name);
+            return;
+        }
+        if (e.getClick() == org.bukkit.event.inventory.ClickType.RIGHT) {
+            openAnvilRename(p, name);
             return;
         }
         if (!library.select(name)) {
@@ -139,14 +144,16 @@ public class AdminTracksGUI implements Listener {
         if (plain.equals(Text.plain(TITLE)) || plain.equals(Text.plain(TITLE_CONFIRM))) e.setCancelled(true);
     }
 
-    private void openAnvilCreate(Player p) { openAnvil(p, "create", plugin.msg().get("gui.tracks.anvil-track-name")); }
+    private void openAnvilCreate(Player p) { openAnvil(p, "create", plugin.msg().get("gui.tracks.anvil-track-name"), " "); }
 
-    private void openAnvil(Player p, String action, String title) {
+    private void openAnvilRename(Player p, String oldName) { openAnvil(p, "rename:" + oldName, plugin.msg().get("gui.tracks.anvil-track-name"), oldName); }
+
+    private void openAnvil(Player p, String action, String title, String initialText) {
         ItemStack left = new ItemStack(Material.PAPER);
         ItemMeta lm = left.getItemMeta(); if (lm != null) { lm.displayName(Component.empty()); left.setItemMeta(lm); }
         new AnvilGUI.Builder()
                 .title(title)
-                .text(" ")
+                .text(initialText == null ? " " : initialText)
                 .itemLeft(left)
                 .interactableSlots()
                 .onClick((slot, state) -> {
@@ -188,7 +195,37 @@ public class AdminTracksGUI implements Listener {
                 })
             );
         }
-    // 'Save as…' flow removed
+        if (action.startsWith("rename:")) {
+            String oldName = action.substring("rename:".length());
+            String oldNorm = library.normalizeName(oldName);
+            String newNorm = library.normalizeName(input);
+            if (newNorm.isEmpty()) {
+                p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("admin.track.create-failed")));
+                return Collections.singletonList(AnvilGUI.ResponseAction.close());
+            }
+            if (!oldNorm.equalsIgnoreCase(newNorm) && library.exists(newNorm)) {
+                p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("admin.track.exists")));
+                return Arrays.asList(AnvilGUI.ResponseAction.replaceInputText(input));
+            }
+            if (plugin.isTrackSessionBusy(oldNorm)) {
+                p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.already-running")));
+                return Collections.singletonList(AnvilGUI.ResponseAction.close());
+            }
+            if (!library.rename(oldNorm, newNorm)) {
+                p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("admin.track.create-failed")));
+                return Collections.singletonList(AnvilGUI.ResponseAction.close());
+            }
+            plugin.discardInactiveRaceSession(oldNorm);
+            plugin.discardInactiveRaceSession(newNorm);
+            library.select(newNorm);
+            p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("admin.track.selected", "name", newNorm)));
+            p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.9f, 1.2f);
+            return Arrays.asList(
+                AnvilGUI.ResponseAction.close(),
+                AnvilGUI.ResponseAction.run(() -> open(p))
+            );
+        }
+        // 'Save as…' flow removed
         return Collections.singletonList(AnvilGUI.ResponseAction.close());
     }
 

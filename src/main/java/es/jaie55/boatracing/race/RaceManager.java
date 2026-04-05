@@ -18,6 +18,7 @@ import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Criteria;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -106,6 +107,12 @@ public class RaceManager {
     private final Set<UUID> overlayPlayers = new HashSet<>();
     private final Map<UUID, Objective> previousSidebarObjectives = new HashMap<>();
     private final Set<UUID> simpleScoreHiddenByBoatRacing = new HashSet<>();
+    private static final String SCOREBOARD_OBJECTIVE_NAME = "boatracing";
+    private static final int SCOREBOARD_MAX_LINES = 12;
+    private static final String[] SCOREBOARD_ENTRIES = new String[]{
+            "\u00A70", "\u00A71", "\u00A72", "\u00A73", "\u00A74", "\u00A75",
+            "\u00A76", "\u00A77", "\u00A78", "\u00A79", "\u00A7a", "\u00A7b"
+    };
     // Per-player pitstop count for current lap
     private final Map<UUID, Integer> pitCount = new HashMap<>();
     // Sector leader times per lap: lap -> (checkpointIndex -> first time/ms)
@@ -514,6 +521,10 @@ public class RaceManager {
 
         // Persist winner stats for placeholders/holograms
         if (!practiceMode && !list.isEmpty() && plugin.getStatsManager() != null) {
+            java.util.List<UUID> finishOrder = new java.util.ArrayList<>();
+            for (Map.Entry<UUID, RaceState> e : list) finishOrder.add(e.getKey());
+            plugin.getStatsManager().recordPlayerPositions(finishOrder);
+
             UUID winner = list.get(0).getKey();
             plugin.getStatsManager().addPlayerWin(winner);
             plugin.getTeamManager().getTeamByMember(winner).ifPresent(t -> plugin.getStatsManager().addTeamWin(t.getId()));
@@ -608,6 +619,61 @@ public class RaceManager {
         long ms = millis % 1000;
         long m = sec / 60; long s = sec % 60;
         return String.format("%d:%02d.%03d", m, s, ms);
+    }
+
+    private static String formatOptionalPracticeTime(Long millis) {
+        return millis != null && millis >= 0L ? formatSeconds(millis) : "--:--.---";
+    }
+
+    private String scoreboardText(String key, String fallback) {
+        String localized = plugin.msg().get(key);
+        if (localized == null || localized.isBlank() || key.equals(localized)) return fallback;
+        return localized;
+    }
+
+    private String resolvePracticeStatusLine() {
+        return scoreboardText("race.scoreboard.practice-label", "PRACTICE");
+    }
+
+    private void appendPracticeSidebarTimes(List<Component> lines, UUID viewerId, RaceState viewerState) {
+        if (lines == null || viewerId == null || viewerState == null) return;
+
+        long currentRun = (viewerState.finished && viewerState.finishTime >= 0L)
+                ? viewerState.finishTime
+                : timeFor(viewerState);
+
+        PracticeStatsManager stats = plugin.getPracticeStatsManager();
+        String currentTrack = getTrackName();
+
+        Long bestRun = stats != null ? stats.getBestRun(viewerId, currentTrack) : null;
+        Long lastRun = stats != null ? stats.getLastRun(viewerId, currentTrack) : null;
+        Long bestLap = stats != null ? stats.getBestLap(viewerId, currentTrack) : null;
+        Long lastLap = stats != null ? stats.getLastLap(viewerId, currentTrack) : null;
+
+        String currentLabel = scoreboardText("race.scoreboard.practice-current", "Current run");
+        String bestRunLabel = scoreboardText("race.scoreboard.practice-best-run", "Best run");
+        String lastRunLabel = scoreboardText("race.scoreboard.practice-last-run", "Last run");
+        String bestLapLabel = scoreboardText("race.scoreboard.practice-best-lap", "Best lap");
+        String lastLapLabel = scoreboardText("race.scoreboard.practice-last-lap", "Last lap");
+
+        lines.add(Component.text(currentLabel + " ", NamedTextColor.YELLOW)
+                .append(Component.text(formatSeconds(currentRun), NamedTextColor.WHITE)));
+
+        lines.add(Component.text(" "));
+
+        lines.add(Component.text(bestRunLabel + " ", NamedTextColor.AQUA)
+                .append(Component.text(formatOptionalPracticeTime(bestRun), NamedTextColor.WHITE)));
+        lines.add(Component.text(lastRunLabel + " ", NamedTextColor.GRAY)
+                .append(Component.text(formatOptionalPracticeTime(lastRun), NamedTextColor.WHITE)));
+
+        lines.add(Component.text(" "));
+
+        lines.add(Component.text(bestLapLabel + " ", NamedTextColor.AQUA)
+                .append(Component.text(formatOptionalPracticeTime(bestLap), NamedTextColor.WHITE)));
+        lines.add(Component.text(lastLapLabel + " ", NamedTextColor.GRAY)
+                .append(Component.text(formatOptionalPracticeTime(lastLap), NamedTextColor.WHITE)));
+
+        lines.add(Component.text(" "));
     }
 
     private void clearPracticeSessionState() {
@@ -806,11 +872,20 @@ public class RaceManager {
         if (player == null || !player.isOnline()) return false;
         if (running || registering || isCountdownActive()) return false;
 
+        UUID playerId = player.getUniqueId();
+        // Practice skips registration, so we must capture the pre-race location here.
+        capturePreLobbyLocation(player);
+
         List<Player> participants = new ArrayList<>();
         participants.add(player);
 
         List<Player> placed = placeAtStartsWithBoats(participants);
-        if (placed.isEmpty()) return false;
+        if (placed.isEmpty()) {
+            preLobbyLocations.remove(playerId);
+            preLobbyBackExpiresAt.remove(playerId);
+            cancelBackExpiryTask(playerId);
+            return false;
+        }
 
         startRaceWithCountdown(placed, true);
         return true;
@@ -1498,23 +1573,19 @@ public class RaceManager {
                 overlayPlayers.remove(pid);
                 previousSidebarObjectives.remove(pid);
             }
-            String objName = "boatracing"; // constant name to play nice with external plugins (e.g., TAB)
-            Objective obj = sb.getObjective(objName);
+            Objective obj = sb.getObjective(SCOREBOARD_OBJECTIVE_NAME); // constant name to play nice with external plugins (e.g., TAB)
             if (obj == null) {
                 obj = sb.registerNewObjective(
-                    objName,
+                    SCOREBOARD_OBJECTIVE_NAME,
                     Criteria.DUMMY,
                     Component.text("BoatRacing", NamedTextColor.GOLD)
                 );
             }
             obj.setDisplaySlot(DisplaySlot.SIDEBAR);
-            // Prepare lines: spacer + header separator + up to 10 rows => 12 entries total
-            String[] entries = new String[]{"\u00A70","\u00A71","\u00A72","\u00A73","\u00A74","\u00A75","\u00A76","\u00A77","\u00A78","\u00A79","\u00A7a","\u00A7b"};
-            for (int i = 0; i < entries.length; i++) {
+            for (int i = 0; i < SCOREBOARD_ENTRIES.length; i++) {
                 String teamName = "br_ln_" + (i+1);
                 org.bukkit.scoreboard.Team t = sb.getTeam(teamName); if (t == null) t = sb.registerNewTeam(teamName);
-                t.addEntry(entries[i]);
-                obj.getScore(entries[i]).setScore(entries.length - i);
+                t.addEntry(SCOREBOARD_ENTRIES[i]);
             }
             if (!canOverlay) {
                 p.setScoreboard(sb);
@@ -1545,8 +1616,13 @@ public class RaceManager {
                 if (sb != null) {
                     // Build lines for this viewer
                     java.util.List<Component> lines = new java.util.ArrayList<>();
-                    // Spacer line to create space between title and first row
-                    lines.add(Component.text(" "));
+                    if (!practiceMode) {
+                        // Spacer line to create space between title and first row
+                        lines.add(Component.text(" "));
+                    } else {
+                        lines.add(Component.text(resolvePracticeStatusLine(), NamedTextColor.AQUA, TextDecoration.BOLD));
+                        appendPracticeSidebarTimes(lines, viewerId, viewerState);
+                    }
 
                     int maxRows = 10;
                     int rowCount = Math.min(maxRows, ordered.size());
@@ -1632,17 +1708,27 @@ public class RaceManager {
                         lines.add(line);
                     }
 
-                    // Push lines into scoreboard teams: br_ln_1..12
-                    for (int i = 0; i < 12; i++) {
+                    Objective obj = sb.getObjective(SCOREBOARD_OBJECTIVE_NAME);
+                    if (obj == null) continue;
+                    int visibleLines = Math.min(lines.size(), SCOREBOARD_MAX_LINES);
+
+                    // Push lines into scoreboard teams and show only used score entries.
+                    for (int i = 0; i < SCOREBOARD_MAX_LINES; i++) {
                         String teamName = "br_ln_" + (i+1);
                         org.bukkit.scoreboard.Team t = sb.getTeam(teamName);
                         if (t == null) continue;
-                        Component content = i < lines.size() ? lines.get(i) : Component.text("", NamedTextColor.BLACK);
+                        Component content = i < visibleLines ? lines.get(i) : Component.empty();
                         try { t.prefix(content); } catch (Exception ignored) { plugin.getLogger().finer("Failed to set scoreboard team prefix: " + ignored.getMessage()); }
+
+                        String entry = SCOREBOARD_ENTRIES[i];
+                        try {
+                            if (i < visibleLines) obj.getScore(entry).setScore(visibleLines - i);
+                            else sb.resetScores(entry);
+                        } catch (Exception ignored) {
+                            plugin.getLogger().finer("Failed to set/reset scoreboard score entry: " + ignored.getMessage());
+                        }
                     }
                 }
-
-                // No internal number hiding; leave formatting to external plugins if desired
 
                 // Send ActionBar with personal stats (omit CP when none). Update frequently for smooth ms
                 int doneCP = Math.min(viewerState.nextCheckpoint, totalCPs);

@@ -29,6 +29,30 @@ update:
   up-to-date: "&aVoce esta usando a versao mais recente (&f{version}&a)."
   info: "&7Mais recente: &f{latest} &7| Lancamentos: &f{url}"
 
+stats:
+  usage: "&cUso: /{label} stats [jogador]"
+  player-not-found: "&cJogador nao encontrado: &f{player}"
+  header-self: "&eSuas estatisticas do BoatRacing:"
+  header-other: "&eEstatisticas do BoatRacing de &f{player}&e:"
+  line-player: "&7Jogador: &f{player}"
+  line-team: "&7Equipe: &f{team}"
+  line-best-race: "&7Melhor corrida: &f{time}"
+  line-best-lap: "&7Melhor volta: &f{time}"
+  positions-header: "&eResumo de posicoes em corrida:"
+  positions-none: "&7Nenhum registro de posicao em corrida ainda."
+  position-line: "&7Vezes na posicao &f{position}&7: &f{count}"
+  position:
+    first: "1a"
+    second: "2a"
+    third: "3a"
+    nth: "{n}a"
+  practice-header: "&eEstatisticas de treino por pista:"
+  practice-none: "&7Nenhuma estatistica de treino registrada ainda."
+  practice-track: "&7[{track}] &fTentativa &7(Melhor: &f{best_run}&7, Ultima: &f{last_run}&7) &8| &fVolta &7(Melhor: &f{best_lap}&7, Ultima: &f{last_lap}&7)"
+  practice-sectors-best: "&8  Melhores setores: &f{sectors}"
+  practice-sectors-last: "&8  Ultimos setores: &f{sectors}"
+  sectors-none: "nenhum"
+
 race:
   usage:
     main: "&cUso: /{label} teams|setup|reload|version"
@@ -43,6 +67,15 @@ race:
     stop: "&cUso: /{label} race stop <track>"
     voteopen: "&cUso: /{label} race voteopen [all|<track1> <track2> ...] [segundos]"
     vote: "&cUso: /{label} race vote <track>"
+
+  scoreboard:
+    practice-label: "TREINO"
+    practice-status: "VOCE ESTA TREINANDO"
+    practice-current: "Tentativa atual"
+    practice-best-run: "Melhor tentativa"
+    practice-last-run: "Ultima tentativa"
+    practice-best-lap: "Melhor volta"
+    practice-last-lap: "Ultima volta"
 
   help:
     header: "&eComandos de corrida:"
@@ -84,6 +117,9 @@ race:
   track-not-found: "&cPista nao encontrada: &f{track}"
   track-load-failed: "&cFalha ao carregar a pista: &f{track}"
   track-not-ready: "&cA pista nao esta pronta: &7{requirements}"
+  requirements:
+    finish: "linha de chegada"
+    start-slot-min: "pelo menos 1 vaga de largada"
   cannot-open-registration: "&cNao e possivel abrir inscricoes agora."
 
   no-participants: "&cNenhum participante inscrito. &7Abra as inscrições primeiro: &f/{label} race open"
@@ -213,6 +249,13 @@ setup:
   light-fail: "&cNao foi possivel adicionar a luz. Use uma Redstone Lamp, evite duplicatas e maximo 5."
   light-added: "&aLuz de largada adicionada &7({x}, {y}, {z})"
   lights-cleared: "&aTodas as luzes de largada foram limpas."
+
+  language-current: "&7Idioma atual: &f{lang}"
+  language-available: "&7Idiomas disponiveis: &f{langs}"
+  language-invalid-code: "&cCodigo de idioma invalido: &f{code}"
+  language-not-found: "&cIdioma nao encontrado: &f{code}"
+  language-already-set: "&eO idioma ja esta definido como &f{lang}&e."
+  language-updated: "&aIdioma alterado de &f{old} &apara &f{new}&a."
   laps-set: "&aVoltas definidas para &f{laps}{track_info}"
   pitstops-set: "&aPit stops obrigatorios definidos para &f{count}{track_info}"
   lobby-set: "&aLobby de inscricao definido em &f{x}, {y}, {z} &7({world})&a e ativado."
@@ -407,6 +450,10 @@ admin:
     player-setnumber: "&7 - &f/{label} admin player setnumber <player> <1-99>"
     player-setboat: "&7 - &f/{label} admin player setboat <player> <BoatType>"
     tracks: "&7 - &f/{label} admin tracks &7(Gerenciar pistas nomeadas via GUI)"
+
+    language: "&cUso: /{label} admin language <code>"
+
+    language: "&7 - &f/{label} admin language <code> &7(Alterar o idioma do plugin e recarregar mensagens instantaneamente)"
   usage:
     admin-help: "&cUso: /{label} admin help"
     team-main: "&cUso: /{label} admin team <create|delete|rename|color|add|remove>"
@@ -420,6 +467,8 @@ admin:
     player-setteam: "&cUso: /{label} admin player setteam <player> <team|none>"
     player-setnumber: "&cUso: /{label} admin player setnumber <player> <1-99>"
     player-setboat: "&cUso: /{label} admin player setboat <player> <BoatType>"
+
+    language: "&cUso: /{label} admin language <code>"
   invalid-color: "&cCor invalida."
   invalid-boat: "&cTipo de barco invalido."
   player-not-member: "&cO jogador nao e membro dessa equipe."
@@ -457,6 +506,13 @@ admin:
   racer-number-set: "&aNumero do piloto definido para &f{player} &aem &f{num}"
   racer-number-changed-notify: "&eUm administrador alterou seu numero de piloto para &f{num}&e."
   laps-set: "&aVoltas definidas para &f{laps}"
+
+  language-current: "&7Idioma atual: &f{lang}"
+  language-available: "&7Idiomas disponiveis: &f{langs}"
+  language-invalid-code: "&cCodigo de idioma invalido: &f{code}"
+  language-not-found: "&cIdioma nao encontrado: &f{code}"
+  language-already-set: "&eO idioma ja esta definido como &f{lang}&e."
+  language-updated: "&aIdioma alterado de &f{old} &apara &f{new}&a."
 
   track:
     exists: "&cJa existe uma pista com esse nome."
@@ -583,6 +639,7 @@ gui:
     title-confirm: "Excluir pista?"
     lore-selected: " &7(selecionada)"
     lore-click-load: "&7Clique: &fCarregar"
+    lore-right-rename: "&7Clique-direito: &eRenomear"
     lore-shift-delete: "&7Shift-clique-direito: &cExcluir"
     btn-create: "&a&lCriar e selecionar"
     lore-create: "&7Crie uma nova pista vazia e selecione-a."
@@ -640,3 +697,4 @@ gui:
     btn-leave-now: "&c&lSair agora"
     anvil-team-name: "Nome da equipe"
     anvil-racer-number: "Numero do piloto"
+

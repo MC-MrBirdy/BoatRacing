@@ -9,7 +9,7 @@ softdepend: [PlaceholderAPI]
 commands:
   boatracing:
     description: BoatRacing base command
-    usage: /<command> teams|race|setup|admin|reload|version
+    usage: /<command> teams|race|stats|setup|admin|reload|version
     permission: boatracing.use
 permissions:
   boatracing.*:
@@ -19,10 +19,13 @@ permissions:
       boatracing.use: true
       boatracing.teams: true
       boatracing.version: true
+      boatracing.stats: true
+      boatracing.stats.others: true
       boatracing.reload: true
       boatracing.update: true
       boatracing.setup: true
       boatracing.admin: true
+      boatracing.admin.language: true
       boatracing.race.join: true
       boatracing.race.leave: true
       boatracing.race.back: true
@@ -36,6 +39,8 @@ permissions:
     children:
       boatracing.teams: true
       boatracing.version: true
+      boatracing.stats: true
+      boatracing.stats.others: true
       boatracing.race.join: true
       boatracing.race.leave: true
       boatracing.race.back: true
@@ -46,6 +51,12 @@ permissions:
     default: true
   boatracing.version:
     description: Use /boatracing version
+    default: true
+  boatracing.stats:
+    description: View player statistics with /boatracing stats [player]
+    default: true
+  boatracing.stats.others:
+    description: View other players' statistics with /boatracing stats <player>
     default: true
   boatracing.reload:
     description: Reload BoatRacing plugin configuration and data
@@ -63,9 +74,12 @@ permissions:
       boatracing.use: true
       boatracing.teams: true
       boatracing.version: true
+      boatracing.stats: true
+      boatracing.stats.others: true
       boatracing.reload: true
       boatracing.update: true
       boatracing.setup: true
+      boatracing.admin.language: true
       boatracing.race.join: true
       boatracing.race.leave: true
       boatracing.race.back: true
@@ -73,6 +87,9 @@ permissions:
       boatracing.race.status: true
       boatracing.race.voteopen: true
       boatracing.race.admin: true
+  boatracing.admin.language:
+    description: Change plugin language with /boatracing admin language <code>
+    default: op
   boatracing.race.join:
     description: Join a race registration
     default: true

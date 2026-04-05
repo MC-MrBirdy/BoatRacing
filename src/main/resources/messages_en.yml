@@ -26,9 +26,34 @@ update:
   up-to-date: "&aYou're running the latest version (&f{version}&a)."
   info: "&7Latest: &f{latest} &7| Releases: &f{url}"
 
+stats:
+  usage: "&cUsage: /{label} stats [player]"
+  player-not-found: "&cPlayer not found: &f{player}"
+  header-self: "&eYour BoatRacing stats:"
+  header-other: "&eBoatRacing stats for &f{player}&e:"
+  line-player: "&7Player: &f{player}"
+  line-team: "&7Team: &f{team}"
+  line-best-race: "&7Best race: &f{time}"
+  line-best-lap: "&7Best lap: &f{time}"
+  positions-header: "&eRace positions summary:"
+  positions-none: "&7No race position records yet."
+  position-line: "&7Times in &f{position}&7 place: &f{count}"
+  position:
+    first: "first"
+    second: "second"
+    third: "third"
+    nth: "{n}th"
+  practice-header: "&ePractice stats by track:"
+  practice-none: "&7No practice stats recorded yet."
+  track-unsaved-label: "current track (unsaved)"
+  practice-track: "&7[{track}] &fRun &7(Best: &f{best_run}&7, Last: &f{last_run}&7) &8| &fLap &7(Best: &f{best_lap}&7, Last: &f{last_lap}&7)"
+  practice-sectors-best: "&8  Best sectors: &f{sectors}"
+  practice-sectors-last: "&8  Last sectors: &f{sectors}"
+  sectors-none: "none"
+
 race:
   usage:
-    main: "&cUsage: /{label} teams|setup|reload|version"
+    main: "&cUsage: /{label} teams|race|stats|setup|admin|reload|version"
     open: "&cUsage: /{label} race open <track>"
     join: "&cUsage: /{label} race join <track>"
     leave: "&cUsage: /{label} race leave <track>"
@@ -40,6 +65,15 @@ race:
     stop: "&cUsage: /{label} race stop <track>"
     voteopen: "&cUsage: /{label} race voteopen [all|<track1> <track2> ...] [seconds]"
     vote: "&cUsage: /{label} race vote <track>"
+
+  scoreboard:
+    practice-label: "PRACTICE"
+    practice-status: "YOU ARE PRACTICING"
+    practice-current: "Current run"
+    practice-best-run: "Best run"
+    practice-last-run: "Last run"
+    practice-best-lap: "Best lap"
+    practice-last-lap: "Last lap"
 
   help:
     header: "&eRace commands:"
@@ -81,6 +115,9 @@ race:
   track-not-found: "&cTrack not found: &f{track}"
   track-load-failed: "&cFailed to load track: &f{track}"
   track-not-ready: "&cTrack is not ready: &7{requirements}"
+  requirements:
+    finish: "finish"
+    start-slot-min: "at least 1 start slot"
   cannot-open-registration: "&cCannot open registration right now."
 
   no-participants: "&cNo registered participants. &7Open registration first: &f/{label} race open"
@@ -210,6 +247,13 @@ setup:
   light-fail: "&cCould not add light. Use a Redstone Lamp, avoid duplicates, and max 5."
   light-added: "&aAdded start light &7({x}, {y}, {z})"
   lights-cleared: "&aCleared all start lights."
+
+  language-current: "&7Current language: &f{lang}"
+  language-available: "&7Available languages: &f{langs}"
+  language-invalid-code: "&cInvalid language code: &f{code}"
+  language-not-found: "&cLanguage not found: &f{code}"
+  language-already-set: "&eLanguage is already set to &f{lang}&e."
+  language-updated: "&aLanguage changed from &f{old} &ato &f{new}&a."
   laps-set: "&aLaps set to &f{laps}{track_info}"
   pitstops-set: "&aMandatory pit stops set to &f{count}{track_info}"
   lobby-set: "&aRegistration lobby set to &f{x}, {y}, {z} &7({world})&a and enabled."
@@ -404,6 +448,8 @@ admin:
     player-setnumber: "&7 - &f/{label} admin player setnumber <player> <1-99>"
     player-setboat: "&7 - &f/{label} admin player setboat <player> <BoatType>"
     tracks: "&7 - &f/{label} admin tracks &7(Manage named tracks via GUI)"
+
+    language: "&7 - &f/{label} admin language <code> &7(Change plugin language and reload messages instantly)"
   usage:
     admin-help: "&cUsage: /{label} admin help"
     team-main: "&cUsage: /{label} admin team <create|delete|rename|color|add|remove>"
@@ -417,6 +463,8 @@ admin:
     player-setteam: "&cUsage: /{label} admin player setteam <player> <team|none>"
     player-setnumber: "&cUsage: /{label} admin player setnumber <player> <1-99>"
     player-setboat: "&cUsage: /{label} admin player setboat <player> <BoatType>"
+
+    language: "&cUsage: /{label} admin language <code>"
   invalid-color: "&cInvalid color."
   invalid-boat: "&cInvalid boat type."
   player-not-member: "&cPlayer is not a member of that team."
@@ -454,6 +502,13 @@ admin:
   racer-number-set: "&aSet racer number for &f{player} &ato &f{num}"
   racer-number-changed-notify: "&eAn administrator has changed your racer number to &f{num}&e."
   laps-set: "&aLaps set to &f{laps}"
+
+  language-current: "&7Current language: &f{lang}"
+  language-available: "&7Available languages: &f{langs}"
+  language-invalid-code: "&cInvalid language code: &f{code}"
+  language-not-found: "&cLanguage not found: &f{code}"
+  language-already-set: "&eLanguage is already set to &f{lang}&e."
+  language-updated: "&aLanguage changed from &f{old} &ato &f{new}&a."
 
   track:
     exists: "&cA track with that name already exists."
@@ -580,6 +635,7 @@ gui:
     title-confirm: "Delete track?"
     lore-selected: " &7(selected)"
     lore-click-load: "&7Click: &fLoad"
+    lore-right-rename: "&7Right-click: &eRename"
     lore-shift-delete: "&7Shift-right-click: &cDelete"
     btn-create: "&a&lCreate and select"
     lore-create: "&7Create a new empty track and select it."
@@ -637,3 +693,4 @@ gui:
     btn-leave-now: "&c&lLeave now"
     anvil-team-name: "Team name"
     anvil-racer-number: "Racer number"
+

@@ -330,7 +330,7 @@ public class TrackConfig {
         java.util.List<String> missing = new java.util.ArrayList<>();
         if (finish == null) missing.add("finish");
     // Optional: pitlane and checkpoints are not required
-        if (starts.isEmpty()) missing.add("at least 1 start slot");
+        if (starts.isEmpty()) missing.add("start-slot-min");
         return missing;
     }
 

@@ -29,6 +29,30 @@ update:
   up-to-date: "&a你正在使用最新版本（&f{version}&a）。"
   info: "&7最新版本：&f{latest} &7| 版本页面：&f{url}"
 
+stats:
+  usage: "&c用法：/{label} stats [玩家]"
+  player-not-found: "&c找不到玩家：&f{player}"
+  header-self: "&e你的 BoatRacing 统计："
+  header-other: "&e玩家 &f{player}&e 的 BoatRacing 统计："
+  line-player: "&7玩家：&f{player}"
+  line-team: "&7队伍：&f{team}"
+  line-best-race: "&7最佳比赛：&f{time}"
+  line-best-lap: "&7最佳圈速：&f{time}"
+  positions-header: "&e比赛名次统计："
+  positions-none: "&7暂无比赛名次记录。"
+  position-line: "&7获得第&f{position}&7名次数：&f{count}"
+  position:
+    first: "1"
+    second: "2"
+    third: "3"
+    nth: "{n}"
+  practice-header: "&e按赛道统计的练习数据："
+  practice-none: "&7暂无练习统计记录。"
+  practice-track: "&7[{track}] &f跑次 &7(最佳：&f{best_run}&7，最近：&f{last_run}&7) &8| &f圈速 &7(最佳：&f{best_lap}&7，最近：&f{last_lap}&7)"
+  practice-sectors-best: "&8  最佳分段：&f{sectors}"
+  practice-sectors-last: "&8  最近分段：&f{sectors}"
+  sectors-none: "无"
+
 race:
   usage:
     main: "&c用法：/{label} teams|setup|reload|version"
@@ -43,6 +67,15 @@ race:
     stop: "&c用法：/{label} race stop <赛道>"
     voteopen: "&c用法：/{label} race voteopen [all|<track1> <track2> ...] [秒]"
     vote: "&c用法：/{label} race vote <track>"
+
+  scoreboard:
+    practice-label: "练习"
+    practice-status: "你正在练习"
+    practice-current: "当前跑次"
+    practice-best-run: "最佳跑次"
+    practice-last-run: "最近跑次"
+    practice-best-lap: "最佳圈速"
+    practice-last-lap: "最近圈速"
 
   help:
     header: "&e赛车指令："
@@ -84,6 +117,9 @@ race:
   track-not-found: "&c找不到赛道：&f{track}"
   track-load-failed: "&c无法载入赛道：&f{track}"
   track-not-ready: "&c赛道尚未就绪：&7{requirements}"
+  requirements:
+    finish: "终点线"
+    start-slot-min: "至少 1 个起点槽位"
   cannot-open-registration: "&c目前无法开放报名。"
 
   no-participants: "&c没有已报名的参与者。&7请先开放报名：&f/{label} race open"
@@ -213,6 +249,13 @@ setup:
   light-fail: "&c无法新增起跑灯。请使用红石灯，避免重复，且最多 5 个。"
   light-added: "&a已新增起跑灯 &7（{x}, {y}, {z}）"
   lights-cleared: "&a已清除所有起跑灯。"
+
+  language-current: "&7当前语言：&f{lang}"
+  language-available: "&7可用语言：&f{langs}"
+  language-invalid-code: "&c无效的语言代码：&f{code}"
+  language-not-found: "&c找不到语言：&f{code}"
+  language-already-set: "&e语言已设置为 &f{lang}&e。"
+  language-updated: "&a语言已从 &f{old} &a切换为 &f{new}&a。"
   laps-set: "&a圈数已设定为 &f{laps}{track_info}"
   pitstops-set: "&a强制维修站停靠次数已设定为 &f{count}{track_info}"
   lobby-set: "&a报名大厅已设定为 &f{x}, {y}, {z} &7（{world}）&a 并已启用。"
@@ -406,7 +449,11 @@ admin:
     player-setteam: "&7 - &f/{label} admin player setteam <玩家> <队伍|none>"
     player-setnumber: "&7 - &f/{label} admin player setnumber <玩家> <1-99>"
     player-setboat: "&7 - &f/{label} admin player setboat <玩家> <船只类型>"
-    tracks: "&7 - &f/{label} admin tracks &7（透过 GUI 管理命名的赛道）"
+    tracks: "&7 - &f/{label} admin tracks &7（通过 GUI 管理命名赛道）"
+
+    language: "&c用法：/{label} admin language <code>"
+
+    language: "&7 - &f/{label} admin language <code> &7（更改插件语言并立即重载消息）"
   usage:
     admin-help: "&c用法：/{label} admin help"
     team-main: "&c用法：/{label} admin team <create|delete|rename|color|add|remove>"
@@ -420,6 +467,8 @@ admin:
     player-setteam: "&c用法：/{label} admin player setteam <玩家> <队伍|none>"
     player-setnumber: "&c用法：/{label} admin player setnumber <玩家> <1-99>"
     player-setboat: "&c用法：/{label} admin player setboat <玩家> <船只类型>"
+
+    language: "&c用法：/{label} admin language <code>"
   invalid-color: "&c无效的颜色。"
   invalid-boat: "&c无效的船只类型。"
   player-not-member: "&c该玩家不是该队伍的成员。"
@@ -457,6 +506,13 @@ admin:
   racer-number-set: "&a已将 &f{player} &a的赛车编号设定为 &f{num}"
   racer-number-changed-notify: "&e管理员已将你的赛车编号更改为 &f{num}&e。"
   laps-set: "&a圈数已设定为 &f{laps}"
+
+  language-current: "&7当前语言：&f{lang}"
+  language-available: "&7可用语言：&f{langs}"
+  language-invalid-code: "&c无效的语言代码：&f{code}"
+  language-not-found: "&c找不到语言：&f{code}"
+  language-already-set: "&e语言已设置为 &f{lang}&e。"
+  language-updated: "&a语言已从 &f{old} &a切换为 &f{new}&a。"
 
   track:
     exists: "&c已存在同名的赛道。"
@@ -583,6 +639,7 @@ gui:
     title-confirm: "删除赛道？"
     lore-selected: " &7（已选定）"
     lore-click-load: "&7点击：&f载入"
+    lore-right-rename: "&7右键点击：&e重命名"
     lore-shift-delete: "&7Shift+右键点击：&c删除"
     btn-create: "&a&l建立并选定"
     lore-create: "&7建立新的空白赛道并选定。"
@@ -640,5 +697,3 @@ gui:
     btn-leave-now: "&c&l立即离开"
     anvil-team-name: "队伍名称"
     anvil-racer-number: "赛车编号"
-
-

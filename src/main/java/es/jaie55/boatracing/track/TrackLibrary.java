@@ -44,6 +44,8 @@ public class TrackLibrary {
 
     public String getCurrent() { return current; }
 
+    public String normalizeName(String raw) { return sanitize(raw); }
+
     public boolean exists(String name) { return new File(tracksDir, sanitize(name) + ".yml").exists(); }
 
     public boolean create(String name) {
@@ -66,6 +68,38 @@ public class TrackLibrary {
         if (!f.exists()) return false;
         if (current != null && current.equalsIgnoreCase(name)) current = null;
         return f.delete();
+    }
+
+    public boolean rename(String oldName, String newName) {
+        String oldClean = sanitize(oldName);
+        String newClean = sanitize(newName);
+        if (oldClean.isEmpty() || newClean.isEmpty()) return false;
+
+        File oldFile = new File(tracksDir, oldClean + ".yml");
+        if (!oldFile.exists()) return false;
+
+        if (oldClean.equalsIgnoreCase(newClean)) {
+            if (current != null && current.equalsIgnoreCase(oldClean)) {
+                current = newClean;
+                trackConfig.setBackingFile(oldFile);
+            }
+            return true;
+        }
+
+        File newFile = new File(tracksDir, newClean + ".yml");
+        if (newFile.exists()) return false;
+
+        try {
+            Files.move(oldFile.toPath(), newFile.toPath());
+            if (current != null && current.equalsIgnoreCase(oldClean)) {
+                current = newClean;
+                trackConfig.setBackingFile(newFile);
+            }
+            return true;
+        } catch (IOException e) {
+            Bukkit.getLogger().warning("[BoatRacing] Failed to rename track file: " + e.getMessage());
+            return false;
+        }
     }
 
     /**

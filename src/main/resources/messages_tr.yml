@@ -30,6 +30,30 @@ update:
   up-to-date: "&aEn güncel sürümü çalıştırıyorsun (&f{version}&a)."
   info: "&7En güncel: &f{latest} &7| Sürümler: &f{url}"
 
+stats:
+  usage: "&cKullanım: /{label} stats [oyuncu]"
+  player-not-found: "&cOyuncu bulunamadı: &f{player}"
+  header-self: "&eBoatRacing istatistiklerin:"
+  header-other: "&e&f{player}&e icin BoatRacing istatistikleri:"
+  line-player: "&7Oyuncu: &f{player}"
+  line-team: "&7Takim: &f{team}"
+  line-best-race: "&7En iyi yaris: &f{time}"
+  line-best-lap: "&7En iyi tur: &f{time}"
+  positions-header: "&eYaris siralamasi ozeti:"
+  positions-none: "&7Henuz yaris siralamasi kaydi yok."
+  position-line: "&7&f{position}&7. sirada bitirme sayisi: &f{count}"
+  position:
+    first: "1"
+    second: "2"
+    third: "3"
+    nth: "{n}"
+  practice-header: "&eParkura gore antrenman istatistikleri:"
+  practice-none: "&7Henuz antrenman istatistigi kaydi yok."
+  practice-track: "&7[{track}] &fKosu &7(En iyi: &f{best_run}&7, Son: &f{last_run}&7) &8| &fTur &7(En iyi: &f{best_lap}&7, Son: &f{last_lap}&7)"
+  practice-sectors-best: "&8  En iyi sektorler: &f{sectors}"
+  practice-sectors-last: "&8  Son sektorler: &f{sectors}"
+  sectors-none: "yok"
+
 race:
   usage:
     main: "&cKullanım: /{label} teams|setup|reload|version"
@@ -44,6 +68,15 @@ race:
     stop: "&cKullanım: /{label} race stop <track>"
     voteopen: "&cKullanım: /{label} race voteopen [all|<track1> <track2> ...] [saniye]"
     vote: "&cKullanım: /{label} race vote <track>"
+
+  scoreboard:
+    practice-label: "ANTRENMAN"
+    practice-status: "SU AN ANTRENMAN YAPIYORSUN"
+    practice-current: "Mevcut kosu"
+    practice-best-run: "En iyi kosu"
+    practice-last-run: "Son kosu"
+    practice-best-lap: "En iyi tur"
+    practice-last-lap: "Son tur"
 
   help:
     header: "&eYarış komutları:"
@@ -85,6 +118,9 @@ race:
   track-not-found: "&cParkur bulunamadı: &f{track}"
   track-load-failed: "&cParkur yüklenemedi: &f{track}"
   track-not-ready: "&cParkur hazır değil: &7{requirements}"
+  requirements:
+    finish: "bitiş çizgisi"
+    start-slot-min: "en az 1 başlangıç slotu"
   cannot-open-registration: "&cŞu anda kayıt açılamıyor."
 
   no-participants: "&cKayıtlı katılımcı yok. &7Önce kaydı aç: &f/{label} race open"
@@ -214,6 +250,13 @@ setup:
   light-fail: "&cIşık eklenemedi. Redstone Lambası kullan, yinelenenlerden kaçın ve en fazla 5."
   light-added: "&aBaşlangıç ışığı eklendi &7({x}, {y}, {z})"
   lights-cleared: "&aTüm başlangıç ışıkları temizlendi."
+
+  language-current: "&7Geçerli dil: &f{lang}"
+  language-available: "&7Kullanılabilir diller: &f{langs}"
+  language-invalid-code: "&cGeçersiz dil kodu: &f{code}"
+  language-not-found: "&cDil bulunamadı: &f{code}"
+  language-already-set: "&eDil zaten &f{lang}&e olarak ayarlı."
+  language-updated: "&aDil &f{old} &adeğerinden &f{new}&a değerine değiştirildi."
   laps-set: "&aTur sayısı &f{laps}{track_info} olarak ayarlandı"
   pitstops-set: "&aZorunlu pit stop sayısı &f{count}{track_info} olarak ayarlandı"
   lobby-set: "&aKayıt lobisi &f{x}, {y}, {z} &7({world})&a konumuna ayarlandı ve etkinleştirildi."
@@ -408,6 +451,10 @@ admin:
     player-setnumber: "&7 - &f/{label} admin player setnumber <player> <1-99>"
     player-setboat: "&7 - &f/{label} admin player setboat <player> <BoatType>"
     tracks: "&7 - &f/{label} admin tracks &7(Adlandırılmış parkurları GUI ile yönet)"
+
+    language: "&cKullanım: /{label} admin language <code>"
+
+    language: "&7 - &f/{label} admin language <code> &7(Eklenti dilini değiştir ve mesajları anında yeniden yükle)"
   usage:
     admin-help: "&cKullanım: /{label} admin help"
     team-main: "&cKullanım: /{label} admin team <create|delete|rename|color|add|remove>"
@@ -421,6 +468,8 @@ admin:
     player-setteam: "&cKullanım: /{label} admin player setteam <player> <team|none>"
     player-setnumber: "&cKullanım: /{label} admin player setnumber <player> <1-99>"
     player-setboat: "&cKullanım: /{label} admin player setboat <player> <BoatType>"
+
+    language: "&cKullanım: /{label} admin language <code>"
   invalid-color: "&cGeçersiz renk."
   invalid-boat: "&cGeçersiz tekne türü."
   player-not-member: "&cOyuncu o takımın üyesi değil."
@@ -458,6 +507,13 @@ admin:
   racer-number-set: "&a&f{player} &aiçin yarışçı numarası &f{num} &aolarak ayarlandı"
   racer-number-changed-notify: "&eBir yönetici yarışçı numaranı &f{num}&e olarak değiştirdi."
   laps-set: "&aTur sayısı &f{laps} olarak ayarlandı"
+
+  language-current: "&7Geçerli dil: &f{lang}"
+  language-available: "&7Kullanılabilir diller: &f{langs}"
+  language-invalid-code: "&cGeçersiz dil kodu: &f{code}"
+  language-not-found: "&cDil bulunamadı: &f{code}"
+  language-already-set: "&eDil zaten &f{lang}&e olarak ayarlı."
+  language-updated: "&aDil &f{old} &adeğerinden &f{new}&a değerine değiştirildi."
 
   track:
     exists: "&cBu isimde bir parkur zaten var."
@@ -584,6 +640,7 @@ gui:
     title-confirm: "Parkur silinsin mi?"
     lore-selected: " &7(seçili)"
     lore-click-load: "&7Tıkla: &fYükle"
+    lore-right-rename: "&7Sağ tık: &eYeniden adlandır"
     lore-shift-delete: "&7Shift+sağ tık: &cSil"
     btn-create: "&a&lOluştur ve seç"
     lore-create: "&7Yeni boş bir parkur oluştur ve seç."
@@ -641,4 +698,3 @@ gui:
     btn-leave-now: "&c&lŞimdi ayrıl"
     anvil-team-name: "Takım adı"
     anvil-racer-number: "Yarışçı numarası"
-

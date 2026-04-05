@@ -44,12 +44,17 @@ This is how we test the plugin to validate its behavior after each update: see t
 <details>
 <summary><strong>What's New (1.1.5)</strong></summary>
 
-Practice mode, map vote flow upgrades, and track record placeholder refresh fixes:
+Practice mode, map vote flow upgrades, admin-track rename support, and track record placeholder refresh fixes:
 
 Added:
 - `/boatracing race practice <track>` starts a solo practice race on a ready track, so one player can train even if normal race minimum players is higher.
+- `/boatracing stats [player]` shows a compact player stats report (competitive position counts by place, omitting zero-count places, plus per-track practice best/last run/lap/sectors).
 - Dedicated permission `boatracing.race.practice` (default `true`) so practice can be granted/revoked independently of race-admin permissions.
+- Dedicated permission `boatracing.stats` (default `true`) so player stats can be granted/revoked independently.
+- Dedicated permission `boatracing.stats.others` (default `true`) so viewing another player's stats can be granted/revoked independently.
 - Dedicated permission `boatracing.race.voteopen` (default `op`) so opening map votes can be granted/revoked independently of race start/stop management.
+- `/boatracing admin language <code>` (alias: `/boatracing admin lang <code>`) switches the active message bundle at runtime, updates `config.yml`, and reloads messages immediately.
+- Dedicated permission `boatracing.admin.language` (default `op`) so language switching can be granted without full admin management access.
 - Practice telemetry persisted in `practice-stats.yml` (best/last run, best/last lap, best/last sector per section).
 - New practice placeholders for player current-track and explicit track tokens (run/lap/section metrics), plus track-practice state alias `%boatracing_track_practicerunning_<track>%`.
 - Bundled Swedish community translation (`messages_sv.yml`, language code `sv`).
@@ -57,13 +62,20 @@ Added:
 Changed:
 - Same-track race/practice mutual lock now also applies during pre-start countdown, while other tracks remain independent (you can still practice on track2 if track1 has a race).
 - Practice countdown/race split/lap/result messages are private to the practicing player (no global race-style broadcasts).
+- During solo practice, the sidebar now shows a localized practice marker (`race.scoreboard.practice-label`), e.g. `PRACTICE` / `PRÁCTICA` depending on configured language.
+- Solo practice now captures pre-practice return context, so when the run ends the player is moved to lobby and receives the same clickable `/boatracing race back` hint/window as standard race flows.
+- Admin Tracks GUI now supports renaming existing tracks with right-click on a track item (left-click still loads, shift-right-click still deletes).
+- Tracks GUI item lore now explicitly shows the rename action (`Right-click`) and this hint is available across bundled language files.
 - `/boatracing race voteopen` now supports opening a vote with all saved tracks via `all` (or no explicit track list).
 - Vote-start broadcast now includes both clickable UI (`/boatracing race voteui`) and a plain typed command instruction (`/{label} race vote <track>`) for mixed/Bedrock clients.
-- When vote ends (timeout or `voteclose`), winner resolution now attempts to auto-open winner registration; if auto-open is not possible, fallback next-step command remains in chat.
+- When vote ends (timeout or `voteclose`), winner resolution now attempts to auto-open winner registration; if auto-open is not possible, fallback next-step command is sent only to vote-managing users (and console), not to regular players.
+- Shade packaging now filters duplicate manifest/signature metadata, removing the previous `maven-shade-plugin` overlap warning for `META-INF/MANIFEST.MF`.
 
 Fixed:
 - `%boatracing_track_best_*_<track>%` and `%boatracing_track_top_1..3_*_<track>%` now use the freshest available track data (live race session first, then track file), avoiding stale best-time values.
 - `%boatracing_track_best_player%` and `%boatracing_track_best_time%` now follow the same resolution path as token placeholders so current-track records update after an improved race time.
+- Track readiness requirement details (`race.track-not-ready`) are now localized through `race.requirements.*` across bundled language files (no mixed EN text in localized messages).
+- Community locale wording regressions were corrected in `fr`, `pl`, `pt_PT`, `ru`, and `zh_CN` bundles (including restored `laps-set`/`tracks` phrasing and replacing leaked `BoatType` tokens with localized argument labels).
 
 </details>
 
@@ -350,8 +362,9 @@ Quick flow:
 Root command groups:
 - `/boatracing teams` opens the player team GUI.
 - `/boatracing race ...` manages registration and race lifecycle.
+- `/boatracing stats [player]` shows your stats or another player's stats.
 - `/boatracing setup ...` configures the active track.
-- `/boatracing admin` opens the admin GUI.
+- `/boatracing admin` opens the admin GUI, and also exposes admin subcommands such as live language switching.
 - `/boatracing reload` reloads config, messages, teams, racers, and stats.
 - `/boatracing version` shows plugin version and update status.
 
@@ -425,6 +438,10 @@ Race commands:
 - `/boatracing race votestatus`
 - `/boatracing race voteclose`
 
+Stats command:
+- `/boatracing stats` shows your own competitive and practice summary.
+- `/boatracing stats <player>` shows another player's summary (requires `boatracing.stats.others`).
+
 Race behavior:
 - Players must belong to a team before joining registration.
 - Registration loads track settings before opening, including any per-track `racing.*` overrides.
@@ -447,7 +464,7 @@ Race behavior:
 - False starts can apply an additional penalty during the light countdown.
 - If registration lobby is enabled, joining registration teleports players there.
 - Leaving registration or registration cancellation can return players to their previous location (`racing.lobby.return-on-leave`).
-- After a race finish or race cancel, participants are returned to the lobby and receive a clickable `/boatracing race back` hint in chat.
+- After a race finish, race cancel, or solo practice finish, participants are returned to the lobby and receive a clickable `/boatracing race back` hint in chat.
 - The saved pre-lobby return location is kept in memory for 3 minutes; after that, `/boatracing race back` expires for that race cycle.
 - Results are sorted by elapsed time plus penalties and broadcast to online players.
 - The winner updates persistent player/team stats used by placeholders.
@@ -482,9 +499,10 @@ Setup suggestions:
 - `setpos` also suggests `auto` and available slot numbers.
 
 Admin suggestions:
-- `help`, `team`, `player`, `tracks`
+- `help`, `team`, `player`, `tracks`, `language`, `lang`
 - `team` suggests `create`, `delete`, `rename`, `color`, `add`, `remove`
 - `player` suggests `setteam`, `setnumber`, `setboat`
+- `language`/`lang` suggest available language codes discovered from bundled and plugin-folder message files.
 
 ## Admin Commands and GUI
 `/boatracing admin` opens the admin hub.
@@ -493,7 +511,7 @@ Admin GUI sections:
 - Teams: create teams, open team view, rename, recolor, add/remove members, delete teams.
 - Players: assign/remove team, set racer number, set boat type.
 - Race: open/close registration, start/force/stop, quick-set laps, custom laps, and remove registrants.
-- Tracks: create/select/delete named tracks and reapply the selected track from disk.
+- Tracks: create/select/rename/delete named tracks and reapply the selected track from disk.
 
 Command equivalents:
 - `/boatracing admin team create <name> [color] [firstMember]`
@@ -506,16 +524,21 @@ Command equivalents:
 - `/boatracing admin player setnumber <player> <1-99>`
 - `/boatracing admin player setboat <player> <BoatType>`
 - `/boatracing admin tracks`
+- `/boatracing admin language <code>`
+- `/boatracing admin lang <code>`
 
 ## Permissions
 - `boatracing.*` (default: false): wildcard for the full plugin.
 - `boatracing.use` (default: true): base meta permission.
 - `boatracing.teams` (default: true): access to `/boatracing teams`.
+- `boatracing.stats` (default: true): access to `/boatracing stats [player]`.
+- `boatracing.stats.others` (default: true): allow `/boatracing stats <player>` for other players.
 - `boatracing.version` (default: true): access to `/boatracing version`.
 - `boatracing.reload` (default: op): access to `/boatracing reload`.
 - `boatracing.update` (default: op): receive in-game update notices.
 - `boatracing.setup` (default: op): access to track setup, wizard, selection, and setup GUIs.
 - `boatracing.admin` (default: op): access to the admin hub and admin management features.
+- `boatracing.admin.language` (default: op): change plugin language with `/boatracing admin language <code>`.
 - `boatracing.race.join` (default: true): join registration.
 - `boatracing.race.leave` (default: true): leave registration.
 - `boatracing.race.back` (default: true): return to the saved pre-lobby location.
@@ -526,13 +549,14 @@ Command equivalents:
 
 Permission notes:
 - `boatracing.admin` grants the other plugin permissions through explicit children.
+- `boatracing.admin.language` can be granted independently so trusted staff can switch language without broader admin powers.
 - Players can always see the `race` root suggestion, but actual subcommands remain permission/config-gated.
 - Non-admin race management is controlled by config and per-track overrides, not by a separate extra permission node.
 
 ## Configuration
 Core:
 - `prefix`: chat prefix.
-- `language`: bundled values are `en`, `es`, `es_419`, `fr`, `pt_BR`, `pt_PT`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, `sv`, `zh_TW`, `zh_CN`, and `ru`.
+- `language`: bundled values are `en`, `es`, `es_419`, `fr`, `pt_BR`, `pt_PT`, `de`, `it`, `pl`, `tr`, `ja`, `ko`, `sv`, `zh_TW`, `zh_CN`, and `ru`; can be changed live with `/boatracing admin language <code>`.
 - `max-members-per-team`: team size limit.
 
 Player actions:

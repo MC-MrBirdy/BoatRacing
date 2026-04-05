@@ -30,6 +30,30 @@ update:
   up-to-date: "&aDu kör den senaste versionen (&f{version}&a)."
   info: "&7Senaste: &f{latest} &7| Utgåvor: &f{url}"
 
+stats:
+  usage: "&cAnvändning: /{label} stats [spelare]"
+  player-not-found: "&cSpelare hittades inte: &f{player}"
+  header-self: "&eDin BoatRacing-statistik:"
+  header-other: "&eBoatRacing-statistik för &f{player}&e:"
+  line-player: "&7Spelare: &f{player}"
+  line-team: "&7Lag: &f{team}"
+  line-best-race: "&7Bästa lopp: &f{time}"
+  line-best-lap: "&7Bästa varv: &f{time}"
+  positions-header: "&eSammanfattning av loppplaceringar:"
+  positions-none: "&7Inga loppplaceringar registrerade ännu."
+  position-line: "&7Antal gånger på plats &f{position}&7: &f{count}"
+  position:
+    first: "1"
+    second: "2"
+    third: "3"
+    nth: "{n}"
+  practice-header: "&eTräningsstatistik per bana:"
+  practice-none: "&7Ingen träningsstatistik registrerad ännu."
+  practice-track: "&7[{track}] &fKörning &7(Bäst: &f{best_run}&7, Senast: &f{last_run}&7) &8| &fVarv &7(Bäst: &f{best_lap}&7, Senast: &f{last_lap}&7)"
+  practice-sectors-best: "&8  Bästa sektorer: &f{sectors}"
+  practice-sectors-last: "&8  Senaste sektorer: &f{sectors}"
+  sectors-none: "ingen"
+
 race:
   usage:
     main: "&cAnvändning: /{label} teams|setup|reload|version"
@@ -44,6 +68,15 @@ race:
     stop: "&cAnvändning: /{label} race stop <track>"
     voteopen: "&cAnvändning: /{label} race voteopen [all|<track1> <track2> ...] [sekunder]"
     vote: "&cAnvändning: /{label} race vote <track>"
+
+  scoreboard:
+    practice-label: "TRÄNING"
+    practice-status: "DU TRANAR"
+    practice-current: "Nuvarande försök"
+    practice-best-run: "Bästa försök"
+    practice-last-run: "Senaste försök"
+    practice-best-lap: "Bästa varv"
+    practice-last-lap: "Senaste varv"
 
   help:
     header: "&eTävlingskommandon:"
@@ -85,6 +118,9 @@ race:
   track-not-found: "&cBana hittades inte: &f{track}"
   track-load-failed: "&cKunde inte ladda bana: &f{track}"
   track-not-ready: "&cBanan är inte redo: &7{requirements}"
+  requirements:
+    finish: "mållinje"
+    start-slot-min: "minst 1 startplats"
   cannot-open-registration: "&cKan inte öppna anmälan just nu."
 
   no-participants: "&cInga anmälda deltagare. &7Öppna först anmälan: &f/{label} race open"
@@ -214,6 +250,13 @@ setup:
   light-fail: "&cKunde inte lägga till ljus. Använd en Redstone Lamp, undvik dubbletter och max 5."
   light-added: "&aLade till startljus &7({x}, {y}, {z})"
   lights-cleared: "&aRensade alla startljus."
+
+  language-current: "&7Aktuellt språk: &f{lang}"
+  language-available: "&7Tillgängliga språk: &f{langs}"
+  language-invalid-code: "&cOgiltig språkkod: &f{code}"
+  language-not-found: "&cSpråk hittades inte: &f{code}"
+  language-already-set: "&eSpråket är redan satt till &f{lang}&e."
+  language-updated: "&aSpråket ändrades från &f{old} &atill &f{new}&a."
   laps-set: "&aVarv satta till &f{laps}{track_info}"
   pitstops-set: "&aObligatoriska pitstopp satta till &f{count}{track_info}"
   lobby-set: "&aAnmälningslobby satt till &f{x}, {y}, {z} &7({world})&a och aktiverad."
@@ -408,6 +451,10 @@ admin:
     player-setnumber: "&7 - &f/{label} admin player setnumber <player> <1-99>"
     player-setboat: "&7 - &f/{label} admin player setboat <player> <BoatType>"
     tracks: "&7 - &f/{label} admin tracks &7(Hantera namngivna banor via GUI)"
+
+    language: "&cAnvändning: /{label} admin language <code>"
+
+    language: "&7 - &f/{label} admin language <code> &7(Byt pluginets språk och ladda om meddelanden direkt)"
   usage:
     admin-help: "&cAnvändning: /{label} admin help"
     team-main: "&cAnvändning: /{label} admin team <create|delete|rename|color|add|remove>"
@@ -421,6 +468,8 @@ admin:
     player-setteam: "&cAnvändning: /{label} admin player setteam <player> <team|none>"
     player-setnumber: "&cAnvändning: /{label} admin player setnumber <player> <1-99>"
     player-setboat: "&cAnvändning: /{label} admin player setboat <player> <BoatType>"
+
+    language: "&cAnvändning: /{label} admin language <code>"
   invalid-color: "&cOgiltig färg."
   invalid-boat: "&cOgiltig båttyp."
   player-not-member: "&cSpelaren är inte medlem i det laget."
@@ -458,6 +507,13 @@ admin:
   racer-number-set: "&aSatte förarnummer för &f{player} &atill &f{num}"
   racer-number-changed-notify: "&eEn administratör har ändrat ditt förarnummer till &f{num}&e."
   laps-set: "&aVarv satta till &f{laps}"
+
+  language-current: "&7Aktuellt språk: &f{lang}"
+  language-available: "&7Tillgängliga språk: &f{langs}"
+  language-invalid-code: "&cOgiltig språkkod: &f{code}"
+  language-not-found: "&cSpråk hittades inte: &f{code}"
+  language-already-set: "&eSpråket är redan satt till &f{lang}&e."
+  language-updated: "&aSpråket ändrades från &f{old} &atill &f{new}&a."
 
   track:
     exists: "&cEn bana med det namnet finns redan."
@@ -584,6 +640,7 @@ gui:
     title-confirm: "Ta bort bana?"
     lore-selected: " &7(vald)"
     lore-click-load: "&7Klicka: &fLadda"
+    lore-right-rename: "&7Högerklick: &eByt namn"
     lore-shift-delete: "&7Shift-högerklick: &cTa bort"
     btn-create: "&a&lSkapa och välj"
     lore-create: "&7Skapa en ny tom bana och välj den."

@@ -30,9 +30,33 @@ update:
   up-to-date: "&aDu verwendest die neueste Version (&f{version}&a)."
   info: "&7Neueste: &f{latest} &7| Veröffentlichungen: &f{url}"
 
+stats:
+  usage: "&cVerwendung: /{label} stats [spieler]"
+  player-not-found: "&cSpieler nicht gefunden: &f{player}"
+  header-self: "&eDeine BoatRacing-Statistiken:"
+  header-other: "&eBoatRacing-Statistiken für &f{player}&e:"
+  line-player: "&7Spieler: &f{player}"
+  line-team: "&7Team: &f{team}"
+  line-best-race: "&7Bestes Rennen: &f{time}"
+  line-best-lap: "&7Beste Runde: &f{time}"
+  positions-header: "&eZusammenfassung der Rennplatzierungen:"
+  positions-none: "&7Noch keine Platzierungsdaten vorhanden."
+  position-line: "&7Anzahl Zieleinläufe auf Platz &f{position}&7: &f{count}"
+  position:
+    first: "1"
+    second: "2"
+    third: "3"
+    nth: "{n}"
+  practice-header: "&eTrainingsstatistiken nach Strecke:"
+  practice-none: "&7Noch keine Trainingsstatistiken vorhanden."
+  practice-track: "&7[{track}] &fLauf &7(Beste: &f{best_run}&7, Letzte: &f{last_run}&7) &8| &fRunde &7(Beste: &f{best_lap}&7, Letzte: &f{last_lap}&7)"
+  practice-sectors-best: "&8  Beste Sektoren: &f{sectors}"
+  practice-sectors-last: "&8  Letzte Sektoren: &f{sectors}"
+  sectors-none: "keine"
+
 race:
   usage:
-    main: "&cVerwendung: /{label} teams|setup|reload|version"
+    main: "&cVerwendung: /{label} teams|race|stats|setup|admin|reload|version"
     open: "&cVerwendung: /{label} race open <track>"
     join: "&cVerwendung: /{label} race join <track>"
     leave: "&cVerwendung: /{label} race leave <track>"
@@ -44,6 +68,15 @@ race:
     stop: "&cVerwendung: /{label} race stop <track>"
     voteopen: "&cVerwendung: /{label} race voteopen [all|<track1> <track2> ...] [sekunden]"
     vote: "&cVerwendung: /{label} race vote <track>"
+
+  scoreboard:
+    practice-label: "TRAINING"
+    practice-status: "DU TRAINIERST"
+    practice-current: "Aktueller Lauf"
+    practice-best-run: "Bester Lauf"
+    practice-last-run: "Letzter Lauf"
+    practice-best-lap: "Beste Runde"
+    practice-last-lap: "Letzte Runde"
 
   help:
     header: "&eRennbefehle:"
@@ -85,6 +118,9 @@ race:
   track-not-found: "&cStrecke nicht gefunden: &f{track}"
   track-load-failed: "&cStrecke konnte nicht geladen werden: &f{track}"
   track-not-ready: "&cStrecke ist nicht bereit: &7{requirements}"
+  requirements:
+    finish: "Ziellinie"
+    start-slot-min: "mindestens 1 Startplatz"
   cannot-open-registration: "&cAnmeldung kann derzeit nicht geöffnet werden."
 
   no-participants: "&cKeine angemeldeten Teilnehmer. &7Öffne zuerst die Anmeldung: &f/{label} race open"
@@ -214,6 +250,13 @@ setup:
   light-fail: "&cStartlicht konnte nicht hinzugefügt werden. Nutze eine Redstone-Lampe, vermeide Duplikate und maximal 5."
   light-added: "&aStartlicht hinzugefügt &7({x}, {y}, {z})"
   lights-cleared: "&aAlle Startlichter entfernt."
+
+  language-current: "&7Aktuelle Sprache: &f{lang}"
+  language-available: "&7Verfügbare Sprachen: &f{langs}"
+  language-invalid-code: "&cUngültiger Sprachcode: &f{code}"
+  language-not-found: "&cSprache nicht gefunden: &f{code}"
+  language-already-set: "&eDie Sprache ist bereits auf &f{lang}&e gesetzt."
+  language-updated: "&aSprache geändert von &f{old} &aauf &f{new}&a."
   laps-set: "&aRunden auf &f{laps}{track_info} gesetzt"
   pitstops-set: "&aPflicht-Boxenstopps auf &f{count}{track_info} gesetzt"
   lobby-set: "&aAnmelde-Lobby auf &f{x}, {y}, {z} &7({world})&a gesetzt und aktiviert."
@@ -408,6 +451,7 @@ admin:
     player-setnumber: "&7 - &f/{label} admin player setnumber <player> <1-99>"
     player-setboat: "&7 - &f/{label} admin player setboat <player> <BoatType>"
     tracks: "&7 - &f/{label} admin tracks &7(Verwalte benannte Strecken per GUI)"
+    language: "&7 - &f/{label} admin language <code> &7(Plugin-Sprache ändern und Nachrichten sofort neu laden)"
   usage:
     admin-help: "&cVerwendung: /{label} admin help"
     team-main: "&cVerwendung: /{label} admin team <create|delete|rename|color|add|remove>"
@@ -421,6 +465,7 @@ admin:
     player-setteam: "&cVerwendung: /{label} admin player setteam <player> <team|none>"
     player-setnumber: "&cVerwendung: /{label} admin player setnumber <player> <1-99>"
     player-setboat: "&cVerwendung: /{label} admin player setboat <player> <BoatType>"
+    language: "&cVerwendung: /{label} admin language <code>"
   invalid-color: "&cUngültige Farbe."
   invalid-boat: "&cUngültiger Boottyp."
   player-not-member: "&cSpieler ist kein Mitglied dieses Teams."
@@ -457,6 +502,13 @@ admin:
   player-no-team: "&cSpieler ist in keinem Team."
   racer-number-set: "&aFahrer-Nummer für &f{player} &aauf &f{num} gesetzt"
   racer-number-changed-notify: "&eEin Administrator hat deine Fahrer-Nummer auf &f{num}&e geändert."
+
+  language-current: "&7Aktuelle Sprache: &f{lang}"
+  language-available: "&7Verfügbare Sprachen: &f{langs}"
+  language-invalid-code: "&cUngültiger Sprachcode: &f{code}"
+  language-not-found: "&cSprache nicht gefunden: &f{code}"
+  language-already-set: "&eDie Sprache ist bereits auf &f{lang}&e gesetzt."
+  language-updated: "&aSprache geändert von &f{old} &aauf &f{new}&a."
   laps-set: "&aRunden auf &f{laps} gesetzt"
 
   track:
@@ -584,6 +636,7 @@ gui:
     title-confirm: "Strecke löschen?"
     lore-selected: " &7(ausgewählt)"
     lore-click-load: "&7Klick: &fLaden"
+    lore-right-rename: "&7Rechtsklick: &eUmbenennen"
     lore-shift-delete: "&7Shift-Rechtsklick: &cLöschen"
     btn-create: "&a&lErstellen und auswählen"
     lore-create: "&7Eine neue leere Strecke erstellen und auswählen."

@@ -3,7 +3,13 @@
 ## 1.1.5 — Unreleased
 ### Added
 - **Solo practice mode command**: added `/boatracing race practice <track>` to start a one-player practice race on a ready track without requiring the minimum race player threshold.
+- **Player stats command**: added `/boatracing stats [player]` to show competitive position counts by place (showing only non-zero places) and practice snapshots (best/last run/lap/sectors) for self or target player.
 - **Practice permission node**: added `boatracing.race.practice` with default `true`, so servers can grant/restrict solo practice independently from race-admin permissions.
+- **Stats permission node**: added `boatracing.stats` with default `true`, so servers can grant/restrict stats access independently.
+- **Stats-others permission node**: added `boatracing.stats.others` with default `true`, so servers can separately control viewing other players via `/boatracing stats <player>`.
+- **Map-vote open permission node**: added `boatracing.race.voteopen` with default `op`, so opening map votes can be granted/restricted independently from race start/stop management.
+- **Admin language switch command**: added `/boatracing admin language <code>` and `/boatracing admin lang <code>` to change the active plugin language at runtime.
+- **Admin language permission node**: added `boatracing.admin.language` with default `op`, so language switching can be delegated without full admin management access.
 - **Persistent practice telemetry**: added `practice-stats.yml` storing per-player/per-track practice metrics (best/last run, best/last lap, best/last sector split).
 - **Practice placeholders**: added `%boatracing_player_practice_*%` placeholders (current-track and `<track>` token variants) and `%boatracing_track_practice_running_<track>%` for practice state displays.
 - **Practice placeholder compatibility alias**: added `%boatracing_track_practicerunning_<track>%` as alias for track practice-running state.
@@ -12,12 +18,20 @@
 ### Changed
 - **Same-track race/practice locking during countdown**: a track now stays busy while practice countdown is active, preventing race open/start/force on that same track until practice ends (other tracks remain independent).
 - **Practice chat scope**: practice countdown/split/lap/result updates are now private to the practicing player instead of global race-style broadcasts.
+- **Localized practice marker in sidebar**: when solo practice is active, the race sidebar now renders a language-aware label from `race.scoreboard.practice-label` (for example `PRACTICE`/`PRÁCTICA`).
+- **Practice lobby return parity**: solo practice now preserves pre-practice location context so finish flow uses the same lobby/back UX (`/boatracing race back` window + hint) as standard race finish/cancel.
+- **Admin Tracks GUI interaction model**: track items now support right-click rename (left-click load, shift-right-click delete), and the lore now shows all three actions in bundled languages.
 - **Map vote flow for mixed clients**: `/boatracing race voteopen` now supports opening all saved tracks (`all` or no explicit track list), broadcasts a plain vote command hint (`/{label} race vote <track>`) alongside clickable UI, and auto-opens registration on the voted winner when possible.
 - **Map vote command syntax and tab-complete**: admin usage/help and tab suggestions now include `voteopen [all|<track1> <track2> ...] [seconds]` with `all`/`*` support.
+- **Runtime language switching flow**: changing language through `/boatracing admin language <code>` now persists into `config.yml` and reloads message bundles immediately (no separate reload command required by the user).
+- **Shade packaging metadata handling**: Maven shade config now filters duplicate `META-INF` manifest/signature files, removing noisy overlap warnings during package builds.
 
 ### Fixed
 - **Track record placeholders not refreshing after improved times**: `%boatracing_track_best_*_<track>%` and `%boatracing_track_top_1..3_*_<track>%` now prefer live race-session data (or track file data) instead of stale in-memory selected-track data, so better race times update correctly.
 - **Current-track best placeholders consistency**: `%boatracing_track_best_player%` and `%boatracing_track_best_time%` now resolve through the same track-token path to avoid stale values when races run in separate track sessions.
+- **Map-vote fallback visibility**: when winner auto-open fails, the `race.vote.next-step` hint is no longer broadcast to all players; it is now sent only to vote-managing users (and console).
+- **Localized track readiness requirements**: `race.track-not-ready` requirement details are now resolved through `race.requirements.*` keys across all bundled locales, avoiding mixed-language output.
+- **Community locale wording regressions**: restored expected phrasing for `setup.laps-set` (FR/PL), restored PT-PT admin tracks help wording, and replaced leaked `BoatType` tokens with localized labels in RU (`тип лодки`) and zh_CN (`船只类型`) admin `setboat` help/usage lines.
 
 ## 1.1.4 — 04/04/2026
 ### Added

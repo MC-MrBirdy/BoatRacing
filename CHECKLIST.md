@@ -9,7 +9,29 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 	- While a practice countdown/run is active on track A, verify `race open/start/force` on track A is blocked.
 	- While practice is active on track A, verify race operations and practice can still run on track B independently.
 	- Verify practice countdown/split/lap/result messages are visible only to the practicing player (not global chat).
+	- During active practice, verify the sidebar shows the localized practice marker from `race.scoreboard.practice-label` (for example `PRACTICE` in `en` and `PRÁCTICA` in `es`).
+	- With `racing.lobby.enabled: true`, finish a solo practice run and verify the player is teleported to lobby and receives the clickable `/boatracing race back` hint.
+	- From that post-practice lobby state, run `/boatracing race back` and verify return to the original pre-practice location.
 	- Verify practice command appears in `/boatracing race help` and tab-completion for users with `boatracing.race.practice`.
+	- In a non-English language (for example `es`), run practice on a not-ready track and verify missing requirements are fully localized (no raw `finish` / `at least 1 start slot`).
+- Stats command:
+	- Permission defaults: `boatracing.stats` is granted by default to non-op players.
+	- Permission defaults: `boatracing.stats.others` is granted by default to non-op players.
+	- Revoke `boatracing.stats` from a test player and verify `/boatracing stats` is denied with no-permission feedback.
+	- Run `/boatracing stats` and verify own report renders (competitive positions summary + practice section with per-track metrics when data exists).
+	- Verify competitive section only lists positions with count > 0 (for example, no line like "second place: 0").
+	- Run `/boatracing stats <otherPlayer>` and verify the report targets that player.
+	- Revoke `boatracing.stats.others` and verify `/boatracing stats <otherPlayer>` is denied with no-permission feedback.
+	- With `boatracing.stats.others` revoked, verify `/boatracing stats` (self) still works.
+	- Run `/boatracing stats <unknownName>` and verify the command returns player-not-found feedback.
+- Admin language switch command:
+	- Permission defaults: `boatracing.admin.language` is `op`.
+	- Grant only `boatracing.admin.language` (without `boatracing.admin`) to a test user and verify `/boatracing admin language <code>` works.
+	- Verify alias `/boatracing admin lang <code>` behaves the same as `language`.
+	- Run `/boatracing admin language <code>` and verify `config.yml` `language` value is updated and messages switch immediately (no manual config edit, no separate `/boatracing reload` command).
+	- Run `/boatracing admin language <currentCode>` and verify already-set feedback is shown.
+	- Run `/boatracing admin language invalid-code!` and verify invalid-code feedback is shown.
+	- Run `/boatracing admin language xx` (valid format but missing bundle) and verify language-not-found feedback includes the available language list.
 - Practice telemetry and placeholders:
 	- After a practice run, verify `plugins/BoatRacing/practice-stats.yml` is created and contains entries under `tracks.<track>.players.<uuid>`.
 	- In a new lap, beat a previous section split and verify section feedback marks a new best for that section.
@@ -32,12 +54,24 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 	- Vote-open chat includes both clickable `/boatracing race voteui` and plain typed instruction `/{label} race vote <track>`.
 	- On vote timeout, winner is announced and plugin attempts to auto-open winner registration.
 	- On manual `/boatracing race voteclose`, winner resolution follows the same auto-open behavior.
-	- If winner registration cannot auto-open (track not ready/busy), fallback next-step command `/{label} race open {winner}` is shown.
+	- If winner registration cannot auto-open (track not ready/busy), fallback next-step command `/{label} race open {winner}` is shown only to vote-managing users (`boatracing.race.voteopen`/`boatracing.race.admin`/`boatracing.setup`) and console, not regular players.
 	- Tab-complete for `race voteopen` suggests `all` and supports optional trailing seconds.
+- Admin Tracks GUI rename flow:
+	- On a track item, left-click still loads and shift-right-click still opens delete confirmation.
+	- Right-click opens Anvil rename for that track and applies the new name when valid.
+	- Track item lore shows all 3 actions (load / rename / delete) in the active language.
 - Swedish bundle (`sv`):
 	- Set `language: "sv"` and reload; all user-facing messages should resolve from `messages_sv.yml` without raw keys.
 	- Verify key 1.1.5 texts in Swedish: practice usage/help, private practice feedback (sector/lap/run), and vote-start instruction line.
 	- Confirm placeholders and color codes render correctly in Swedish messages (no broken `{placeholder}` tokens).
+- Community locale wording regressions:
+	- Set `language: "fr"`, run `/boatracing setup laps 5`, and verify setup feedback preserves `Nombre de tours défini ...` wording.
+	- Set `language: "pl"`, run `/boatracing setup laps 5`, and verify setup feedback preserves `Okrążenia ustalone ...` wording.
+	- Set `language: "pt_PT"`, run `/boatracing admin help`, and verify tracks help line uses `Gerenciar pistas nomeadas via GUI`.
+	- Set `language: "ru"`, trigger admin `setboat` help/usage output, and verify argument label is `тип лодки` (not `BoatType`).
+	- Set `language: "zh_CN"`, trigger admin `setboat` help/usage output, and verify argument label is `船只类型` (not `BoatType`).
+- Packaging/build output:
+	- Run `./mvnw.cmd clean package` and verify there is no `maven-shade-plugin` overlap warning for `META-INF/MANIFEST.MF`.
 
 ## What to verify for 1.1.4-26.1-SNAPSHOT (snapshot-26.1-gui-fallback-01)
 - Versioning and docs:
@@ -329,9 +363,12 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 - Two online accounts: Player A and Player B.
 - Minimum permission: `boatracing.use` (default: true).
 - Admin permission: `boatracing.admin` (default: op). Optional for track/race setup: `boatracing.setup`. For reload: `boatracing.reload`.
+- Optional language-switch permission: `boatracing.admin.language` (default: op) for `/boatracing admin language|lang <code>` without full admin management access.
 - Extra note: `boatracing.setup` also enables the Tracks GUI.
  - Race permissions by subcommand:
 	 - `boatracing.race.join` / `boatracing.race.leave` / `boatracing.race.status` (default: true)
+	 - `boatracing.stats` (default: true)
+	 - `boatracing.stats.others` (default: true)
 	 - `boatracing.race.admin` (open/start/force/stop) (default: op)
 - Optional: temporarily OP both players to speed up testing.
 
@@ -436,6 +473,7 @@ Admins (`boatracing.admin`) get a dedicated GUI and commands.
 - Saved tracks list (MAP icon), marking “(selected)” on the active one.
 - Actions:
 	- Click: select track (`tracks/<name>.yml`) and apply.
+	- Right-click: rename track via Anvil.
 	- Shift-right-click: confirmation “Delete track?”; confirm deletes file.
 	- Create and select: creates `tracks/<name>.yml`, auto-selects it, and suggests starting the wizard.
 	- Reapply selected: reapplies current track.
@@ -463,6 +501,9 @@ Recommended flow:
 	- `/boatracing admin player setteam <player> <team|none>`
 	- `/boatracing admin player setnumber <player> <1-99>`
 	- `/boatracing admin player setboat <player> <BoatType>`
+- Language:
+	- `/boatracing admin language <code>`
+	- `/boatracing admin lang <code>`
 
 ## Chat commands (players)
 
@@ -486,13 +527,15 @@ Recommended flow:
 
 ## Tab-completion
 
-- `/boatracing` → `teams`, `race`, `setup`, `reload`, `version`, `admin` (filtered by permissions; `admin` visible with permission).
+- `/boatracing` → `teams`, `race`, `stats`, `setup`, `reload`, `version`, `admin` (filtered by permissions; `admin` visible with permission).
 - `/boatracing teams` → `create`, `join`, `leave`, `boat`, `number` (and, when applicable, `rename`, `color` for admins only).
 - `/boatracing teams color` → list of dye colors.
 - `/boatracing teams boat` → list of allowed boats (normal and chest).
 - `/boatracing setup setpos` → suggests online player names; for the 2nd arg suggests `auto` and valid slot numbers (1-based).
 - `/boatracing setup clearpos` → suggests online player names.
 - `/boatracing admin team ...` and `/boatracing admin player ...` → subcommand/parameter completion (team/player names).
+- `/boatracing admin language` and `/boatracing admin lang` → suggest available language codes.
+- With `boatracing.admin.language` (without `boatracing.admin`), `/boatracing` still suggests `admin`, and `/boatracing admin` suggests `language` and `lang`.
  - `/boatracing race` → non-admins see `join`, `leave`, and `status`; admins also see `open`, `start`, `force`, `stop`. Track names are suggested where an argument `<track>` is required.
 
 ## Persistence and reload

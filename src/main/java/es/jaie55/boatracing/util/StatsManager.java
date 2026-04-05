@@ -17,6 +17,7 @@ public class StatsManager {
 
     private final Map<UUID, Integer> playerWins = new HashMap<>();
     private final Map<UUID, Integer> teamWins = new HashMap<>();
+    private final Map<UUID, Map<Integer, Integer>> playerPositions = new HashMap<>();
     private final Map<UUID, Long> playerBestRace = new HashMap<>();
     private final Map<UUID, Long> playerBestLap = new HashMap<>();
 
@@ -31,19 +32,34 @@ public class StatsManager {
         cfg = YamlConfiguration.loadConfiguration(file);
         playerWins.clear();
         teamWins.clear();
+        playerPositions.clear();
         playerBestRace.clear();
         playerBestLap.clear();
 
         readIntMap("playerWins", playerWins);
         readIntMap("teamWins", teamWins);
+        readPositionMap("playerPositions", playerPositions);
         readLongMap("playerBestRace", playerBestRace);
         readLongMap("playerBestLap", playerBestLap);
+
+        // Legacy compatibility: if no explicit position map exists yet,
+        // bootstrap 1st-place counts from historical player wins.
+        if (playerPositions.isEmpty() && !playerWins.isEmpty()) {
+            for (Map.Entry<UUID, Integer> e : playerWins.entrySet()) {
+                int wins = e.getValue() == null ? 0 : e.getValue();
+                if (wins <= 0) continue;
+                Map<Integer, Integer> per = new HashMap<>();
+                per.put(1, wins);
+                playerPositions.put(e.getKey(), per);
+            }
+        }
     }
 
     public void save() {
         if (cfg == null) cfg = new YamlConfiguration();
         writeIntMap("playerWins", playerWins);
         writeIntMap("teamWins", teamWins);
+        writePositionMap("playerPositions", playerPositions);
         writeLongMap("playerBestRace", playerBestRace);
         writeLongMap("playerBestLap", playerBestLap);
         try {
@@ -59,6 +75,48 @@ public class StatsManager {
 
     public int getTeamWins(UUID teamId) {
         return teamWins.getOrDefault(teamId, 0);
+    }
+
+    public Map<Integer, Integer> getPlayerPositions(UUID playerId) {
+        if (playerId == null) return Collections.emptyMap();
+
+        Map<Integer, Integer> per = playerPositions.get(playerId);
+        TreeMap<Integer, Integer> out = new TreeMap<>();
+        if (per != null) {
+            for (Map.Entry<Integer, Integer> e : per.entrySet()) {
+                Integer pos = e.getKey();
+                Integer count = e.getValue();
+                if (pos == null || count == null || pos < 1 || count < 1) continue;
+                out.put(pos, count);
+            }
+        }
+
+        if (!out.isEmpty()) return Collections.unmodifiableMap(out);
+
+        // Extra legacy fallback when position map is still empty for this player.
+        int wins = playerWins.getOrDefault(playerId, 0);
+        if (wins > 0) {
+            out.put(1, wins);
+            return Collections.unmodifiableMap(out);
+        }
+        return Collections.emptyMap();
+    }
+
+    public void recordPlayerPositions(List<UUID> orderedPlayersByFinish) {
+        if (orderedPlayersByFinish == null || orderedPlayersByFinish.isEmpty()) return;
+
+        boolean changed = false;
+        int position = 1;
+        for (UUID playerId : orderedPlayersByFinish) {
+            if (playerId != null) {
+                Map<Integer, Integer> per = playerPositions.computeIfAbsent(playerId, k -> new HashMap<>());
+                per.merge(position, 1, Integer::sum);
+                changed = true;
+            }
+            position++;
+        }
+
+        if (changed) save();
     }
 
     public Long getPlayerBestRace(UUID playerId) {
@@ -152,6 +210,38 @@ public class StatsManager {
         }
     }
 
+    private void readPositionMap(String path, Map<UUID, Map<Integer, Integer>> out) {
+        ConfigurationSection root = cfg.getConfigurationSection(path);
+        if (root == null) return;
+
+        for (String playerKey : root.getKeys(false)) {
+            UUID playerId;
+            try {
+                playerId = UUID.fromString(playerKey);
+            } catch (IllegalArgumentException ignored) {
+                plugin.getLogger().finer("Ignoring invalid UUID in stats.yml at " + path + "." + playerKey);
+                continue;
+            }
+
+            ConfigurationSection perSec = root.getConfigurationSection(playerKey);
+            if (perSec == null) continue;
+
+            Map<Integer, Integer> per = new HashMap<>();
+            for (String posKey : perSec.getKeys(false)) {
+                int pos;
+                try {
+                    pos = Integer.parseInt(posKey);
+                } catch (NumberFormatException ignored) {
+                    continue;
+                }
+                if (pos < 1) continue;
+                int count = perSec.getInt(posKey, 0);
+                if (count > 0) per.put(pos, count);
+            }
+            if (!per.isEmpty()) out.put(playerId, per);
+        }
+    }
+
     private void writeIntMap(String path, Map<UUID, Integer> in) {
         cfg.set(path, null);
         for (Map.Entry<UUID, Integer> e : in.entrySet()) {
@@ -163,6 +253,22 @@ public class StatsManager {
         cfg.set(path, null);
         for (Map.Entry<UUID, Long> e : in.entrySet()) {
             cfg.set(path + "." + e.getKey(), e.getValue());
+        }
+    }
+
+    private void writePositionMap(String path, Map<UUID, Map<Integer, Integer>> in) {
+        cfg.set(path, null);
+        for (Map.Entry<UUID, Map<Integer, Integer>> playerEntry : in.entrySet()) {
+            UUID playerId = playerEntry.getKey();
+            Map<Integer, Integer> per = playerEntry.getValue();
+            if (playerId == null || per == null || per.isEmpty()) continue;
+
+            for (Map.Entry<Integer, Integer> posEntry : per.entrySet()) {
+                Integer pos = posEntry.getKey();
+                Integer count = posEntry.getValue();
+                if (pos == null || count == null || pos < 1 || count < 1) continue;
+                cfg.set(path + "." + playerId + "." + pos, count);
+            }
         }
     }
 }

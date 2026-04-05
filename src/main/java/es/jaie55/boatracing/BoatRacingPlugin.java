@@ -64,6 +64,9 @@ public class BoatRacingPlugin extends JavaPlugin {
     private final java.util.Set<java.util.UUID> pendingDisband = new java.util.HashSet<>();
     private final java.util.Map<java.util.UUID, java.util.UUID> pendingTransfer = new java.util.HashMap<>();
     private final java.util.Map<java.util.UUID, java.util.UUID> pendingKick = new java.util.HashMap<>();
+        private static final java.util.List<String> BUNDLED_LANGUAGE_CODES = java.util.Arrays.asList(
+            "en", "es", "es_419", "fr", "pt_BR", "pt_PT", "de", "it", "pl", "tr", "ja", "ko", "sv", "zh_TW", "zh_CN", "ru"
+        );
 
     public static BoatRacingPlugin getInstance() { return instance; }
     public TeamManager getTeamManager() { return teamManager; }
@@ -101,6 +104,28 @@ public class BoatRacingPlugin extends JavaPlugin {
         return findRaceSessionByKey(key);
     }
 
+    public boolean isTrackSessionBusy(String trackName) {
+        RaceManager rm = getRaceManagerByTrack(trackName);
+        return rm != null && (rm.isRunning() || rm.isRegistering() || rm.isCountdownActive());
+    }
+
+    public void discardInactiveRaceSession(String trackName) {
+        if (trackName == null || trackName.isBlank()) return;
+        String key = normalizeTrackKey(trackName);
+        if (key.equalsIgnoreCase("unsaved")) return;
+
+        java.util.Iterator<java.util.Map.Entry<String, RaceManager>> it = raceSessions.entrySet().iterator();
+        while (it.hasNext()) {
+            java.util.Map.Entry<String, RaceManager> e = it.next();
+            if (!e.getKey().equalsIgnoreCase(key)) continue;
+            RaceManager rm = e.getValue();
+            if (rm == null || (!rm.isRunning() && !rm.isRegistering() && !rm.isCountdownActive())) {
+                it.remove();
+            }
+            break;
+        }
+    }
+
     public RaceManager getRaceManagerForPlayer(java.util.UUID playerId) {
         if (playerId == null) return null;
         for (RaceManager rm : getAllRaceManagers()) {
@@ -128,6 +153,163 @@ public class BoatRacingPlugin extends JavaPlugin {
                 || p.hasPermission("boatracing.setup");
     }
 
+    private String localizeTrackRequirement(String requirementKey) {
+        if (requirementKey == null || requirementKey.isBlank()) return "";
+        String fullKey = "race.requirements." + requirementKey;
+        String translated = msg().get(fullKey);
+        return fullKey.equals(translated) ? requirementKey : translated;
+    }
+
+    public String formatTrackRequirements(java.util.List<String> requirementKeys) {
+        if (requirementKeys == null || requirementKeys.isEmpty()) return msg().get("general.none");
+        java.util.List<String> localized = new java.util.ArrayList<>();
+        for (String requirementKey : requirementKeys) {
+            String value = localizeTrackRequirement(requirementKey);
+            if (!value.isBlank()) localized.add(value);
+        }
+        if (localized.isEmpty()) return msg().get("general.none");
+        return String.join(", ", localized);
+    }
+
+    private static String normalizePracticeTrackToken(String token) {
+        if (token == null || token.isBlank()) return "unsaved";
+        return token.trim().replace(' ', '_').toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private String statsUnsavedTrackLabel() {
+        String key = "stats.track-unsaved-label";
+        String localized = msg().get(key);
+        return key.equals(localized) ? msg().get("general.unsaved") : localized;
+    }
+
+    private String resolvePracticeTrackDisplayName(String token) {
+        if (token == null || token.isBlank()) return msg().get("general.none");
+        if ("unsaved".equalsIgnoreCase(token)) return statsUnsavedTrackLabel();
+        if (trackLibrary != null) {
+            for (String trackName : trackLibrary.list()) {
+                if (normalizePracticeTrackToken(trackName).equalsIgnoreCase(token)) return trackName;
+            }
+        }
+        return token.replace('_', ' ');
+    }
+
+    private static String formatMillis(long millis) {
+        long sec = millis / 1000L;
+        long ms = millis % 1000L;
+        long m = sec / 60L;
+        long s = sec % 60L;
+        return String.format(java.util.Locale.ROOT, "%d:%02d.%03d", m, s, ms);
+    }
+
+    private String formatOptionalMillis(Long millis) {
+        if (millis == null || millis < 0L) return msg().get("general.none");
+        return formatMillis(millis);
+    }
+
+    private java.util.Map<Integer, Long> sanitizePracticeSectors(java.util.Map<Integer, Long> sectors) {
+        java.util.Map<Integer, Long> out = new java.util.TreeMap<>();
+        if (sectors == null || sectors.isEmpty()) return out;
+
+        for (java.util.Map.Entry<Integer, Long> entry : sectors.entrySet()) {
+            Integer section = entry.getKey();
+            Long millis = entry.getValue();
+            if (section == null || section <= 0 || millis == null || millis <= 0L) continue;
+            out.put(section, millis);
+        }
+        return out;
+    }
+
+    private boolean hasDisplayablePracticeSectors(java.util.Map<Integer, Long> sectors) {
+        return !sanitizePracticeSectors(sectors).isEmpty();
+    }
+
+    private String formatPracticeSectors(java.util.Map<Integer, Long> sectors) {
+        java.util.Map<Integer, Long> cleaned = sanitizePracticeSectors(sectors);
+        if (cleaned.isEmpty()) return msg().get("stats.sectors-none");
+
+        java.util.List<String> parts = new java.util.ArrayList<>();
+        for (java.util.Map.Entry<Integer, Long> entry : cleaned.entrySet()) {
+            parts.add("S" + entry.getKey() + "=" + formatMillis(entry.getValue()));
+        }
+        return String.join(", ", parts);
+    }
+
+    private String formatPositionLabel(int position) {
+        return switch (position) {
+            case 1 -> msg().get("stats.position.first");
+            case 2 -> msg().get("stats.position.second");
+            case 3 -> msg().get("stats.position.third");
+            default -> msg().get("stats.position.nth", "n", String.valueOf(position));
+        };
+    }
+
+    private String displayName(org.bukkit.OfflinePlayer target) {
+        if (target == null) return msg().get("general.none");
+        String name = target.getName();
+        if (name != null && !name.isBlank()) return name;
+        java.util.UUID id = target.getUniqueId();
+        return id != null ? id.toString() : msg().get("general.none");
+    }
+
+    private void sendStatsReport(Player viewer, org.bukkit.OfflinePlayer target) {
+        if (viewer == null || target == null) return;
+        java.util.UUID targetId = target.getUniqueId();
+        if (targetId == null) return;
+
+        if (statsManager == null) statsManager = new StatsManager(this);
+        if (practiceStatsManager == null) practiceStatsManager = new PracticeStatsManager(this);
+
+        String targetName = displayName(target);
+        boolean self = viewer.getUniqueId().equals(targetId);
+        viewer.sendMessage(Text.colorize(prefix + msg().get(self ? "stats.header-self" : "stats.header-other", "player", targetName)));
+        viewer.sendMessage(Text.colorize(msg().get("stats.line-player", "player", targetName)));
+
+        java.util.Optional<es.jaie55.boatracing.team.Team> teamOpt = teamManager.getTeamByMember(targetId);
+        String teamName = teamOpt.map(es.jaie55.boatracing.team.Team::getName).orElse(msg().get("general.none"));
+
+        viewer.sendMessage(Text.colorize(msg().get("stats.line-team", "team", teamName)));
+        viewer.sendMessage(Text.colorize(msg().get("stats.line-best-race", "time", formatOptionalMillis(statsManager.getPlayerBestRace(targetId)))));
+        viewer.sendMessage(Text.colorize(msg().get("stats.line-best-lap", "time", formatOptionalMillis(statsManager.getPlayerBestLap(targetId)))));
+
+        viewer.sendMessage(Text.colorize(msg().get("stats.positions-header")));
+        java.util.Map<Integer, Integer> positions = statsManager.getPlayerPositions(targetId);
+        if (positions.isEmpty()) {
+            viewer.sendMessage(Text.colorize(msg().get("stats.positions-none")));
+        } else {
+            for (java.util.Map.Entry<Integer, Integer> entry : positions.entrySet()) {
+                viewer.sendMessage(Text.colorize(msg().get(
+                        "stats.position-line",
+                        "position", formatPositionLabel(entry.getKey()),
+                        "count", String.valueOf(entry.getValue())
+                )));
+            }
+        }
+
+        viewer.sendMessage(Text.colorize(msg().get("stats.practice-header")));
+        java.util.Map<String, PracticeStatsManager.PlayerTrackStatsView> practiceByTrack = practiceStatsManager.getAllTrackStats(targetId);
+        if (practiceByTrack.isEmpty()) {
+            viewer.sendMessage(Text.colorize(msg().get("stats.practice-none")));
+            return;
+        }
+
+        for (java.util.Map.Entry<String, PracticeStatsManager.PlayerTrackStatsView> entry : practiceByTrack.entrySet()) {
+            String trackName = resolvePracticeTrackDisplayName(entry.getKey());
+            PracticeStatsManager.PlayerTrackStatsView stats = entry.getValue();
+            viewer.sendMessage(Text.colorize(msg().get(
+                    "stats.practice-track",
+                    "track", trackName,
+                    "best_run", formatOptionalMillis(stats.getBestRunMillis()),
+                    "last_run", formatOptionalMillis(stats.getLastRunMillis()),
+                    "best_lap", formatOptionalMillis(stats.getBestLapMillis()),
+                    "last_lap", formatOptionalMillis(stats.getLastLapMillis())
+            )));
+
+            if (hasDisplayablePracticeSectors(stats.getBestSectorMillis())) {
+                viewer.sendMessage(Text.colorize(msg().get("stats.practice-sectors-best", "sectors", formatPracticeSectors(stats.getBestSectorMillis()))));
+            }
+        }
+    }
+
     private boolean isActiveTrackRequest(String name) {
         if (name == null) return false;
         String current = trackLibrary != null ? trackLibrary.getCurrent() : null;
@@ -143,6 +325,49 @@ public class BoatRacingPlugin extends JavaPlugin {
     private static String normalizeTrackKey(String name) {
         if (name == null || name.isBlank()) return "unsaved";
         return name.trim();
+    }
+
+    private static String normalizeLanguageCode(String code) {
+        if (code == null) return "en";
+        String normalized = code.trim();
+        return normalized.isEmpty() ? "en" : normalized;
+    }
+
+    private static boolean isValidLanguageCode(String code) {
+        return code != null && code.matches("[A-Za-z0-9_-]+");
+    }
+
+    private java.util.Set<String> getAvailableLanguageCodes() {
+        java.util.LinkedHashSet<String> codes = new java.util.LinkedHashSet<>(BUNDLED_LANGUAGE_CODES);
+        java.io.File[] localBundles = getDataFolder().listFiles((dir, name) -> name != null && name.startsWith("messages_") && name.endsWith(".yml"));
+        if (localBundles != null) {
+            for (java.io.File file : localBundles) {
+                String name = file.getName();
+                String code = name.substring("messages_".length(), name.length() - ".yml".length());
+                if (isValidLanguageCode(code)) codes.add(code);
+            }
+        }
+        return codes;
+    }
+
+    private boolean hasLanguageBundle(String code) {
+        if (!isValidLanguageCode(code)) return false;
+        String filename = "messages_" + code + ".yml";
+        java.io.File customBundle = new java.io.File(getDataFolder(), filename);
+        if (customBundle.exists() && customBundle.isFile()) return true;
+        try (InputStream bundled = getResource(filename)) {
+            return bundled != null;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private String resolveCanonicalLanguageCode(String code) {
+        String normalized = normalizeLanguageCode(code);
+        for (String available : getAvailableLanguageCodes()) {
+            if (available.equalsIgnoreCase(normalized)) return available;
+        }
+        return normalized;
     }
 
     private boolean trackExistsForRace(String name) {
@@ -211,6 +436,16 @@ public class BoatRacingPlugin extends JavaPlugin {
         return rm.openRegistration(laps, null);
     }
 
+    private void sendMapVoteNextStepToPrivileged(String winner) {
+        String line = Text.colorize(pref() + msg().get("race.vote.next-step", "winner", winner, "label", mapVoteCommandLabel));
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (canOpenMapVote(online)) {
+                online.sendMessage(line);
+            }
+        }
+        Bukkit.getConsoleSender().sendMessage(line);
+    }
+
     private void closeMapVote(boolean announceResult) {
         if (!mapVoteOpen) return;
         mapVoteOpen = false;
@@ -256,7 +491,7 @@ public class BoatRacingPlugin extends JavaPlugin {
             }
             Bukkit.broadcastMessage(Text.colorize(pref() + msg().get("race.vote.ended-winner", "winner", winner, "votes", String.valueOf(max))));
             if (!openVotedTrackRegistration(winner)) {
-                Bukkit.broadcastMessage(Text.colorize(pref() + msg().get("race.vote.next-step", "winner", winner, "label", mapVoteCommandLabel)));
+                sendMapVoteNextStepToPrivileged(winner);
             }
         }
 
@@ -429,8 +664,6 @@ public class BoatRacingPlugin extends JavaPlugin {
             getLogger().warning("Failed to initialize bStats metrics: " + t.getMessage());
         }
 
-    // ViaVersion integration and internal scoreboard number hiding removed by request
-
     // Updates
     if (getConfig().getBoolean("updates.enabled", true)) {
             String currentVersion = getDescription().getVersion();
@@ -537,7 +770,6 @@ public class BoatRacingPlugin extends JavaPlugin {
         saveConfig();
     }
 
-
     // Resolve an OfflinePlayer without remote lookups: prefer online, then cache, or UUID literal
     private org.bukkit.OfflinePlayer resolveOffline(String token) {
         if (token == null || token.isEmpty()) return null;
@@ -633,9 +865,44 @@ public class BoatRacingPlugin extends JavaPlugin {
                 else this.statsManager.reload();
                 if (this.practiceStatsManager == null) this.practiceStatsManager = new PracticeStatsManager(this);
                 else this.practiceStatsManager.reload();
-                // ViaVersion integration removed; nothing to re-apply
                 p.sendMessage(Text.colorize(prefix + msg().get("plugin.reloaded")));
                 p.playSound(p.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.9f, 1.1f);
+                return true;
+            }
+            // /boatracing stats [player]
+            if (args[0].equalsIgnoreCase("stats")) {
+                if (!p.hasPermission("boatracing.stats")) {
+                    p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
+                    p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+                    return true;
+                }
+                if (args.length > 2) {
+                    p.sendMessage(Text.colorize(prefix + msg().get("stats.usage", "label", label)));
+                    return true;
+                }
+
+                if (args.length == 2 && !p.hasPermission("boatracing.stats.others")) {
+                    boolean selfAlias = (p.getName() != null && args[1].equalsIgnoreCase(p.getName()))
+                            || args[1].equalsIgnoreCase(p.getUniqueId().toString());
+                    if (!selfAlias) {
+                        p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
+                        p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+                        return true;
+                    }
+                }
+
+                org.bukkit.OfflinePlayer target = p;
+                if (args.length == 2 && p.hasPermission("boatracing.stats.others")) {
+                    target = resolveOffline(args[1]);
+                    if (target == null || target.getUniqueId() == null) {
+                        p.sendMessage(Text.colorize(prefix + msg().get("stats.player-not-found", "player", args[1])));
+                        p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+                        return true;
+                    }
+                }
+
+                sendStatsReport(p, target);
+                p.playSound(p.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.6f, 1.2f);
                 return true;
             }
             // /boatracing race
@@ -679,7 +946,7 @@ public class BoatRacingPlugin extends JavaPlugin {
                             return true;
                         }
                         if (!rm.getTrack().isReady()) {
-                            p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-ready", "requirements", String.join(", ", rm.getTrack().missingRequirements()))));
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-ready", "requirements", formatTrackRequirements(rm.getTrack().missingRequirements()))));
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
                             return true;
                         }
@@ -696,7 +963,7 @@ public class BoatRacingPlugin extends JavaPlugin {
                         RaceManager rm = getOrCreateRaceSession(tname);
                         if (rm == null) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
                         if (!rm.getTrack().isReady()) {
-                            p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-ready", "requirements", String.join(", ", rm.getTrack().missingRequirements()))));
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-ready", "requirements", formatTrackRequirements(rm.getTrack().missingRequirements()))));
                             return true;
                         }
                         // Must be in a team
@@ -817,7 +1084,7 @@ public class BoatRacingPlugin extends JavaPlugin {
                             return true;
                         }
                         if (!rm.getTrack().isReady()) {
-                            p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-ready", "requirements", String.join(", ", rm.getTrack().missingRequirements()))));
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-ready", "requirements", formatTrackRequirements(rm.getTrack().missingRequirements()))));
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
                             return true;
                         }
@@ -863,7 +1130,7 @@ public class BoatRacingPlugin extends JavaPlugin {
                         RaceManager rm = getOrCreateRaceSession(tname);
                         if (rm == null) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
                         if (!rm.getTrack().isReady()) {
-                            p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-ready", "requirements", String.join(", ", rm.getTrack().missingRequirements()))));
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-ready", "requirements", formatTrackRequirements(rm.getTrack().missingRequirements()))));
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
                             return true;
                         }
@@ -942,7 +1209,7 @@ public class BoatRacingPlugin extends JavaPlugin {
                         if (ready) {
                             p.sendMessage(Text.colorize(msg().get("race.status.track-ready")));
                         } else {
-                            p.sendMessage(Text.colorize(msg().get("race.track-not-ready", "requirements", String.join(", ", missing))));
+                            p.sendMessage(Text.colorize(msg().get("race.track-not-ready", "requirements", formatTrackRequirements(missing))));
                         }
                         return true;
                     }
@@ -1293,16 +1560,69 @@ public class BoatRacingPlugin extends JavaPlugin {
             }
             // /boatracing admin
             if (args[0].equalsIgnoreCase("admin")) {
-                if (!p.hasPermission("boatracing.admin")) {
+                boolean isLanguageSubcommand = args.length >= 2 && (args[1].equalsIgnoreCase("language") || args[1].equalsIgnoreCase("lang"));
+                boolean canUseAdmin = p.hasPermission("boatracing.admin");
+                boolean canManageLanguage = p.hasPermission("boatracing.admin.language");
+                if (!canUseAdmin && !(isLanguageSubcommand && canManageLanguage)) {
                     p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
                     return true;
                 }
                 if (args.length == 1) {
+                    if (!canUseAdmin) {
+                        p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
+                        return true;
+                    }
                     // Open Admin GUI by default
                     adminGUI.openMain(p);
                     return true;
                 }
+                if (args[1].equalsIgnoreCase("language") || args[1].equalsIgnoreCase("lang")) {
+                    if (!(canUseAdmin || canManageLanguage)) {
+                        p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
+                        return true;
+                    }
+
+                    String currentLang = resolveCanonicalLanguageCode(getConfig().getString("language", "en"));
+                    java.util.Set<String> availableLanguages = getAvailableLanguageCodes();
+
+                    if (args.length < 3) {
+                        p.sendMessage(Text.colorize(prefix + msg().get("admin.usage.language", "label", label)));
+                        p.sendMessage(Text.colorize(prefix + msg().get("admin.language-current", "lang", currentLang)));
+                        p.sendMessage(Text.colorize(prefix + msg().get("admin.language-available", "langs", String.join(", ", availableLanguages))));
+                        return true;
+                    }
+
+                    String requestedRaw = normalizeLanguageCode(args[2]);
+                    if (!isValidLanguageCode(requestedRaw)) {
+                        p.sendMessage(Text.colorize(prefix + msg().get("admin.language-invalid-code", "code", requestedRaw)));
+                        p.sendMessage(Text.colorize(prefix + msg().get("admin.usage.language", "label", label)));
+                        return true;
+                    }
+
+                    String requestedLang = resolveCanonicalLanguageCode(requestedRaw);
+                    if (!hasLanguageBundle(requestedLang)) {
+                        p.sendMessage(Text.colorize(prefix + msg().get("admin.language-not-found", "code", requestedRaw)));
+                        p.sendMessage(Text.colorize(prefix + msg().get("admin.language-available", "langs", String.join(", ", availableLanguages))));
+                        return true;
+                    }
+
+                    if (requestedLang.equalsIgnoreCase(currentLang)) {
+                        p.sendMessage(Text.colorize(prefix + msg().get("admin.language-already-set", "lang", requestedLang)));
+                        return true;
+                    }
+
+                    getConfig().set("language", requestedLang);
+                    saveConfig();
+                    this.messageManager.reload();
+                    p.sendMessage(Text.colorize(prefix + msg().get("admin.language-updated", "old", currentLang, "new", requestedLang)));
+                    p.playSound(p.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.9f, 1.1f);
+                    return true;
+                }
                 if (args[1].equalsIgnoreCase("help")) {
+                    if (!canUseAdmin) {
+                        p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
+                        return true;
+                    }
                     p.sendMessage(Text.colorize(prefix + msg().get("admin.help.header")));
                     p.sendMessage(Text.colorize(msg().get("admin.help.team-create", "label", label)));
                     p.sendMessage(Text.colorize(msg().get("admin.help.team-delete", "label", label)));
@@ -1313,16 +1633,25 @@ public class BoatRacingPlugin extends JavaPlugin {
                     p.sendMessage(Text.colorize(msg().get("admin.help.player-setteam", "label", label)));
                     p.sendMessage(Text.colorize(msg().get("admin.help.player-setnumber", "label", label)));
                     p.sendMessage(Text.colorize(msg().get("admin.help.player-setboat", "label", label)));
+                    p.sendMessage(Text.colorize(msg().get("admin.help.language", "label", label)));
                     p.sendMessage(Text.colorize(msg().get("admin.help.tracks", "label", label)));
                     return true;
                 }
                 if (args[1].equalsIgnoreCase("tracks")) {
+                    if (!canUseAdmin) {
+                        p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
+                        return true;
+                    }
                     if (!p.hasPermission("boatracing.setup")) { p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission"))); return true; }
                     tracksGUI.open(p);
                     return true;
                 }
                 // admin team ...
                 if (args[1].equalsIgnoreCase("team")) {
+                    if (!canUseAdmin) {
+                        p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
+                        return true;
+                    }
                     if (args.length < 3) { p.sendMessage(Text.colorize(prefix + msg().get("admin.usage.team-main", "label", label))); return true; }
                     String op = args[2].toLowerCase();
                     switch (op) {
@@ -1442,6 +1771,10 @@ public class BoatRacingPlugin extends JavaPlugin {
                 }
                 // admin player ...
                 if (args[1].equalsIgnoreCase("player")) {
+                    if (!canUseAdmin) {
+                        p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
+                        return true;
+                    }
                     if (args.length < 3) { p.sendMessage(Text.colorize(prefix + msg().get("admin.usage.player-main", "label", label))); return true; }
                     String op = args[2].toLowerCase();
                     switch (op) {
@@ -1757,8 +2090,9 @@ public class BoatRacingPlugin extends JavaPlugin {
                 if (sender.hasPermission("boatracing.teams")) root.add("teams");
                 // Expose 'race' root to all users for join/leave/status discoverability
                 root.add("race");
+                if (sender.hasPermission("boatracing.stats")) root.add("stats");
                 if (sender.hasPermission("boatracing.setup")) root.add("setup");
-                if (sender.hasPermission("boatracing.admin")) root.add("admin");
+                    if (sender.hasPermission("boatracing.admin") || sender.hasPermission("boatracing.admin.language")) root.add("admin");
                 if (sender.hasPermission("boatracing.reload")) root.add("reload");
                 if (sender.hasPermission("boatracing.version")) root.add("version");
                 return root;
@@ -1768,15 +2102,56 @@ public class BoatRacingPlugin extends JavaPlugin {
                 java.util.List<String> root = new java.util.ArrayList<>();
                 if (sender.hasPermission("boatracing.teams")) root.add("teams");
                 root.add("race");
+                if (sender.hasPermission("boatracing.stats")) root.add("stats");
                 if (sender.hasPermission("boatracing.setup")) root.add("setup");
-                if (sender.hasPermission("boatracing.admin")) root.add("admin");
+                    if (sender.hasPermission("boatracing.admin") || sender.hasPermission("boatracing.admin.language")) root.add("admin");
                 if (sender.hasPermission("boatracing.reload")) root.add("reload");
                 if (sender.hasPermission("boatracing.version")) root.add("version");
                 return root.stream().filter(s -> s.startsWith(pref)).toList();
             }
+            if (args.length >= 2 && args[0].equalsIgnoreCase("stats")) {
+                if (!sender.hasPermission("boatracing.stats")) return java.util.Collections.emptyList();
+                if (args.length == 2) {
+                    if (!sender.hasPermission("boatracing.stats.others")) return java.util.Collections.emptyList();
+                    String pref = args[1] == null ? "" : args[1].toLowerCase();
+                    java.util.Set<String> names = new java.util.LinkedHashSet<>();
+                    for (org.bukkit.entity.Player online : org.bukkit.Bukkit.getOnlinePlayers()) {
+                        if (online.getName() != null && online.getName().toLowerCase().startsWith(pref)) names.add(online.getName());
+                    }
+                    for (org.bukkit.OfflinePlayer offline : org.bukkit.Bukkit.getOfflinePlayers()) {
+                        if (offline.getName() != null && offline.getName().toLowerCase().startsWith(pref)) names.add(offline.getName());
+                    }
+                    return new java.util.ArrayList<>(names);
+                }
+                return java.util.Collections.emptyList();
+            }
             if (args.length >= 2 && args[0].equalsIgnoreCase("admin")) {
-                if (!sender.hasPermission("boatracing.admin")) return java.util.Collections.emptyList();
-                if (args.length == 2) return java.util.Arrays.asList("help","team","player","tracks");
+                boolean canUseAdmin = sender.hasPermission("boatracing.admin");
+                boolean canManageLanguage = sender.hasPermission("boatracing.admin.language");
+                if (!canUseAdmin && !canManageLanguage) return java.util.Collections.emptyList();
+                if (args.length == 2) {
+                    String pref = args[1] == null ? "" : args[1].toLowerCase();
+                    java.util.List<String> subs = new java.util.ArrayList<>();
+                    if (canUseAdmin) {
+                        subs.add("help");
+                        subs.add("team");
+                        subs.add("player");
+                        subs.add("tracks");
+                    }
+                    subs.add("language");
+                    subs.add("lang");
+                    return subs.stream().filter(s -> s.startsWith(pref)).toList();
+                }
+                if (args[1].equalsIgnoreCase("language") || args[1].equalsIgnoreCase("lang")) {
+                    if (!(canUseAdmin || canManageLanguage)) return java.util.Collections.emptyList();
+                    if (args.length == 3) {
+                        String pref = args[2] == null ? "" : args[2].toLowerCase();
+                        java.util.List<String> codes = new java.util.ArrayList<>(getAvailableLanguageCodes());
+                        return codes.stream().filter(code -> code.toLowerCase().startsWith(pref)).toList();
+                    }
+                    return java.util.Collections.emptyList();
+                }
+                if (!canUseAdmin) return java.util.Collections.emptyList();
                 if (args.length == 3 && args[1].equalsIgnoreCase("team")) return java.util.Arrays.asList("create","delete","rename","color","add","remove");
                 if (args.length == 3 && args[1].equalsIgnoreCase("player")) return java.util.Arrays.asList("setteam","setnumber","setboat");
                 if (args.length == 5 && args[2].equalsIgnoreCase("setboat")) {

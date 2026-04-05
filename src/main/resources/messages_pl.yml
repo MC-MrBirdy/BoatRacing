@@ -29,6 +29,30 @@ update:
   up-to-date: "&aWykonujesz najnowszą wersję (&f{version}&a)."
   info: "&7Najnowsza: &f{latest} &7| Wydania: &f{url}"
 
+stats:
+  usage: "&cUżycie: /{label} stats [gracz]"
+  player-not-found: "&cGracz nie znaleziony: &f{player}"
+  header-self: "&eTwoje statystyki BoatRacing:"
+  header-other: "&eStatystyki BoatRacing gracza &f{player}&e:"
+  line-player: "&7Gracz: &f{player}"
+  line-team: "&7Drużyna: &f{team}"
+  line-best-race: "&7Najlepszy wyścig: &f{time}"
+  line-best-lap: "&7Najlepsze okrążenie: &f{time}"
+  positions-header: "&ePodsumowanie pozycji w wyścigach:"
+  positions-none: "&7Brak zapisanych pozycji w wyścigach."
+  position-line: "&7Liczba razy na pozycji &f{position}&7: &f{count}"
+  position:
+    first: "1"
+    second: "2"
+    third: "3"
+    nth: "{n}"
+  practice-header: "&eStatystyki treningu według toru:"
+  practice-none: "&7Brak zapisanych statystyk treningu."
+  practice-track: "&7[{track}] &fPrzejazd &7(Najlepszy: &f{best_run}&7, Ostatni: &f{last_run}&7) &8| &fOkrążenie &7(Najlepsze: &f{best_lap}&7, Ostatnie: &f{last_lap}&7)"
+  practice-sectors-best: "&8  Najlepsze sektory: &f{sectors}"
+  practice-sectors-last: "&8  Ostatnie sektory: &f{sectors}"
+  sectors-none: "brak"
+
 race:
   usage:
     main: "&cUżycie: /{label} teams|setup|reload|version"
@@ -43,6 +67,15 @@ race:
     stop: "&cUżycie: /{label} race stop <track>"
     voteopen: "&cUżycie: /{label} race voteopen [all|<track1> <track2> ...] [sekundy]"
     vote: "&cUżycie: /{label} race vote <track>"
+
+  scoreboard:
+    practice-label: "TRENING"
+    practice-status: "TRENUJESZ"
+    practice-current: "Aktualny przejazd"
+    practice-best-run: "Najlepszy przejazd"
+    practice-last-run: "Ostatni przejazd"
+    practice-best-lap: "Najlepsze okrazenie"
+    practice-last-lap: "Ostatnie okrazenie"
 
   help:
     header: "&eKomendy wyścigu:"
@@ -84,6 +117,9 @@ race:
   track-not-found: "&cTor nie znaleziony: &f{track}"
   track-load-failed: "&cNiepowodzenie ładowania toru: &f{track}"
   track-not-ready: "&cTor nie jest gotowy: &7{requirements}"
+  requirements:
+    finish: "linia mety"
+    start-slot-min: "co najmniej 1 slot startowy"
   cannot-open-registration: "&cNie można teraz otworzyć rejestracji."
 
   no-participants: "&cBrak zarejestrowanych uczestników. &7Najpierw otwórz rejestrację: &f/{label} race open"
@@ -213,6 +249,13 @@ setup:
   light-fail: "&cNie można dodać światła. Użyj Lampy Redstone, unikaj duplikatów i max 5."
   light-added: "&aDodano światło startowe &7({x}, {y}, {z})"
   lights-cleared: "&aWyczyszczono wszystkie światła startowe."
+
+  language-current: "&7Aktualny język: &f{lang}"
+  language-available: "&7Dostępne języki: &f{langs}"
+  language-invalid-code: "&cNieprawidłowy kod języka: &f{code}"
+  language-not-found: "&cNie znaleziono języka: &f{code}"
+  language-already-set: "&eJęzyk jest już ustawiony na &f{lang}&e."
+  language-updated: "&aJęzyk zmieniono z &f{old} &ana &f{new}&a."
   laps-set: "&aOkrążenia ustalone na &f{laps}{track_info}"
   pitstops-set: "&aObowiązkowe postoje w boksach ustalone na &f{count}{track_info}"
   lobby-set: "&aPoczekalnia rejestracji ustawiona na &f{x}, {y}, {z} &7({world})&a i włączona."
@@ -407,6 +450,10 @@ admin:
     player-setnumber: "&7 - &f/{label} admin player setnumber <player> <1-99>"
     player-setboat: "&7 - &f/{label} admin player setboat <player> <BoatType>"
     tracks: "&7 - &f/{label} admin tracks &7(Zarządzaj nazwanymi torami przez GUI)"
+
+    language: "&cUżycie: /{label} admin language <code>"
+
+    language: "&7 - &f/{label} admin language <code> &7(Zmień język pluginu i natychmiast przeładuj wiadomości)"
   usage:
     admin-help: "&cUżycie: /{label} admin help"
     team-main: "&cUżycie: /{label} admin team <create|delete|rename|color|add|remove>"
@@ -420,6 +467,8 @@ admin:
     player-setteam: "&cUżycie: /{label} admin player setteam <player> <team|none>"
     player-setnumber: "&cUżycie: /{label} admin player setnumber <player> <1-99>"
     player-setboat: "&cUżycie: /{label} admin player setboat <player> <BoatType>"
+
+    language: "&cUżycie: /{label} admin language <code>"
   invalid-color: "&cNieprawidłowy kolor."
   invalid-boat: "&cNieprawidłowy typ łodzi."
   player-not-member: "&cGracz nie jest członkiem tego zespołu."
@@ -457,6 +506,13 @@ admin:
   racer-number-set: "&aUstawiono numer wyścigowy dla &f{player} &ana &f{num}"
   racer-number-changed-notify: "&eAdministrator zmienił(a) Twój numer wyścigowy na &f{num}&e."
   laps-set: "&aOkrążenia ustawione na &f{laps}"
+
+  language-current: "&7Aktualny język: &f{lang}"
+  language-available: "&7Dostępne języki: &f{langs}"
+  language-invalid-code: "&cNieprawidłowy kod języka: &f{code}"
+  language-not-found: "&cNie znaleziono języka: &f{code}"
+  language-already-set: "&eJęzyk jest już ustawiony na &f{lang}&e."
+  language-updated: "&aJęzyk zmieniono z &f{old} &ana &f{new}&a."
 
   track:
     exists: "&cTor o tej nazwie już istnieje."
@@ -583,6 +639,7 @@ gui:
     title-confirm: "Usunąć tor?"
     lore-selected: " &7(wybrany)"
     lore-click-load: "&7Klik: &fZaładuj"
+    lore-right-rename: "&7Prawy klik: &eZmień nazwę"
     lore-shift-delete: "&7Shift+prawy klik: &cUsuń"
     btn-create: "&a&lStwórz i wybierz"
     lore-create: "&7Stwórz nowy pusty tor i wybierz go."
@@ -640,3 +697,4 @@ gui:
     btn-leave-now: "&c&lOpuść teraz"
     anvil-team-name: "Nazwa zespołu"
     anvil-racer-number: "Numer wyścigowy"
+

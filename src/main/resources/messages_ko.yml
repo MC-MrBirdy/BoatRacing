@@ -29,6 +29,30 @@ update:
   up-to-date: "&a최신 버전을 실행 중입니다 (&f{version}&a)."
   info: "&7최신: &f{latest} &7| 릴리스: &f{url}"
 
+stats:
+  usage: "&c사용법: /{label} stats [플레이어]"
+  player-not-found: "&c플레이어를 찾을 수 없습니다: &f{player}"
+  header-self: "&e내 BoatRacing 통계:"
+  header-other: "&e&f{player}&e의 BoatRacing 통계:"
+  line-player: "&7플레이어: &f{player}"
+  line-team: "&7팀: &f{team}"
+  line-best-race: "&7최고 레이스: &f{time}"
+  line-best-lap: "&7최고 랩: &f{time}"
+  positions-header: "&e레이스 순위 요약:"
+  positions-none: "&7레이스 순위 기록이 아직 없습니다."
+  position-line: "&7&f{position}&7위 횟수: &f{count}"
+  position:
+    first: "1"
+    second: "2"
+    third: "3"
+    nth: "{n}"
+  practice-header: "&e트랙별 연습 통계:"
+  practice-none: "&7연습 통계가 아직 없습니다."
+  practice-track: "&7[{track}] &f주행 &7(최고: &f{best_run}&7, 최근: &f{last_run}&7) &8| &f랩 &7(최고: &f{best_lap}&7, 최근: &f{last_lap}&7)"
+  practice-sectors-best: "&8  최고 구간: &f{sectors}"
+  practice-sectors-last: "&8  최근 구간: &f{sectors}"
+  sectors-none: "없음"
+
 race:
   usage:
     main: "&c사용법: /{label} teams|setup|reload|version"
@@ -43,6 +67,15 @@ race:
     stop: "&c사용법: /{label} race stop <track>"
     voteopen: "&c사용법: /{label} race voteopen [all|<track1> <track2> ...] [초]"
     vote: "&c사용법: /{label} race vote <track>"
+
+  scoreboard:
+    practice-label: "연습"
+    practice-status: "연습 중입니다"
+    practice-current: "현재 주행"
+    practice-best-run: "최고 주행"
+    practice-last-run: "최근 주행"
+    practice-best-lap: "최고 랩"
+    practice-last-lap: "최근 랩"
 
   help:
     header: "&e레이스 명령:"
@@ -84,6 +117,9 @@ race:
   track-not-found: "&c트랙을 찾을 수 없습니다: &f{track}"
   track-load-failed: "&c트랙 로드 실패: &f{track}"
   track-not-ready: "&c트랙이 준비되지 않았습니다: &7{requirements}"
+  requirements:
+    finish: "결승선"
+    start-slot-min: "최소 1개의 시작 슬롯"
   cannot-open-registration: "&c지금은 등록을 열 수 없습니다."
 
   no-participants: "&c등록된 참가자가 없습니다. &7먼저 등록을 열어주세요: &f/{label} race open"
@@ -213,6 +249,13 @@ setup:
   light-fail: "&c조명을 추가할 수 없습니다. 레드스톤 랜프를 사용하고, 중복을 피하고, 최대 5개입니다."
   light-added: "&a스타트 조명 추가됨 &7({x}, {y}, {z})"
   lights-cleared: "&a모든 스타트 조명이 제거되었습니다."
+
+  language-current: "&7현재 언어: &f{lang}"
+  language-available: "&7사용 가능한 언어: &f{langs}"
+  language-invalid-code: "&c잘못된 언어 코드: &f{code}"
+  language-not-found: "&c언어를 찾을 수 없습니다: &f{code}"
+  language-already-set: "&e언어가 이미 &f{lang}&e(으)로 설정되어 있습니다."
+  language-updated: "&a언어가 &f{old} &a에서 &f{new}&a(으)로 변경되었습니다."
   laps-set: "&a랩이 &f{laps}{track_info}&a로 설정되었습니다."
   pitstops-set: "&a필수 피트 정차가 &f{count}{track_info}&a로 설정되었습니다."
   lobby-set: "&a등록 로비가 &f{x}, {y}, {z}&a로 설정됨 &7({world})&a 및 활성화됨."
@@ -406,7 +449,11 @@ admin:
     player-setteam: "&7 - &f/{label} admin player setteam <player> <team|none>"
     player-setnumber: "&7 - &f/{label} admin player setnumber <player> <1-99>"
     player-setboat: "&7 - &f/{label} admin player setboat <player> <BoatType>"
-    tracks: "&7 - &f/{label} admin tracks &7(GUI를 통해 명명된 트랙 관리)"
+    tracks: "&7 - &f/{label} admin tracks &7(GUI를 통해 이름이 지정된 트랙 관리)"
+
+    language: "&c사용법: /{label} admin language <code>"
+
+    language: "&7 - &f/{label} admin language <code> &7(플러그인 언어를 변경하고 메시지를 즉시 다시 불러옵니다)"
   usage:
     admin-help: "&c사용법: /{label} admin help"
     team-main: "&c사용법: /{label} admin team <create|delete|rename|color|add|remove>"
@@ -420,6 +467,8 @@ admin:
     player-setteam: "&c사용법: /{label} admin player setteam <player> <team|none>"
     player-setnumber: "&c사용법: /{label} admin player setnumber <player> <1-99>"
     player-setboat: "&c사용법: /{label} admin player setboat <player> <BoatType>"
+
+    language: "&c사용법: /{label} admin language <code>"
   invalid-color: "&c유효하지 않은 색상입니다."
   invalid-boat: "&c유효하지 않은 보트 유형입니다."
   player-not-member: "&c플레이어는 해당 팀의 멤버가 아닙니다."
@@ -457,6 +506,13 @@ admin:
   racer-number-set: "&a&f{player}&a의 선수 번호가 &f{num}&a으로 설정되었습니다."
   racer-number-changed-notify: "&e관리자가 선수 번호를 &f{num}&e으로 변경했습니다."
   laps-set: "&a랩이 &f{laps}&a로 설정되었습니다."
+
+  language-current: "&7현재 언어: &f{lang}"
+  language-available: "&7사용 가능한 언어: &f{langs}"
+  language-invalid-code: "&c잘못된 언어 코드: &f{code}"
+  language-not-found: "&c언어를 찾을 수 없습니다: &f{code}"
+  language-already-set: "&e언어가 이미 &f{lang}&e(으)로 설정되어 있습니다."
+  language-updated: "&a언어가 &f{old} &a에서 &f{new}&a(으)로 변경되었습니다."
 
   track:
     exists: "&c같은 이름의 트랙이 이미 존재합니다."
@@ -583,6 +639,7 @@ gui:
     title-confirm: "트랙을 삭제하시겠습니까?"
     lore-selected: " &7(선택됨)"
     lore-click-load: "&7클릭: &f로드"
+    lore-right-rename: "&7우클릭: &e이름 변경"
     lore-shift-delete: "&7Shift-우클릭: &c삭제"
     btn-create: "&a&l생성 및 선택"
     lore-create: "&7새 빈 트랙을 생성하고 선택합니다."
@@ -640,3 +697,4 @@ gui:
     btn-leave-now: "&c&l지금 나가기"
     anvil-team-name: "팀 이름"
     anvil-racer-number: "선수 번호"
+

@@ -279,7 +279,7 @@ public class SetupWizard {
         if (t == null) return;
         if (!t.isReady()) {
             java.util.List<String> missing = t.missingRequirements();
-            p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.track-not-ready", "requirements", String.join(", ", missing))));
+            p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.track-not-ready", "requirements", plugin.formatTrackRequirements(missing))));
             // Ensure wizard is active and point to the first incomplete step
             states.put(p.getUniqueId(), firstIncomplete(t));
             p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.9f, 0.7f);

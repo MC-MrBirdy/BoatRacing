@@ -26,9 +26,34 @@ update:
   up-to-date: "&aEstás ejecutando la última versión (&f{version}&a)."
   info: "&7Última: &f{latest} &7| Releases: &f{url}"
 
+stats:
+  usage: "&cUso: /{label} stats [jugador]"
+  player-not-found: "&cJugador no encontrado: &f{player}"
+  header-self: "&eTus estadísticas de BoatRacing:"
+  header-other: "&eEstadísticas de BoatRacing de &f{player}&e:"
+  line-player: "&7Jugador: &f{player}"
+  line-team: "&7Equipo: &f{team}"
+  line-best-race: "&7Mejor carrera: &f{time}"
+  line-best-lap: "&7Mejor vuelta: &f{time}"
+  positions-header: "&eResumen de posiciones en carrera:"
+  positions-none: "&7Aún no hay registros de posiciones en carrera."
+  position-line: "&7Veces en &f{position}&7 posición: &f{count}"
+  position:
+    first: "primera"
+    second: "segunda"
+    third: "tercera"
+    nth: "{n}ª"
+  practice-header: "&eEstadísticas de práctica por pista:"
+  practice-none: "&7Aún no hay estadísticas de práctica registradas."
+  track-unsaved-label: "pista actual (sin guardar)"
+  practice-track: "&7[{track}] &fIntento &7(Mejor: &f{best_run}&7, Último: &f{last_run}&7) &8| &fVuelta &7(Mejor: &f{best_lap}&7, Última: &f{last_lap}&7)"
+  practice-sectors-best: "&8  Mejores sectores: &f{sectors}"
+  practice-sectors-last: "&8  Últimos sectores: &f{sectors}"
+  sectors-none: "ninguno"
+
 race:
   usage:
-    main: "&cUso: /{label} teams|setup|reload|version"
+    main: "&cUso: /{label} teams|race|stats|setup|admin|reload|version"
     open: "&cUso: /{label} race open <track>"
     join: "&cUso: /{label} race join <track>"
     leave: "&cUso: /{label} race leave <track>"
@@ -40,6 +65,15 @@ race:
     stop: "&cUso: /{label} race stop <track>"
     voteopen: "&cUso: /{label} race voteopen [all|<track1> <track2> ...] [seconds]"
     vote: "&cUso: /{label} race vote <track>"
+
+  scoreboard:
+    practice-label: "PRÁCTICA"
+    practice-status: "ESTAS PRACTICANDO"
+    practice-current: "Tiempo actual"
+    practice-best-run: "Mejor carrera"
+    practice-last-run: "Última carrera"
+    practice-best-lap: "Mejor vuelta"
+    practice-last-lap: "Última vuelta"
 
   help:
     header: "&eComandos de carrera:"
@@ -81,6 +115,9 @@ race:
   track-not-found: "&cPista no encontrada: &f{track}"
   track-load-failed: "&cFallo al cargar la pista: &f{track}"
   track-not-ready: "&cLa pista no está lista: &7{requirements}"
+  requirements:
+    finish: "línea de meta"
+    start-slot-min: "al menos 1 slot de salida"
   cannot-open-registration: "&cNo se puede abrir el registro en este momento."
 
   no-participants: "&cSin participantes registrados. &7Abre el registro primero: &f/{label} race open"
@@ -210,6 +247,13 @@ setup:
   light-fail: "&cNo se pudo añadir la luz. Usa una Lámpara de Piedra Roja, evita duplicados y máximo 5."
   light-added: "&aLuz de salida añadida &7({x}, {y}, {z})"
   lights-cleared: "&aTodas las luces de salida han sido eliminadas."
+
+  language-current: "&7Idioma actual: &f{lang}"
+  language-available: "&7Idiomas disponibles: &f{langs}"
+  language-invalid-code: "&cCodigo de idioma invalido: &f{code}"
+  language-not-found: "&cIdioma no encontrado: &f{code}"
+  language-already-set: "&eEl idioma ya esta establecido en &f{lang}&e."
+  language-updated: "&aIdioma cambiado de &f{old} &aa &f{new}&a."
   laps-set: "&aVueltas establecidas a &f{laps}{track_info}"
   pitstops-set: "&aParadas obligatorias en el pit establecidas a &f{count}{track_info}"
   lobby-set: "&aLobby de registro establecido en &f{x}, {y}, {z} &7({world})&a y activado."
@@ -403,7 +447,9 @@ admin:
     player-setteam: "&7 - &f/{label} admin player setteam <player> <team|none>"
     player-setnumber: "&7 - &f/{label} admin player setnumber <player> <1-99>"
     player-setboat: "&7 - &f/{label} admin player setboat <player> <BoatType>"
-    tracks: "&7 - &f/{label} admin tracks &7(Gestiona pistas nombradas mediante GUI)"
+    tracks: "&7 - &f/{label} admin tracks &7(Gestiona pistas nombradas via GUI)"
+
+    language: "&7 - &f/{label} admin language <code> &7(Cambia el idioma del plugin y recarga mensajes al instante)"
   usage:
     admin-help: "&cUso: /{label} admin help"
     team-main: "&cUso: /{label} admin team <create|delete|rename|color|add|remove>"
@@ -417,6 +463,8 @@ admin:
     player-setteam: "&cUso: /{label} admin player setteam <player> <team|none>"
     player-setnumber: "&cUso: /{label} admin player setnumber <player> <1-99>"
     player-setboat: "&cUso: /{label} admin player setboat <player> <BoatType>"
+
+    language: "&cUso: /{label} admin language <code>"
   invalid-color: "&cColor inválido."
   invalid-boat: "&cTipo de bote inválido."
   player-not-member: "&cEl jugador no es miembro de ese equipo."
@@ -454,6 +502,13 @@ admin:
   racer-number-set: "&aNúmero de corredor para &f{player} &aestablecido a &f{num}"
   racer-number-changed-notify: "&eUn administrador ha cambiado tu número de corredor a &f{num}&e."
   laps-set: "&aVueltas establecidas a &f{laps}"
+
+  language-current: "&7Idioma actual: &f{lang}"
+  language-available: "&7Idiomas disponibles: &f{langs}"
+  language-invalid-code: "&cCodigo de idioma invalido: &f{code}"
+  language-not-found: "&cIdioma no encontrado: &f{code}"
+  language-already-set: "&eEl idioma ya esta establecido en &f{lang}&e."
+  language-updated: "&aIdioma cambiado de &f{old} &aa &f{new}&a."
 
   track:
     exists: "&cYa existe una pista con ese nombre."
@@ -580,6 +635,7 @@ gui:
     title-confirm: "¿Eliminar pista?"
     lore-selected: " &7(seleccionada)"
     lore-click-load: "&7Click: &fCargar"
+    lore-right-rename: "&7Clic-derecho: &eRenombrar"
     lore-shift-delete: "&7Shift-clic-derecho: &cEliminar"
     btn-create: "&a&lCrear y seleccionar"
     lore-create: "&7Crear una nueva pista vacía y seleccionarla."
@@ -637,3 +693,4 @@ gui:
     btn-leave-now: "&c&lAbandonar ahora"
     anvil-team-name: "Nombre del equipo"
     anvil-racer-number: "Número de corredor"
+
