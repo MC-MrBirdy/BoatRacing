@@ -53,7 +53,7 @@ Added:
 - Dedicated permission `boatracing.stats` (default `true`) so player stats can be granted/revoked independently.
 - Dedicated permission `boatracing.stats.others` (default `true`) so viewing another player's stats can be granted/revoked independently.
 - Dedicated permission `boatracing.race.voteopen` (default `op`) so opening map votes can be granted/revoked independently of race start/stop management.
-- `/boatracing admin language <code>` (alias: `/boatracing admin lang <code>`) switches the active message bundle at runtime, updates `config.yml`, and reloads messages immediately.
+- `/boatracing admin language <code>` switches the active message bundle at runtime, updates `config.yml`, and reloads messages immediately.
 - Dedicated permission `boatracing.admin.language` (default `op`) so language switching can be granted without full admin management access.
 - Practice telemetry persisted in `practice-stats.yml` (best/last run, best/last lap, best/last sector per section).
 - New practice placeholders for player current-track and explicit track tokens (run/lap/section metrics), plus track-practice state alias `%boatracing_track_practicerunning_<track>%`.
@@ -70,12 +70,14 @@ Changed:
 - Vote-start broadcast now includes both clickable UI (`/boatracing race voteui`) and a plain typed command instruction (`/{label} race vote <track>`) for mixed/Bedrock clients.
 - When vote ends (timeout or `voteclose`), winner resolution now attempts to auto-open winner registration; if auto-open is not possible, fallback next-step command is sent only to vote-managing users (and console), not to regular players.
 - Shade packaging now filters duplicate manifest/signature metadata, removing the previous `maven-shade-plugin` overlap warning for `META-INF/MANIFEST.MF`.
+- Admin language switching now uses only `/boatracing admin language <code>`; the short alias `lang` was removed from command handling and tab-completion.
 
 Fixed:
 - `%boatracing_track_best_*_<track>%` and `%boatracing_track_top_1..3_*_<track>%` now use the freshest available track data (live race session first, then track file), avoiding stale best-time values.
 - `%boatracing_track_best_player%` and `%boatracing_track_best_time%` now follow the same resolution path as token placeholders so current-track records update after an improved race time.
 - Track readiness requirement details (`race.track-not-ready`) are now localized through `race.requirements.*` across bundled language files (no mixed EN text in localized messages).
 - Community locale wording regressions were corrected in `fr`, `pl`, `pt_PT`, `ru`, and `zh_CN` bundles (including restored `laps-set`/`tracks` phrasing and replacing leaked `BoatType` tokens with localized argument labels).
+- Stats chat report readability was improved: noisy sector rows are reduced (no empty `0:00.000` sector values), and unsaved practice track names now use the dedicated localized label `stats.track-unsaved-label` across bundles.
 
 </details>
 
@@ -499,10 +501,10 @@ Setup suggestions:
 - `setpos` also suggests `auto` and available slot numbers.
 
 Admin suggestions:
-- `help`, `team`, `player`, `tracks`, `language`, `lang`
+- `help`, `team`, `player`, `tracks`, `language`
 - `team` suggests `create`, `delete`, `rename`, `color`, `add`, `remove`
 - `player` suggests `setteam`, `setnumber`, `setboat`
-- `language`/`lang` suggest available language codes discovered from bundled and plugin-folder message files.
+- `language` suggests available language codes discovered from bundled and plugin-folder message files.
 
 ## Admin Commands and GUI
 `/boatracing admin` opens the admin hub.
@@ -525,7 +527,6 @@ Command equivalents:
 - `/boatracing admin player setboat <player> <BoatType>`
 - `/boatracing admin tracks`
 - `/boatracing admin language <code>`
-- `/boatracing admin lang <code>`
 
 ## Permissions
 - `boatracing.*` (default: false): wildcard for the full plugin.

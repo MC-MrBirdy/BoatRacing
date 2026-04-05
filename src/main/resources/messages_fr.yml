@@ -48,6 +48,7 @@ stats:
     nth: "{n}e"
   practice-header: "&eStatistiques d'entraînement par circuit :"
   practice-none: "&7Aucune statistique d'entraînement enregistrée."
+  track-unsaved-label: "circuit actuel (non enregistré)"
   practice-track: "&7[{track}] &fEssai &7(Meilleur : &f{best_run}&7, Dernier : &f{last_run}&7) &8| &fTour &7(Meilleur : &f{best_lap}&7, Dernier : &f{last_lap}&7)"
   practice-sectors-best: "&8  Meilleurs secteurs : &f{sectors}"
   practice-sectors-last: "&8  Derniers secteurs : &f{sectors}"

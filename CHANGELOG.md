@@ -8,7 +8,7 @@
 - **Stats permission node**: added `boatracing.stats` with default `true`, so servers can grant/restrict stats access independently.
 - **Stats-others permission node**: added `boatracing.stats.others` with default `true`, so servers can separately control viewing other players via `/boatracing stats <player>`.
 - **Map-vote open permission node**: added `boatracing.race.voteopen` with default `op`, so opening map votes can be granted/restricted independently from race start/stop management.
-- **Admin language switch command**: added `/boatracing admin language <code>` and `/boatracing admin lang <code>` to change the active plugin language at runtime.
+- **Admin language switch command**: added `/boatracing admin language <code>` to change the active plugin language at runtime.
 - **Admin language permission node**: added `boatracing.admin.language` with default `op`, so language switching can be delegated without full admin management access.
 - **Persistent practice telemetry**: added `practice-stats.yml` storing per-player/per-track practice metrics (best/last run, best/last lap, best/last sector split).
 - **Practice placeholders**: added `%boatracing_player_practice_*%` placeholders (current-track and `<track>` token variants) and `%boatracing_track_practice_running_<track>%` for practice state displays.
@@ -24,6 +24,7 @@
 - **Map vote flow for mixed clients**: `/boatracing race voteopen` now supports opening all saved tracks (`all` or no explicit track list), broadcasts a plain vote command hint (`/{label} race vote <track>`) alongside clickable UI, and auto-opens registration on the voted winner when possible.
 - **Map vote command syntax and tab-complete**: admin usage/help and tab suggestions now include `voteopen [all|<track1> <track2> ...] [seconds]` with `all`/`*` support.
 - **Runtime language switching flow**: changing language through `/boatracing admin language <code>` now persists into `config.yml` and reloads message bundles immediately (no separate reload command required by the user).
+- **Admin language command alias cleanup**: removed `/boatracing admin lang <code>`; only `/boatracing admin language <code>` is now accepted and suggested.
 - **Shade packaging metadata handling**: Maven shade config now filters duplicate `META-INF` manifest/signature files, removing noisy overlap warnings during package builds.
 
 ### Fixed
@@ -32,6 +33,7 @@
 - **Map-vote fallback visibility**: when winner auto-open fails, the `race.vote.next-step` hint is no longer broadcast to all players; it is now sent only to vote-managing users (and console).
 - **Localized track readiness requirements**: `race.track-not-ready` requirement details are now resolved through `race.requirements.*` keys across all bundled locales, avoiding mixed-language output.
 - **Community locale wording regressions**: restored expected phrasing for `setup.laps-set` (FR/PL), restored PT-PT admin tracks help wording, and replaced leaked `BoatType` tokens with localized labels in RU (`тип лодки`) and zh_CN (`船只类型`) admin `setboat` help/usage lines.
+- **Stats chat readability**: practice stats output now suppresses empty sector noise (e.g. `0:00.000` entries), and unsaved practice tracks use localized `stats.track-unsaved-label` names across bundled locales.
 
 ## 1.1.4 — 04/04/2026
 ### Added

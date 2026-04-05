@@ -49,6 +49,7 @@ stats:
     nth: "{n}"
   practice-header: "&eParkura gore antrenman istatistikleri:"
   practice-none: "&7Henuz antrenman istatistigi kaydi yok."
+  track-unsaved-label: "mevcut parkur (kaydedilmemis)"
   practice-track: "&7[{track}] &fKosu &7(En iyi: &f{best_run}&7, Son: &f{last_run}&7) &8| &fTur &7(En iyi: &f{best_lap}&7, Son: &f{last_lap}&7)"
   practice-sectors-best: "&8  En iyi sektorler: &f{sectors}"
   practice-sectors-last: "&8  Son sektorler: &f{sectors}"

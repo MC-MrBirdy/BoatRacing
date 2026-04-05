@@ -19,6 +19,8 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 	- Permission defaults: `boatracing.stats.others` is granted by default to non-op players.
 	- Revoke `boatracing.stats` from a test player and verify `/boatracing stats` is denied with no-permission feedback.
 	- Run `/boatracing stats` and verify own report renders (competitive positions summary + practice section with per-track metrics when data exists).
+	- In an unsaved practice track context, verify track label uses the localized `stats.track-unsaved-label` wording (for example `pista actual (sin guardar)` in `es`).
+	- Verify practice sector output does not spam empty entries (for example `S2=0:00.000`) and only shows meaningful best-sector data.
 	- Verify competitive section only lists positions with count > 0 (for example, no line like "second place: 0").
 	- Run `/boatracing stats <otherPlayer>` and verify the report targets that player.
 	- Revoke `boatracing.stats.others` and verify `/boatracing stats <otherPlayer>` is denied with no-permission feedback.
@@ -27,7 +29,7 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 - Admin language switch command:
 	- Permission defaults: `boatracing.admin.language` is `op`.
 	- Grant only `boatracing.admin.language` (without `boatracing.admin`) to a test user and verify `/boatracing admin language <code>` works.
-	- Verify alias `/boatracing admin lang <code>` behaves the same as `language`.
+	- Verify `/boatracing admin lang <code>` is no longer accepted and returns unknown/usage feedback.
 	- Run `/boatracing admin language <code>` and verify `config.yml` `language` value is updated and messages switch immediately (no manual config edit, no separate `/boatracing reload` command).
 	- Run `/boatracing admin language <currentCode>` and verify already-set feedback is shown.
 	- Run `/boatracing admin language invalid-code!` and verify invalid-code feedback is shown.
@@ -363,7 +365,7 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 - Two online accounts: Player A and Player B.
 - Minimum permission: `boatracing.use` (default: true).
 - Admin permission: `boatracing.admin` (default: op). Optional for track/race setup: `boatracing.setup`. For reload: `boatracing.reload`.
-- Optional language-switch permission: `boatracing.admin.language` (default: op) for `/boatracing admin language|lang <code>` without full admin management access.
+- Optional language-switch permission: `boatracing.admin.language` (default: op) for `/boatracing admin language <code>` without full admin management access.
 - Extra note: `boatracing.setup` also enables the Tracks GUI.
  - Race permissions by subcommand:
 	 - `boatracing.race.join` / `boatracing.race.leave` / `boatracing.race.status` (default: true)
@@ -503,7 +505,6 @@ Recommended flow:
 	- `/boatracing admin player setboat <player> <BoatType>`
 - Language:
 	- `/boatracing admin language <code>`
-	- `/boatracing admin lang <code>`
 
 ## Chat commands (players)
 
@@ -534,8 +535,9 @@ Recommended flow:
 - `/boatracing setup setpos` → suggests online player names; for the 2nd arg suggests `auto` and valid slot numbers (1-based).
 - `/boatracing setup clearpos` → suggests online player names.
 - `/boatracing admin team ...` and `/boatracing admin player ...` → subcommand/parameter completion (team/player names).
-- `/boatracing admin language` and `/boatracing admin lang` → suggest available language codes.
-- With `boatracing.admin.language` (without `boatracing.admin`), `/boatracing` still suggests `admin`, and `/boatracing admin` suggests `language` and `lang`.
+- `/boatracing admin language` → suggest available language codes.
+- With `boatracing.admin.language` (without `boatracing.admin`), `/boatracing` still suggests `admin`, and `/boatracing admin` suggests `language`.
+	- Verify `/boatracing admin` tab-complete does not suggest `lang` anymore.
  - `/boatracing race` → non-admins see `join`, `leave`, and `status`; admins also see `open`, `start`, `force`, `stop`. Track names are suggested where an argument `<track>` is required.
 
 ## Persistence and reload

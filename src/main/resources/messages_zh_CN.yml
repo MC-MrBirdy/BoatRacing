@@ -48,6 +48,7 @@ stats:
     nth: "{n}"
   practice-header: "&e按赛道统计的练习数据："
   practice-none: "&7暂无练习统计记录。"
+  track-unsaved-label: "当前赛道（未保存）"
   practice-track: "&7[{track}] &f跑次 &7(最佳：&f{best_run}&7，最近：&f{last_run}&7) &8| &f圈速 &7(最佳：&f{best_lap}&7，最近：&f{last_lap}&7)"
   practice-sectors-best: "&8  最佳分段：&f{sectors}"
   practice-sectors-last: "&8  最近分段：&f{sectors}"

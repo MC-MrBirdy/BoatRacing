@@ -48,6 +48,7 @@ stats:
     nth: "{n}"
   practice-header: "&e트랙별 연습 통계:"
   practice-none: "&7연습 통계가 아직 없습니다."
+  track-unsaved-label: "현재 트랙(저장되지 않음)"
   practice-track: "&7[{track}] &f주행 &7(최고: &f{best_run}&7, 최근: &f{last_run}&7) &8| &f랩 &7(최고: &f{best_lap}&7, 최근: &f{last_lap}&7)"
   practice-sectors-best: "&8  최고 구간: &f{sectors}"
   practice-sectors-last: "&8  최근 구간: &f{sectors}"

@@ -1560,7 +1560,7 @@ public class BoatRacingPlugin extends JavaPlugin {
             }
             // /boatracing admin
             if (args[0].equalsIgnoreCase("admin")) {
-                boolean isLanguageSubcommand = args.length >= 2 && (args[1].equalsIgnoreCase("language") || args[1].equalsIgnoreCase("lang"));
+                boolean isLanguageSubcommand = args.length >= 2 && args[1].equalsIgnoreCase("language");
                 boolean canUseAdmin = p.hasPermission("boatracing.admin");
                 boolean canManageLanguage = p.hasPermission("boatracing.admin.language");
                 if (!canUseAdmin && !(isLanguageSubcommand && canManageLanguage)) {
@@ -1576,7 +1576,7 @@ public class BoatRacingPlugin extends JavaPlugin {
                     adminGUI.openMain(p);
                     return true;
                 }
-                if (args[1].equalsIgnoreCase("language") || args[1].equalsIgnoreCase("lang")) {
+                if (args[1].equalsIgnoreCase("language")) {
                     if (!(canUseAdmin || canManageLanguage)) {
                         p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
                         return true;
@@ -2139,10 +2139,9 @@ public class BoatRacingPlugin extends JavaPlugin {
                         subs.add("tracks");
                     }
                     subs.add("language");
-                    subs.add("lang");
                     return subs.stream().filter(s -> s.startsWith(pref)).toList();
                 }
-                if (args[1].equalsIgnoreCase("language") || args[1].equalsIgnoreCase("lang")) {
+                if (args[1].equalsIgnoreCase("language")) {
                     if (!(canUseAdmin || canManageLanguage)) return java.util.Collections.emptyList();
                     if (args.length == 3) {
                         String pref = args[2] == null ? "" : args[2].toLowerCase();

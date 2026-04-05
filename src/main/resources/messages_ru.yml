@@ -48,6 +48,7 @@ stats:
     nth: "{n}"
   practice-header: "&eСтатистика тренировки по трассам:"
   practice-none: "&7Пока нет записанной статистики тренировок."
+  track-unsaved-label: "текущая трасса (не сохранена)"
   practice-track: "&7[{track}] &fЗаезд &7(Лучший: &f{best_run}&7, Последний: &f{last_run}&7) &8| &fКруг &7(Лучший: &f{best_lap}&7, Последний: &f{last_lap}&7)"
   practice-sectors-best: "&8  Лучшие сектора: &f{sectors}"
   practice-sectors-last: "&8  Последние сектора: &f{sectors}"

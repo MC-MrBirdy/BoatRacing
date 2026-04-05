@@ -49,6 +49,7 @@ stats:
     nth: "{n}ª"
   practice-header: "&eStatistiche pratica per pista:"
   practice-none: "&7Nessuna statistica pratica registrata."
+  track-unsaved-label: "pista attuale (non salvata)"
   practice-track: "&7[{track}] &fTentativo &7(Migliore: &f{best_run}&7, Ultimo: &f{last_run}&7) &8| &fGiro &7(Migliore: &f{best_lap}&7, Ultimo: &f{last_lap}&7)"
   practice-sectors-best: "&8  Migliori settori: &f{sectors}"
   practice-sectors-last: "&8  Ultimi settori: &f{sectors}"

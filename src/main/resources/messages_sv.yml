@@ -49,6 +49,7 @@ stats:
     nth: "{n}"
   practice-header: "&eTräningsstatistik per bana:"
   practice-none: "&7Ingen träningsstatistik registrerad ännu."
+  track-unsaved-label: "aktuell bana (ej sparad)"
   practice-track: "&7[{track}] &fKörning &7(Bäst: &f{best_run}&7, Senast: &f{last_run}&7) &8| &fVarv &7(Bäst: &f{best_lap}&7, Senast: &f{last_lap}&7)"
   practice-sectors-best: "&8  Bästa sektorer: &f{sectors}"
   practice-sectors-last: "&8  Senaste sektorer: &f{sectors}"

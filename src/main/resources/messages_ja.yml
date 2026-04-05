@@ -49,6 +49,7 @@ stats:
     nth: "{n}"
   practice-header: "&eトラック別練習統計:"
   practice-none: "&7練習統計はまだ記録されていません。"
+  track-unsaved-label: "現在のトラック（未保存）"
   practice-track: "&7[{track}] &f走行 &7(ベスト: &f{best_run}&7, 最新: &f{last_run}&7) &8| &fラップ &7(ベスト: &f{best_lap}&7, 最新: &f{last_lap}&7)"
   practice-sectors-best: "&8  ベスト区間: &f{sectors}"
   practice-sectors-last: "&8  最新区間: &f{sectors}"

@@ -49,6 +49,7 @@ stats:
     nth: "{n}"
   practice-header: "&eTrainingsstatistiken nach Strecke:"
   practice-none: "&7Noch keine Trainingsstatistiken vorhanden."
+  track-unsaved-label: "aktuelle Strecke (ungespeichert)"
   practice-track: "&7[{track}] &fLauf &7(Beste: &f{best_run}&7, Letzte: &f{last_run}&7) &8| &fRunde &7(Beste: &f{best_lap}&7, Letzte: &f{last_lap}&7)"
   practice-sectors-best: "&8  Beste Sektoren: &f{sectors}"
   practice-sectors-last: "&8  Letzte Sektoren: &f{sectors}"
