@@ -33,6 +33,8 @@ public class TrackConfig {
     private final Map<String, Integer> customStartSlots = new LinkedHashMap<>();
     // Best race times per Player UUID string (millis)
     private final Map<String, Long> bestTimes = new LinkedHashMap<>();
+    // Best race times segmented by total laps: laps -> (player UUID -> millis)
+    private final Map<Integer, Map<String, Long>> bestTimesByLaps = new LinkedHashMap<>();
     private final List<Region> checkpoints = new ArrayList<>();
     public static class LightPos {
         public final String world; public final int x, y, z;
@@ -74,11 +76,47 @@ public class TrackConfig {
     public void clearCustomStartSlot(java.util.UUID playerId) { if (playerId != null) { customStartSlots.remove(playerId.toString()); save(); } }
     public Map<String, Long> getBestTimes() { return Collections.unmodifiableMap(bestTimes); }
     public Long getBestTime(java.util.UUID playerId) { return playerId == null ? null : bestTimes.get(playerId.toString()); }
+    public Map<String, Long> getBestTimesForLaps(int laps) {
+        int normalizedLaps = Math.max(1, laps);
+        Map<String, Long> lapMap = bestTimesByLaps.get(normalizedLaps);
+        return lapMap == null ? Collections.emptyMap() : Collections.unmodifiableMap(lapMap);
+    }
+    public Long getBestTime(java.util.UUID playerId, int laps) {
+        if (playerId == null) return null;
+        Map<String, Long> lapMap = bestTimesByLaps.get(Math.max(1, laps));
+        return lapMap == null ? null : lapMap.get(playerId.toString());
+    }
     public void updateBestTime(java.util.UUID playerId, long millis) {
         if (playerId == null) return;
         String key = playerId.toString();
         Long cur = bestTimes.get(key);
         if (cur == null || millis < cur) { bestTimes.put(key, millis); save(); }
+    }
+    public void updateBestTime(java.util.UUID playerId, long millis, int laps) {
+        if (playerId == null) return;
+        int normalizedLaps = Math.max(1, laps);
+        String key = playerId.toString();
+
+        boolean changed = false;
+
+        Map<String, Long> lapMap = bestTimesByLaps.computeIfAbsent(normalizedLaps, ignored -> new LinkedHashMap<>());
+        Long currentLapBest = lapMap.get(key);
+        if (currentLapBest == null || millis < currentLapBest) {
+            lapMap.put(key, millis);
+            changed = true;
+        }
+
+        Long overallBest = bestTimes.get(key);
+        if (overallBest == null || millis < overallBest) {
+            bestTimes.put(key, millis);
+            changed = true;
+        }
+
+        if (changed) save();
+    }
+
+    public int getConfiguredLaps(int globalDefault) {
+        return Math.max(1, getRacingInt("laps", Math.max(1, globalDefault)));
     }
 
     public void addStart(Location loc) {
@@ -86,11 +124,56 @@ public class TrackConfig {
         save();
     }
 
+    public boolean removeStartAt(int index0Based) {
+        if (index0Based < 0 || index0Based >= starts.size()) return false;
+        starts.remove(index0Based);
+
+        // Keep custom slot assignments valid after removing one start slot.
+        java.util.Iterator<Map.Entry<String, Integer>> it = customStartSlots.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, Integer> entry = it.next();
+            Integer slot = entry.getValue();
+            if (slot == null) {
+                it.remove();
+                continue;
+            }
+            if (slot == index0Based) {
+                it.remove();
+            } else if (slot > index0Based) {
+                entry.setValue(slot - 1);
+            }
+        }
+
+        save();
+        return true;
+    }
+
     public void setFinish(Region r) { this.finish = r; save(); }
     public void setPitlane(Region r) { this.pitlane = r; save(); }
     public void setTeamPit(java.util.UUID teamId, Region r) { if (teamId != null) { teamPits.put(teamId.toString(), r); save(); } }
     public void clearTeamPits() { teamPits.clear(); save(); }
     public void addCheckpoint(Region r) { this.checkpoints.add(r); save(); }
+    public boolean replaceCheckpoint(int index0Based, Region r) {
+        if (r == null || index0Based < 0 || index0Based >= checkpoints.size()) return false;
+        checkpoints.set(index0Based, r);
+        save();
+        return true;
+    }
+    public boolean removeCheckpointAt(int index0Based) {
+        if (index0Based < 0 || index0Based >= checkpoints.size()) return false;
+        checkpoints.remove(index0Based);
+        save();
+        return true;
+    }
+    public boolean moveCheckpoint(int fromIndex0Based, int toIndex0Based) {
+        if (fromIndex0Based < 0 || fromIndex0Based >= checkpoints.size()) return false;
+        if (toIndex0Based < 0 || toIndex0Based >= checkpoints.size()) return false;
+        if (fromIndex0Based == toIndex0Based) return true;
+        Region moved = checkpoints.remove(fromIndex0Based);
+        checkpoints.add(toIndex0Based, moved);
+        save();
+        return true;
+    }
     public void clearCheckpoints() { this.checkpoints.clear(); save(); }
     public void clearStarts() { this.starts.clear(); save(); }
 
@@ -111,7 +194,7 @@ public class TrackConfig {
 
     public void load() {
         cfg = YamlConfiguration.loadConfiguration(file);
-    starts.clear(); checkpoints.clear(); lights.clear(); finish = null; pitlane = null; teamPits.clear(); customStartSlots.clear(); bestTimes.clear(); racingOverrides.clear();
+    starts.clear(); checkpoints.clear(); lights.clear(); finish = null; pitlane = null; teamPits.clear(); customStartSlots.clear(); bestTimes.clear(); bestTimesByLaps.clear(); racingOverrides.clear();
         if (cfg.contains("starts")) {
             for (Object o : cfg.getList("starts")) {
                 if (o instanceof Map<?,?> map) {
@@ -151,6 +234,31 @@ public class TrackConfig {
                 for (String key : bt.getKeys(false)) {
                     long v = bt.getLong(key, -1L);
                     if (v >= 0L) bestTimes.put(key, v);
+                }
+            }
+        }
+        // Best times per player grouped by laps (bestTimesByLaps.<laps>.<uuid> = millis)
+        if (cfg.isConfigurationSection("bestTimesByLaps")) {
+            ConfigurationSection btl = cfg.getConfigurationSection("bestTimesByLaps");
+            if (btl != null) {
+                for (String lapKey : btl.getKeys(false)) {
+                    int laps;
+                    try {
+                        laps = Integer.parseInt(lapKey);
+                    } catch (NumberFormatException ignored) {
+                        continue;
+                    }
+                    if (laps < 1) continue;
+
+                    ConfigurationSection lapSection = btl.getConfigurationSection(lapKey);
+                    if (lapSection == null) continue;
+
+                    Map<String, Long> lapMap = new LinkedHashMap<>();
+                    for (String playerKey : lapSection.getKeys(false)) {
+                        long v = lapSection.getLong(playerKey, -1L);
+                        if (v >= 0L) lapMap.put(playerKey, v);
+                    }
+                    if (!lapMap.isEmpty()) bestTimesByLaps.put(laps, lapMap);
                 }
             }
         }
@@ -282,6 +390,21 @@ public class TrackConfig {
         } else {
             cfg.set("bestTimes", null);
         }
+        // Write best times grouped by laps
+        if (!bestTimesByLaps.isEmpty()) {
+            cfg.set("bestTimesByLaps", null);
+            java.util.List<Integer> lapKeys = new java.util.ArrayList<>(bestTimesByLaps.keySet());
+            java.util.Collections.sort(lapKeys);
+            for (Integer lapKey : lapKeys) {
+                Map<String, Long> lapMap = bestTimesByLaps.get(lapKey);
+                if (lapMap == null || lapMap.isEmpty()) continue;
+                for (Map.Entry<String, Long> e : lapMap.entrySet()) {
+                    cfg.set("bestTimesByLaps." + lapKey + "." + e.getKey(), e.getValue());
+                }
+            }
+        } else {
+            cfg.set("bestTimesByLaps", null);
+        }
         if (!checkpoints.isEmpty()) {
             java.util.List<java.util.Map<String,Object>> cps = new java.util.ArrayList<>();
             for (Region r : checkpoints) {
@@ -337,6 +460,12 @@ public class TrackConfig {
     // Lights API
     public java.util.List<LightPos> getLights() { return java.util.Collections.unmodifiableList(lights); }
     public void clearLights() { lights.clear(); save(); }
+    public boolean removeLightAt(int index0Based) {
+        if (index0Based < 0 || index0Based >= lights.size()) return false;
+        lights.remove(index0Based);
+        save();
+        return true;
+    }
     public boolean addLight(org.bukkit.block.Block b) {
         if (b == null || b.getType() != org.bukkit.Material.REDSTONE_LAMP) return false;
         if (lights.size() >= 5) return false;

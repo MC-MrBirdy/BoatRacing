@@ -44,9 +44,9 @@ public class SelectionManager {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             BoatRacingPlugin plugin = BoatRacingPlugin.getInstance();
-            String wandName = plugin != null ? plugin.msg().get("setup.wand-name") : "&6BoatRacing Selection Tool";
-            String loreLeft = plugin != null ? plugin.msg().get("setup.wand-lore-left") : "&eLeft-click: &fmark Corner A";
-            String loreRight = plugin != null ? plugin.msg().get("setup.wand-lore-right") : "&eRight-click: &fmark Corner B";
+            String wandName = resolveWandMessage(plugin, "setup.wand-name", "setup.usage.wand-name", "&6BoatRacing Selection Tool");
+            String loreLeft = resolveWandMessage(plugin, "setup.wand-lore-left", "setup.usage.wand-lore-left", "&eLeft-click: &fmark Corner A");
+            String loreRight = resolveWandMessage(plugin, "setup.wand-lore-right", "setup.usage.wand-lore-right", "&eRight-click: &fmark Corner B");
             Component name = Text.item(wandName);
         java.util.List<String> loreLines = java.util.Arrays.asList(
             loreLeft,
@@ -64,6 +64,18 @@ public class SelectionManager {
         ItemStack wand = createWand();
         java.util.Map<Integer, ItemStack> left = p.getInventory().addItem(wand);
         if (!left.isEmpty()) p.getWorld().dropItemNaturally(p.getLocation(), wand);
+    }
+
+    private static String resolveWandMessage(BoatRacingPlugin plugin, String primaryKey, String fallbackKey, String hardDefault) {
+        if (plugin == null) return hardDefault;
+
+        String value = plugin.msg().get(primaryKey);
+        if (!primaryKey.equals(value)) return value;
+
+        String fallback = plugin.msg().get(fallbackKey);
+        if (!fallbackKey.equals(fallback)) return fallback;
+
+        return hardDefault;
     }
 
     public static void clear(Player p) { selections.remove(p.getUniqueId()); }

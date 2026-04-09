@@ -18,7 +18,7 @@
 
 An F1‒style ice boat racing plugin for Bukkit/Spigot (compatible with Paper/Purpur) with a clean, vanilla‒like GUI. Manage teams, configure tracks with the built‒in BoatRacing selection tool, run timed races with checkpoints, pit area penalties, and a guided setup wizard.
 
-> Status: Public release (1.1.5)
+> Status: Public release (1.1.6)
 
 <a id="snapshot-261-warning"></a>
 > [!WARNING]
@@ -40,6 +40,50 @@ An F1‒style ice boat racing plugin for Bukkit/Spigot (compatible with Paper/Pu
 See the changelog in [CHANGELOG.md](https://github.com/Jaie55/BoatRacing/blob/main/CHANGELOG.md).
 
 This is how we test the plugin to validate its behavior after each update: see the QA checklist in [CHECKLIST.md](CHECKLIST.md)
+
+<details>
+<summary><strong>What's New (1.1.6)</strong></summary>
+
+Admin Race GUI workflow, track-session sync, and localization consistency release:
+
+Added:
+- Checkpoint editor inside Admin Race GUI with paginated list and click actions: add from selection, replace, remove, move up, and move down.
+- Mandatory pit stop controls in Admin Race GUI: quick-set buttons (`0/1/2`) and custom value via anvil input.
+- Built-in setup selection visualizer with particles for wand selections, including performance controls in `config.yml` (`setup.selection-visualizer.*`).
+- Explicit lap-scoped track placeholders for comparative panels (track + laps), without depending on the currently active lap configuration:
+	- `%boatracing_track_best_player_laps_<track>_<laps>%`
+	- `%boatracing_track_best_time_laps_<track>_<laps>%`
+	- `%boatracing_track_best_time_ms_laps_<track>_<laps>%`
+	- `%boatracing_track_top_1|2|3_player_laps_<track>_<laps>%`
+	- `%boatracing_track_top_1|2|3_time_laps_<track>_<laps>%`
+	- `%boatracing_track_top_1|2|3_time_ms_laps_<track>_<laps>%`
+- Stats placeholders now also support track-scoped and lap-scoped best race/lap contexts:
+	- Viewer: `%boatracing_player_best_race_track_<track>%`, `%boatracing_player_best_lap_track_<track>%`, `%boatracing_player_best_race_laps_<track>_<laps>%`, `%boatracing_player_best_lap_laps_<track>_<laps>%`
+	- Top: `%boatracing_top_player_best_race_name_track_<track>%`, `%boatracing_top_player_best_lap_name_track_<track>%`, `%boatracing_top_player_best_race_name_laps_<track>_<laps>%`, `%boatracing_top_player_best_lap_name_laps_<track>_<laps>%`
+
+Changed:
+- Admin Race GUI race/setup actions now resolve and operate on the active track session instead of relying on a single shared runtime manager.
+- Track setup overrides changed from Admin Race GUI (laps/pitstops/checkpoints) now persist through track config writes in the same GUI flow.
+- Setup commands `/boatracing setup setlaps <n>` and `/boatracing setup setpitstops <n>` now synchronize the currently selected track session in memory when that session already exists.
+- Setup command docs now explicitly state that these overrides apply immediately (no restart/reload required).
+- Track record storage and placeholders are now lap-aware (`bestTimesByLaps`), so 2-lap bests no longer overwrite or display as 3-lap bests (and vice versa) in `%boatracing_track_best_*%`, `%boatracing_track_top_*%`, and `%boatracing_player_track_best%`.
+- Selection visualizer rendering now distributes particle budget across all box edges and culls by selection-box distance, improving shape consistency on large selections.
+
+Fixed:
+- `RaceManager` now reloads track data when applying race settings, so `race open <track>` always uses the latest saved `tracks/<track>.yml -> racing.*` overrides even for pre-existing sessions.
+- Fixed mismatch where `/boatracing setup setlaps <n>` could confirm one value while `/boatracing race open <track>` still opened registration with an older lap count until restart.
+- Fixed equivalent stale-value behavior for per-track `mandatory-pitstops` after `/boatracing setup setpitstops <n>`.
+- Setup post-creation editing is now less destructive: you can remove a single start slot/light by index and clear finish/default pit without recreating the whole track setup.
+- Removed hardcoded Admin Race GUI user-facing strings and migrated new checkpoint/pitstop/editor texts to message keys.
+- Completed localization coverage for the new `gui.race.*` keys across all bundled language files (`messages_*.yml`).
+- Stats tab-complete now avoids unsafe offline-name reads during `/boatracing stats <player>` suggestions, preventing repeated Paper 1.21 DataConverter console errors (`Failed to convert json to nbt` / `MalformedJsonException`) on malformed legacy playerdata.
+- Fixed setup wand display regression where some servers showed raw message keys (`setup.wand-name`, `setup.wand-lore-left`, `setup.wand-lore-right`) instead of localized text.
+- Fixed intermittent wireframe edge truncation in the selection visualizer when particle limits were reached.
+
+Docs:
+- README, CHANGELOG, and CHECKLIST now include 1.1.6 release and QA coverage for checkpoint editor + pitstops GUI controls and setup override sync.
+
+</details>
 
 <details>
 <summary><strong>What's New (1.1.5)</strong></summary>
@@ -382,14 +426,18 @@ Setup commands:
 - `/boatracing setup wand` gives the selection wand.
 - `/boatracing setup addstart` adds your current position as a start slot.
 - `/boatracing setup clearstarts` removes all start slots.
+- `/boatracing setup removestart <slot>` removes one start slot by number (1-based).
 - `/boatracing setup setfinish` saves the current selection as the finish region.
+- `/boatracing setup clearfinish` removes the finish region.
 - `/boatracing setup setpit [team]` saves the current selection as the default pit or a team-specific pit.
+- `/boatracing setup clearpit` removes the default pit region.
 - `/boatracing setup addcheckpoint` appends a checkpoint in order.
 - `/boatracing setup clearcheckpoints` removes all checkpoints.
 - `/boatracing setup addlight` adds the Redstone Lamp you are looking at as a start light.
+- `/boatracing setup removelight <index>` removes one start light by number (1-based).
 - `/boatracing setup clearlights` removes all start lights.
-- `/boatracing setup setlaps <n>` saves the lap count for the active track.
-- `/boatracing setup setpitstops <n>` saves mandatory pit stops for the active track.
+- `/boatracing setup setlaps <n>` saves the lap count for the active track and applies it immediately (no restart/reload required).
+- `/boatracing setup setpitstops <n>` saves mandatory pit stops for the active track and applies them immediately (no restart/reload required).
 - `/boatracing setup setlobby` stores your current location as the registration lobby and enables it.
 - `/boatracing setup setpos <player> <slot|auto>` binds a player to a custom start slot or clears the binding with `auto`.
 - `/boatracing setup clearpos <player>` removes a custom start slot binding.
@@ -720,7 +768,11 @@ Resolution rules:
 |---|---|---|---|
 | `%boatracing_player_track_best%` / `%boatracing_player_track_best_ms%` | Viewer best time on the current track | `Track PB: 0:59.443` | Viewer context |
 | `%boatracing_player_best_race%` / `%boatracing_player_best_race_ms%` | Viewer best race overall | `Best race: 1:40.010` | Viewer context |
+| `%boatracing_player_best_race_track_<track>%` / `%boatracing_player_best_race_ms_track_<track>%` | Viewer best race for a specific track token | `%boatracing_player_best_race_track_harbor%` -> `1:40.010` | Viewer context |
+| `%boatracing_player_best_race_laps_<track>_<laps>%` / `%boatracing_player_best_race_ms_laps_<track>_<laps>%` | Viewer best race for a specific track token and lap count | `%boatracing_player_best_race_laps_harbor_3%` -> `1:40.010` | Viewer context |
 | `%boatracing_player_best_lap%` / `%boatracing_player_best_lap_ms%` | Viewer best lap overall | `Best lap: 0:28.911` | Viewer context |
+| `%boatracing_player_best_lap_track_<track>%` / `%boatracing_player_best_lap_ms_track_<track>%` | Viewer best lap for a specific track token | `%boatracing_player_best_lap_track_harbor%` -> `0:28.911` | Viewer context |
+| `%boatracing_player_best_lap_laps_<track>_<laps>%` / `%boatracing_player_best_lap_ms_laps_<track>_<laps>%` | Viewer best lap for a specific track token and lap count context | `%boatracing_player_best_lap_laps_harbor_3%` -> `0:29.102` | Viewer context |
 | `%boatracing_player_wins%` / `%boatracing_player_team_wins%` | Viewer wins and viewer team wins | `Wins: 12` / `Team wins: 18` | Viewer context |
 
 ### Category: Global and Top Stats
@@ -730,14 +782,20 @@ Resolution rules:
 | `%boatracing_teams_count%` / `%boatracing_teams_list%` | Total number of teams and the team list | `Teams: 4` / `Teams: Sharks, Rockets, Drift, Wave` | Same for every viewer |
 | `%boatracing_track_name%` / `%boatracing_track_best_player%` / `%boatracing_track_best_time%` | Current track name and its best record | `Track: harbor` / `Track record: jaie55 - 0:58.772` | Same for every viewer |
 | `%boatracing_track_best_player_<track>%` / `%boatracing_track_best_time_<track>%` / `%boatracing_track_best_time_ms_<track>%` | Best record for a specific track token | `%boatracing_track_best_time_harbor%` -> `0:58.772` / `%boatracing_track_best_player_harbor%` -> `jaie55` | Same for every viewer |
+| `%boatracing_track_best_player_laps_<track>_<laps>%` / `%boatracing_track_best_time_laps_<track>_<laps>%` / `%boatracing_track_best_time_ms_laps_<track>_<laps>%` | Best record for a specific track token and lap count | `%boatracing_track_best_time_laps_harbor_2%` -> `0:39.221` / `%boatracing_track_best_time_laps_harbor_3%` -> `0:58.772` | Same for every viewer |
 | `%boatracing_track_top_1_player_<track>%` / `%boatracing_track_top_1_time_<track>%` / `%boatracing_track_top_1_time_ms_<track>%` | Track top 1 holder and time | `%boatracing_track_top_1_player_harbor%` -> `jaie55` / `%boatracing_track_top_1_time_harbor%` -> `0:58.772` | Same for every viewer |
 | `%boatracing_track_top_2_player_<track>%` / `%boatracing_track_top_2_time_<track>%` / `%boatracing_track_top_2_time_ms_<track>%` | Track top 2 holder and time | `%boatracing_track_top_2_player_harbor%` -> `KiluGod` / `%boatracing_track_top_2_time_harbor%` -> `1:00.120` | Same for every viewer |
 | `%boatracing_track_top_3_player_<track>%` / `%boatracing_track_top_3_time_<track>%` / `%boatracing_track_top_3_time_ms_<track>%` | Track top 3 holder and time | `%boatracing_track_top_3_player_harbor%` -> `RacerX` / `%boatracing_track_top_3_time_harbor%` -> `1:01.004` | Same for every viewer |
+| `%boatracing_track_top_1_player_laps_<track>_<laps>%` / `%boatracing_track_top_1_time_laps_<track>_<laps>%` / `%boatracing_track_top_1_time_ms_laps_<track>_<laps>%` | Track top 1 for a specific lap count (same pattern for `top_2` and `top_3`) | `%boatracing_track_top_1_time_laps_harbor_3%` -> `0:58.772` / `%boatracing_track_top_2_time_laps_harbor_3%` -> `1:00.120` | Same for every viewer |
 | `%boatracing_track_practice_running_<track>%` / `%boatracing_track_practicerunning_<track>%` | Practice-running state for a specific track token | `%boatracing_track_practice_running_harbor%` -> `true` | Same for every viewer |
 | `%boatracing_top_player_wins_name%` / `%boatracing_top_player_wins%` | Player with most wins | `Top wins: jaie55 (29)` | Same for every viewer |
 | `%boatracing_top_team_wins_name%` / `%boatracing_top_team_wins%` | Team with most wins | `Top team: Sharks (77)` | Same for every viewer |
 | `%boatracing_top_player_best_race_name%` / `%boatracing_top_player_best_race%` | Best race holder and time | `Best race: KiluGod - 1:38.404` | Same for every viewer |
+| `%boatracing_top_player_best_race_name_track_<track>%` / `%boatracing_top_player_best_race_track_<track>%` | Best race holder and time for a specific track token | `%boatracing_top_player_best_race_name_track_harbor%` -> `KiluGod` | Same for every viewer |
+| `%boatracing_top_player_best_race_name_laps_<track>_<laps>%` / `%boatracing_top_player_best_race_laps_<track>_<laps>%` | Best race holder and time for a specific track token and lap count | `%boatracing_top_player_best_race_laps_harbor_3%` -> `1:38.404` | Same for every viewer |
 | `%boatracing_top_player_best_lap_name%` / `%boatracing_top_player_best_lap%` | Best lap holder and time | `Best lap: jaie55 - 0:27.950` | Same for every viewer |
+| `%boatracing_top_player_best_lap_name_track_<track>%` / `%boatracing_top_player_best_lap_track_<track>%` | Best lap holder and time for a specific track token | `%boatracing_top_player_best_lap_name_track_harbor%` -> `jaie55` | Same for every viewer |
+| `%boatracing_top_player_best_lap_name_laps_<track>_<laps>%` / `%boatracing_top_player_best_lap_laps_<track>_<laps>%` | Best lap holder and time for a specific track token and lap count context | `%boatracing_top_player_best_lap_laps_harbor_3%` -> `0:27.950` | Same for every viewer |
 
 ### Category: Team Lookup by Name
 Use `<team>` with the team token. Team names with spaces can be addressed using underscores in docs/examples.

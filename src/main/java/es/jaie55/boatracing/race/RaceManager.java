@@ -145,6 +145,9 @@ public class RaceManager {
      * Called on construction and whenever a track is loaded before a race.
      */
     public void loadSettings() {
+        // Race sessions keep their own TrackConfig instance; reload from disk so setup edits
+        // made through another TrackConfig instance are visible immediately.
+        track.load();
         org.bukkit.configuration.file.FileConfiguration cfg = plugin.getConfig();
         this.totalLaps = track.getRacingInt("laps", cfg.getInt("racing.laps", 3));
         this.pitPenaltySeconds = track.getRacingDouble("pit-penalty-seconds", cfg.getDouble("racing.pit-penalty-seconds", 5.0));
@@ -407,7 +410,7 @@ public class RaceManager {
                 st.progressOrder = nextProgressOrder();
                 st.wasInCheckpoint = false;
                 if (plugin.getStatsManager() != null && lapDurationMs > 0) {
-                    plugin.getStatsManager().updatePlayerBestLap(p.getUniqueId(), lapDurationMs);
+                    plugin.getStatsManager().updatePlayerBestLap(p.getUniqueId(), lapDurationMs, getTrackName(), totalLaps);
                 }
                 PracticeStatsManager.PracticeUpdate lapPracticeUpdate = null;
                 if (practiceMode) {
@@ -421,9 +424,9 @@ public class RaceManager {
                     st.finished = true;
                     long now = System.currentTimeMillis();
                     st.finishTime = (now - startTime) + st.penaltyMillis;
-                    try { track.updateBestTime(p.getUniqueId(), st.finishTime); } catch (Exception ignored) { var inst = BoatRacingPlugin.getInstance(); if (inst != null) inst.getLogger().finer("updateBestTime failed: " + ignored.getMessage()); }
+                    try { track.updateBestTime(p.getUniqueId(), st.finishTime, totalLaps); } catch (Exception ignored) { var inst = BoatRacingPlugin.getInstance(); if (inst != null) inst.getLogger().finer("updateBestTime failed: " + ignored.getMessage()); }
                     if (plugin.getStatsManager() != null) {
-                        plugin.getStatsManager().updatePlayerBestRace(p.getUniqueId(), st.finishTime);
+                        plugin.getStatsManager().updatePlayerBestRace(p.getUniqueId(), st.finishTime, getTrackName(), totalLaps);
                     }
                     if (practiceMode) {
                         PracticeStatsManager practiceStats = plugin.getPracticeStatsManager();
@@ -1178,8 +1181,10 @@ public class RaceManager {
         java.util.List<Player> unassignedPlayers = new java.util.ArrayList<>();
         for (UUID id : unassigned) { Player p = Bukkit.getPlayer(id); if (p != null) unassignedPlayers.add(p); }
         unassignedPlayers.sort((a,b) -> {
-            Long ta = track.getBestTime(a.getUniqueId());
-            Long tb = track.getBestTime(b.getUniqueId());
+            Long ta = track.getBestTime(a.getUniqueId(), totalLaps);
+            Long tb = track.getBestTime(b.getUniqueId(), totalLaps);
+            if (ta == null) ta = track.getBestTime(a.getUniqueId());
+            if (tb == null) tb = track.getBestTime(b.getUniqueId());
             if (ta == null && tb == null) return 0;
             if (ta == null) return 1; // a after b
             if (tb == null) return -1; // a before b

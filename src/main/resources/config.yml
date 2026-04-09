@@ -12,6 +12,22 @@ player-actions:
   # Allow non-admin players to open, start, force-start and stop races.
   # Can also be overridden per-track in tracks/<name>.yml under racing.allow-player-start
   allow-player-race-start: false
+setup:
+  selection-visualizer:
+    enabled: true
+    # If true, particles are shown only while holding the BoatRacing wand.
+    show-only-with-wand: true
+    # Refresh interval in ticks (20 ticks = 1 second).
+    period-ticks: 10
+    # Any Bukkit particle that does not require extra data.
+    particle: "END_ROD"
+    # Distance between points in the wireframe (blocks).
+    spacing: 1.0
+    # Safety cap per player per refresh to protect TPS in huge selections.
+    max-particles-per-player: 250
+    # Skip rendering only if the player is too far from the selection box.
+    # Once inside this range, the full wireframe is rendered.
+    view-distance: 96.0
 bstats:
   enabled: true
   # Anonymous usage metrics via bStats. Set to false to opt-out.

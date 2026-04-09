@@ -2,6 +2,8 @@ package es.jaie55.boatracing.ui;
 
 import es.jaie55.boatracing.BoatRacingPlugin;
 import es.jaie55.boatracing.race.RaceManager;
+import es.jaie55.boatracing.track.Region;
+import es.jaie55.boatracing.track.SelectionUtils;
 import es.jaie55.boatracing.track.TrackConfig;
 import es.jaie55.boatracing.util.SchedulerCompat;
 import es.jaie55.boatracing.util.Text;
@@ -28,6 +30,9 @@ public class AdminRaceGUI implements Listener {
     private final BoatRacingPlugin plugin;
     private final org.bukkit.NamespacedKey KEY_ACTION;
     private final org.bukkit.NamespacedKey KEY_PLAYER_ID;
+    private final java.util.Set<java.util.UUID> checkpointsView = new java.util.HashSet<>();
+    private final java.util.Map<java.util.UUID, Integer> checkpointPageByPlayer = new java.util.HashMap<>();
+    private static final int CHECKPOINT_PAGE_SIZE = 45;
 
     public AdminRaceGUI(BoatRacingPlugin plugin) {
         this.plugin = plugin;
@@ -37,16 +42,25 @@ public class AdminRaceGUI implements Listener {
     }
 
     public void open(Player p) {
+        openMain(p);
+    }
+
+    private void openMain(Player p) {
+        checkpointsView.remove(p.getUniqueId());
+        checkpointPageByPlayer.remove(p.getUniqueId());
         Inventory inv = Bukkit.createInventory(null, 54, TITLE);
         fill(inv, pane(Material.GRAY_STAINED_GLASS_PANE));
 
-        RaceManager rm = plugin.getRaceManager();
-        TrackConfig tc = plugin.getTrackConfig();
-        String cur = (plugin.getTrackLibrary() != null && plugin.getTrackLibrary().getCurrent() != null) ? plugin.getTrackLibrary().getCurrent() : plugin.msg().get("general.unsaved");
+        String trackKey = activeTrackKey();
+        RaceManager rm = resolveRaceManager(trackKey);
+        if (rm == null) rm = plugin.getRaceManager();
+        TrackConfig tc = rm.getTrack();
+        String cur = activeTrackLabel(trackKey);
         boolean running = rm.isRunning();
         boolean registering = rm.isRegistering();
         int regs = rm.getRegistered().size();
         int laps = rm.getTotalLaps();
+        int pitstops = rm.getMandatoryPitstops();
         int participants = running ? rm.getParticipants().size() : 0;
         boolean ready = tc.isReady();
 
@@ -58,10 +72,16 @@ public class AdminRaceGUI implements Listener {
                 plugin.msg().get("gui.race.lore-track", "track", cur),
                 plugin.msg().get(ready ? "gui.race.lore-ready-yes" : "gui.race.lore-ready-no"),
                 plugin.msg().get("gui.race.lore-laps", "laps", laps),
+                plugin.msg().get("race.status.mandatory-pitstops", "count", pitstops),
+                plugin.msg().get("race.status.checkpoints", "count", tc.getCheckpoints().size()),
                 plugin.msg().get(registering ? "gui.race.lore-registration-open" : "gui.race.lore-registration-closed", "count", regs),
                 plugin.msg().get(running ? "gui.race.lore-running-yes" : "gui.race.lore-running-no", "count", participants)
             )
         ));
+
+        // Fast navigation/edit actions
+        inv.setItem(7, action(Material.COMPASS, plugin.msg().get("gui.race.btn-checkpoints-editor"), "cp:editor"));
+        inv.setItem(8, action(Material.MAP, plugin.msg().get("gui.admin.btn-manage-tracks"), "tracks"));
 
         // Controls row
         inv.setItem(18, action(Material.LIME_DYE, plugin.msg().get("gui.race.btn-open-reg"), "open"));
@@ -79,6 +99,12 @@ public class AdminRaceGUI implements Listener {
         inv.setItem(29, action(Material.PAPER, plugin.msg().get("gui.race.btn-set-laps", "n", "5"), "laps:5"));
         inv.setItem(30, action(Material.PAPER, plugin.msg().get("gui.race.btn-set-laps", "n", "10"), "laps:10"));
         inv.setItem(31, action(Material.NAME_TAG, plugin.msg().get("gui.race.btn-custom-laps"), "laps:custom"));
+
+        // Pit stop quick set
+        inv.setItem(32, action(Material.HOPPER, plugin.msg().get("gui.race.btn-set-pitstops", "n", "0"), "pitstops:0"));
+        inv.setItem(33, action(Material.HOPPER, plugin.msg().get("gui.race.btn-set-pitstops", "n", "1"), "pitstops:1"));
+        inv.setItem(34, action(Material.HOPPER, plugin.msg().get("gui.race.btn-set-pitstops", "n", "2"), "pitstops:2"));
+        inv.setItem(35, action(Material.NAME_TAG, plugin.msg().get("gui.race.btn-custom-pitstops"), "pitstops:custom"));
 
         // Track edit shortcuts (some are command tips)
         inv.setItem(36, action(Material.WHITE_CONCRETE, plugin.msg().get("gui.race.btn-add-start-tip"), "tip:addstart"));
@@ -132,16 +158,33 @@ public class AdminRaceGUI implements Listener {
         String action = im.getPersistentDataContainer().get(KEY_ACTION, org.bukkit.persistence.PersistentDataType.STRING);
         if (action == null) {
             // Back button
-            if (it.getType() == Material.ARROW) { plugin.getAdminGUI().openMain(p); return; }
+            if (it.getType() == Material.ARROW) {
+                if (checkpointsView.contains(p.getUniqueId())) {
+                    openMain(p);
+                } else {
+                    plugin.getAdminGUI().openMain(p);
+                }
+                return;
+            }
             return;
         }
+
+        if (checkpointsView.contains(p.getUniqueId())) {
+            handleCheckpointAction(p, e, action);
+            return;
+        }
+
         // Some actions open an Anvil (e.g., custom laps). If we refresh immediately,
         // it will close the Anvil. Skip auto-refresh for those.
-        boolean skipRefresh = "laps:custom".equals(action) || "vote:setup".equals(action);
+        boolean skipRefresh = "laps:custom".equals(action)
+                || "pitstops:custom".equals(action)
+                || "vote:setup".equals(action)
+                || "cp:editor".equals(action)
+                || "tracks".equals(action);
         handle(p, action, im);
         if (!skipRefresh) {
             // Refresh UI after action
-            SchedulerCompat.runNow(plugin, () -> open(p));
+            SchedulerCompat.runNow(plugin, () -> openMain(p));
         }
     }
 
@@ -152,10 +195,20 @@ public class AdminRaceGUI implements Listener {
     }
 
     private void handle(Player p, String action, ItemMeta im) {
-        RaceManager rm = plugin.getRaceManager();
-        TrackConfig tc = plugin.getTrackConfig();
+        String trackKey = activeTrackKey();
+        RaceManager rm = resolveRaceManager(trackKey);
+        if (rm == null) {
+            p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.track-not-found", "track", trackKey)));
+            return;
+        }
+        TrackConfig tc = rm.getTrack();
         switch (action) {
             case "open" -> {
+                if (!tc.isReady()) {
+                    p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.track-not-ready", "requirements", plugin.formatTrackRequirements(tc.missingRequirements()))));
+                    return;
+                }
+                rm.loadSettings();
                 int laps = rm.getTotalLaps();
                 boolean ok = rm.openRegistration(laps, null);
                 if (!ok) p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.cannot-open-registration")));
@@ -190,14 +243,31 @@ public class AdminRaceGUI implements Listener {
                 if (plugin.getVoteGUI() != null) plugin.getVoteGUI().openAdminSetup(p);
             }
             case "vote:close" -> plugin.closeMapVoteFromAdmin(p);
+            case "tracks" -> plugin.getTracksGUI().open(p);
+            case "cp:editor" -> openCheckpointEditor(p, 0);
             default -> {
                 if (action.startsWith("laps:")) {
                     String v = action.substring("laps:".length());
-                    if ("custom".equals(v)) { openAnvilLaps(p); return; }
+                    if ("custom".equals(v)) { openAnvilLaps(p, trackKey); return; }
                     try {
+                        if (!ensureTrackEditable(p, trackKey, rm)) return;
                         int n = Math.max(1, Integer.parseInt(v));
                         rm.setTotalLaps(n);
-                        p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("admin.laps-set", "laps", n)));
+                        tc.setRacingOverride("laps", n);
+                        p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("setup.laps-set", "laps", n, "track_info", trackInfoSuffix(trackKey))));
+                        p.playSound(p.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.9f, 1.2f);
+                    } catch (NumberFormatException ignored) {}
+                    return;
+                }
+                if (action.startsWith("pitstops:")) {
+                    String v = action.substring("pitstops:".length());
+                    if ("custom".equals(v)) { openAnvilPitstops(p, trackKey); return; }
+                    try {
+                        if (!ensureTrackEditable(p, trackKey, rm)) return;
+                        int n = Math.max(0, Integer.parseInt(v));
+                        rm.setMandatoryPitstops(n);
+                        tc.setRacingOverride("mandatory-pitstops", n);
+                        p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("setup.pitstops-set", "count", n, "track_info", trackInfoSuffix(trackKey))));
                         p.playSound(p.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.9f, 1.2f);
                     } catch (NumberFormatException ignored) {}
                     return;
@@ -213,6 +283,7 @@ public class AdminRaceGUI implements Listener {
                     return;
                 }
                 if (action.startsWith("clear:")) {
+                    if (!ensureTrackEditable(p, trackKey, rm)) return;
                     switch (action.substring(6)) {
                         case "starts" -> { tc.clearStarts(); p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("setup.starts-cleared"))); }
                         case "finish" -> { tc.setFinish(null); p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("setup.finish-cleared"))); }
@@ -233,7 +304,206 @@ public class AdminRaceGUI implements Listener {
         }
     }
 
-    private void openAnvilLaps(Player p) {
+    private void handleCheckpointAction(Player p, InventoryClickEvent e, String action) {
+        String trackKey = activeTrackKey();
+        RaceManager rm = resolveRaceManager(trackKey);
+        if (rm == null) {
+            p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.track-not-found", "track", trackKey)));
+            openMain(p);
+            return;
+        }
+        TrackConfig tc = rm.getTrack();
+
+        if ("cp:refresh".equals(action)) { openCheckpointEditor(p, checkpointPageByPlayer.getOrDefault(p.getUniqueId(), 0)); return; }
+        if ("cp:prev".equals(action)) { openCheckpointEditor(p, checkpointPageByPlayer.getOrDefault(p.getUniqueId(), 0) - 1); return; }
+        if ("cp:next".equals(action)) { openCheckpointEditor(p, checkpointPageByPlayer.getOrDefault(p.getUniqueId(), 0) + 1); return; }
+        if ("tracks".equals(action)) { plugin.getTracksGUI().open(p); return; }
+
+        if ("cp:add".equals(action)) {
+            if (!ensureTrackEditable(p, trackKey, rm)) return;
+            Region r = selectedRegion(p);
+            if (r == null) return;
+            tc.addCheckpoint(r);
+            p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("setup.checkpoint-added", "num", tc.getCheckpoints().size(), "box", fmtBox(r.getBox()))));
+            int addedIndex = Math.max(0, tc.getCheckpoints().size() - 1);
+            openCheckpointEditor(p, addedIndex / CHECKPOINT_PAGE_SIZE);
+            return;
+        }
+
+        if ("cp:clear".equals(action)) {
+            if (!ensureTrackEditable(p, trackKey, rm)) return;
+            tc.clearCheckpoints();
+            p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("setup.checkpoints-cleared")));
+            openCheckpointEditor(p, 0);
+            return;
+        }
+
+        if (!action.startsWith("cp:item:")) return;
+        int idx;
+        try {
+            idx = Integer.parseInt(action.substring("cp:item:".length()));
+        } catch (NumberFormatException ex) {
+            openCheckpointEditor(p, checkpointPageByPlayer.getOrDefault(p.getUniqueId(), 0));
+            return;
+        }
+
+        if (idx < 0 || idx >= tc.getCheckpoints().size()) {
+            openCheckpointEditor(p, checkpointPageByPlayer.getOrDefault(p.getUniqueId(), 0));
+            return;
+        }
+
+        if (!ensureTrackEditable(p, trackKey, rm)) return;
+
+        org.bukkit.event.inventory.ClickType click = e.getClick();
+        if (click == org.bukkit.event.inventory.ClickType.SHIFT_LEFT) {
+            if (!tc.moveCheckpoint(idx, idx - 1)) {
+                p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("gui.race.cp-action-move-up-fail")));
+            } else {
+                p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("gui.race.cp-action-moved-up", "index", String.valueOf(idx + 1))));
+            }
+            openCheckpointEditor(p, checkpointPageByPlayer.getOrDefault(p.getUniqueId(), 0));
+            return;
+        }
+
+        if (click == org.bukkit.event.inventory.ClickType.SHIFT_RIGHT) {
+            if (!tc.moveCheckpoint(idx, idx + 1)) {
+                p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("gui.race.cp-action-move-down-fail")));
+            } else {
+                p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("gui.race.cp-action-moved-down", "index", String.valueOf(idx + 1))));
+            }
+            openCheckpointEditor(p, checkpointPageByPlayer.getOrDefault(p.getUniqueId(), 0));
+            return;
+        }
+
+        if (click == org.bukkit.event.inventory.ClickType.RIGHT) {
+            if (!tc.removeCheckpointAt(idx)) {
+                p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("gui.race.cp-action-remove-fail")));
+            } else {
+                p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("gui.race.cp-action-removed", "index", String.valueOf(idx + 1))));
+            }
+            openCheckpointEditor(p, checkpointPageByPlayer.getOrDefault(p.getUniqueId(), 0));
+            return;
+        }
+
+        Region selected = selectedRegion(p);
+        if (selected == null) return;
+        if (!tc.replaceCheckpoint(idx, selected)) {
+            p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("gui.race.cp-action-replace-fail")));
+        } else {
+            p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("gui.race.cp-action-replaced", "index", String.valueOf(idx + 1))));
+        }
+        openCheckpointEditor(p, checkpointPageByPlayer.getOrDefault(p.getUniqueId(), 0));
+    }
+
+    private void openCheckpointEditor(Player p, int requestedPage) {
+        String trackKey = activeTrackKey();
+        RaceManager rm = resolveRaceManager(trackKey);
+        if (rm == null) {
+            p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.track-not-found", "track", trackKey)));
+            openMain(p);
+            return;
+        }
+        TrackConfig tc = rm.getTrack();
+        checkpointsView.add(p.getUniqueId());
+
+        Inventory inv = Bukkit.createInventory(null, 54, TITLE);
+        fill(inv, pane(Material.GRAY_STAINED_GLASS_PANE));
+
+        int total = tc.getCheckpoints().size();
+        int maxPage = total <= 0 ? 0 : (total - 1) / CHECKPOINT_PAGE_SIZE;
+        int page = Math.max(0, Math.min(requestedPage, maxPage));
+        checkpointPageByPlayer.put(p.getUniqueId(), page);
+
+        int start = page * CHECKPOINT_PAGE_SIZE;
+        int end = Math.min(total, start + CHECKPOINT_PAGE_SIZE);
+        for (int i = start; i < end; i++) {
+            Region r = tc.getCheckpoints().get(i);
+            int slot = i - start;
+            inv.setItem(slot, actionWithLore(
+                    Material.LIGHT_BLUE_STAINED_GLASS,
+                    plugin.msg().get("gui.race.cp-item-title", "index", String.valueOf(i + 1)),
+                    "cp:item:" + i,
+                    java.util.Arrays.asList(
+                        plugin.msg().get("gui.race.cp-item-lore-region", "region", summarizeRegion(r)),
+                        plugin.msg().get("gui.race.cp-item-lore-replace"),
+                        plugin.msg().get("gui.race.cp-item-lore-remove"),
+                        plugin.msg().get("gui.race.cp-item-lore-move-up"),
+                        plugin.msg().get("gui.race.cp-item-lore-move-down")
+                    )
+            ));
+        }
+
+        inv.setItem(45, button(Material.ARROW, Text.item(plugin.msg().get("gui.common.back"))));
+        inv.setItem(46, action(Material.LIGHT_GRAY_CONCRETE, plugin.msg().get("gui.race.btn-add-checkpoint-tip"), "cp:add"));
+        inv.setItem(47, action(Material.TNT, plugin.msg().get("gui.race.btn-clear-checkpoints"), "cp:clear"));
+        inv.setItem(48, action(Material.MAP, plugin.msg().get("gui.admin.btn-manage-tracks"), "tracks"));
+        inv.setItem(49, action(Material.CLOCK, plugin.msg().get("gui.admin.btn-refresh"), "cp:refresh"));
+        inv.setItem(50, card(
+                Material.NETHER_STAR,
+                Text.item(plugin.msg().get("gui.race.btn-status")),
+                java.util.Arrays.asList(
+                        plugin.msg().get("gui.race.lore-track", "track", activeTrackLabel(trackKey)),
+                        plugin.msg().get("race.status.checkpoints", "count", total),
+                plugin.msg().get("gui.race.cp-page", "current", String.valueOf(page + 1), "total", String.valueOf(maxPage + 1))
+                )
+        ));
+        inv.setItem(52, action(Material.ARROW, plugin.msg().get("gui.race.btn-prev-page"), "cp:prev"));
+        inv.setItem(53, action(Material.ARROW, plugin.msg().get("gui.race.btn-next-page"), "cp:next"));
+
+        p.openInventory(inv);
+        p.playSound(p.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.8f, 1.2f);
+    }
+
+    private String activeTrackKey() {
+        if (plugin.getTrackLibrary() == null) return "unsaved";
+        String current = plugin.getTrackLibrary().getCurrent();
+        return (current == null || current.isBlank()) ? "unsaved" : current;
+    }
+
+    private String activeTrackLabel(String trackKey) {
+        if (trackKey == null || trackKey.isBlank() || "unsaved".equalsIgnoreCase(trackKey)) {
+            return plugin.msg().get("general.unsaved");
+        }
+        return trackKey;
+    }
+
+    private RaceManager resolveRaceManager(String trackKey) {
+        RaceManager rm = plugin.getOrCreateRaceManagerByTrack(trackKey);
+        if (rm != null) return rm;
+        if ("unsaved".equalsIgnoreCase(trackKey)) return plugin.getRaceManager();
+        return null;
+    }
+
+    private String trackInfoSuffix(String trackKey) {
+        if (trackKey == null || trackKey.isBlank() || "unsaved".equalsIgnoreCase(trackKey)) return "";
+        return plugin.msg().get("setup.track-info", "track", trackKey);
+    }
+
+    private boolean ensureTrackEditable(Player p, String trackKey, RaceManager rm) {
+        if (rm != null && (rm.isRunning() || rm.isCountdownActive())) {
+            p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.already-running")));
+            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+            return false;
+        }
+        if (rm != null && rm.isRegistering()) {
+            p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.cannot-open-registration")));
+            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+            return false;
+        }
+        return true;
+    }
+
+    private Region selectedRegion(Player p) {
+        var sel = SelectionUtils.getSelectionDetailed(p);
+        if (sel == null) {
+            p.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("setup.no-selection")));
+            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+            return null;
+        }
+        return new Region(sel.worldName, sel.box);
+    }
+
+    private void openAnvilLaps(Player p, String trackKey) {
         ItemStack left = new ItemStack(Material.PAPER);
         ItemMeta lm = left.getItemMeta(); if (lm != null) { lm.displayName(Component.empty()); left.setItemMeta(lm); }
         new AnvilGUI.Builder()
@@ -246,15 +516,72 @@ public class AdminRaceGUI implements Listener {
                 String input = state.getText() == null ? "" : state.getText().trim();
                 try {
                     int n = Math.max(1, Integer.parseInt(input));
-                    plugin.getRaceManager().setTotalLaps(n);
-                    state.getPlayer().sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("admin.laps-set", "laps", n)));
-                    return java.util.Arrays.asList(AnvilGUI.ResponseAction.close(), AnvilGUI.ResponseAction.run(() -> open(state.getPlayer())));
+                    Player sp = state.getPlayer();
+                    RaceManager rm = resolveRaceManager(trackKey);
+                    if (rm == null) {
+                        sp.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.track-not-found", "track", trackKey)));
+                        return java.util.Arrays.asList(AnvilGUI.ResponseAction.close(), AnvilGUI.ResponseAction.run(() -> openMain(sp)));
+                    }
+                    if (!ensureTrackEditable(sp, trackKey, rm)) {
+                        return java.util.Arrays.asList(AnvilGUI.ResponseAction.close(), AnvilGUI.ResponseAction.run(() -> openMain(sp)));
+                    }
+                    TrackConfig tc = rm.getTrack();
+                    rm.setTotalLaps(n);
+                    tc.setRacingOverride("laps", n);
+                    sp.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("setup.laps-set", "laps", n, "track_info", trackInfoSuffix(trackKey))));
+                    return java.util.Arrays.asList(AnvilGUI.ResponseAction.close(), AnvilGUI.ResponseAction.run(() -> openMain(sp)));
                 } catch (NumberFormatException ex) {
                     return java.util.Arrays.asList(AnvilGUI.ResponseAction.replaceInputText(input));
                 }
             })
             .plugin(plugin)
             .open(p);
+    }
+
+    private void openAnvilPitstops(Player p, String trackKey) {
+        ItemStack left = new ItemStack(Material.PAPER);
+        ItemMeta lm = left.getItemMeta(); if (lm != null) { lm.displayName(Component.empty()); left.setItemMeta(lm); }
+        new AnvilGUI.Builder()
+                .title(plugin.msg().get("gui.race.anvil-set-pitstops"))
+                .text(" ")
+                .itemLeft(left)
+                .interactableSlots()
+                .onClick((slot, state) -> {
+                    if (slot != AnvilGUI.Slot.OUTPUT) return java.util.Collections.emptyList();
+                    String input = state.getText() == null ? "" : state.getText().trim();
+                    try {
+                        int n = Math.max(0, Integer.parseInt(input));
+                        Player sp = state.getPlayer();
+                        RaceManager rm = resolveRaceManager(trackKey);
+                        if (rm == null) {
+                            sp.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("race.track-not-found", "track", trackKey)));
+                            return java.util.Arrays.asList(AnvilGUI.ResponseAction.close(), AnvilGUI.ResponseAction.run(() -> openMain(sp)));
+                        }
+                        if (!ensureTrackEditable(sp, trackKey, rm)) {
+                            return java.util.Arrays.asList(AnvilGUI.ResponseAction.close(), AnvilGUI.ResponseAction.run(() -> openMain(sp)));
+                        }
+                        TrackConfig tc = rm.getTrack();
+                        rm.setMandatoryPitstops(n);
+                        tc.setRacingOverride("mandatory-pitstops", n);
+                        sp.sendMessage(Text.colorize(plugin.pref() + plugin.msg().get("setup.pitstops-set", "count", n, "track_info", trackInfoSuffix(trackKey))));
+                        return java.util.Arrays.asList(AnvilGUI.ResponseAction.close(), AnvilGUI.ResponseAction.run(() -> openMain(sp)));
+                    } catch (NumberFormatException ex) {
+                        return java.util.Arrays.asList(AnvilGUI.ResponseAction.replaceInputText(input));
+                    }
+                })
+                .plugin(plugin)
+                .open(p);
+    }
+
+    private String summarizeRegion(Region r) {
+        if (r == null || r.getBox() == null) return plugin.msg().get("gui.race.cp-invalid-region");
+        return r.getWorldName() + " " + fmtBox(r.getBox());
+    }
+
+    private static String fmtBox(org.bukkit.util.BoundingBox b) {
+        return String.format(java.util.Locale.ROOT, "(%d,%d,%d) -> (%d,%d,%d)",
+                (int) Math.floor(b.getMinX()), (int) Math.floor(b.getMinY()), (int) Math.floor(b.getMinZ()),
+                (int) Math.floor(b.getMaxX()), (int) Math.floor(b.getMaxY()), (int) Math.floor(b.getMaxZ()));
     }
 
     // Helpers

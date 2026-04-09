@@ -85,6 +85,111 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         if (key.equals("top_player_best_race")) return plugin.getStatsManager().topPlayerByBestRace().map(e -> formatMillis(e.getValue())).orElse("-");
         if (key.equals("top_player_best_lap_name")) return plugin.getStatsManager().topPlayerByBestLap().map(e -> safePlayerName(e.getKey())).orElse("-");
         if (key.equals("top_player_best_lap")) return plugin.getStatsManager().topPlayerByBestLap().map(e -> formatMillis(e.getValue())).orElse("-");
+        if (key.startsWith("top_player_best_race_name_track_")) {
+            String trackToken = params.substring("top_player_best_race_name_track_".length());
+            String normalized = normalizeTrackToken(trackToken);
+            if (normalized.isEmpty()) return "-";
+            return plugin.getStatsManager().topPlayerByBestRace(normalized).map(e -> safePlayerName(e.getKey())).orElse("-");
+        }
+        if (key.startsWith("top_player_best_race_track_")) {
+            String trackToken = params.substring("top_player_best_race_track_".length());
+            String normalized = normalizeTrackToken(trackToken);
+            if (normalized.isEmpty()) return "-";
+            return plugin.getStatsManager().topPlayerByBestRace(normalized).map(e -> formatMillis(e.getValue())).orElse("-");
+        }
+        if (key.startsWith("top_player_best_lap_name_track_")) {
+            String trackToken = params.substring("top_player_best_lap_name_track_".length());
+            String normalized = normalizeTrackToken(trackToken);
+            if (normalized.isEmpty()) return "-";
+            return plugin.getStatsManager().topPlayerByBestLap(normalized).map(e -> safePlayerName(e.getKey())).orElse("-");
+        }
+        if (key.startsWith("top_player_best_lap_track_")) {
+            String trackToken = params.substring("top_player_best_lap_track_".length());
+            String normalized = normalizeTrackToken(trackToken);
+            if (normalized.isEmpty()) return "-";
+            return plugin.getStatsManager().topPlayerByBestLap(normalized).map(e -> formatMillis(e.getValue())).orElse("-");
+        }
+        if (key.startsWith("top_player_best_race_name_laps_")) {
+            String suffix = params.substring("top_player_best_race_name_laps_".length());
+            TrackLapsToken parsed = parseTrackLapsToken(suffix);
+            if (parsed == null) return "-";
+            return plugin.getStatsManager().topPlayerByBestRace(parsed.trackToken(), parsed.laps()).map(e -> safePlayerName(e.getKey())).orElse("-");
+        }
+        if (key.startsWith("top_player_best_race_laps_")) {
+            String suffix = params.substring("top_player_best_race_laps_".length());
+            TrackLapsToken parsed = parseTrackLapsToken(suffix);
+            if (parsed == null) return "-";
+            return plugin.getStatsManager().topPlayerByBestRace(parsed.trackToken(), parsed.laps()).map(e -> formatMillis(e.getValue())).orElse("-");
+        }
+        if (key.startsWith("top_player_best_lap_name_laps_")) {
+            String suffix = params.substring("top_player_best_lap_name_laps_".length());
+            TrackLapsToken parsed = parseTrackLapsToken(suffix);
+            if (parsed == null) return "-";
+            return plugin.getStatsManager().topPlayerByBestLap(parsed.trackToken(), parsed.laps()).map(e -> safePlayerName(e.getKey())).orElse("-");
+        }
+        if (key.startsWith("top_player_best_lap_laps_")) {
+            String suffix = params.substring("top_player_best_lap_laps_".length());
+            TrackLapsToken parsed = parseTrackLapsToken(suffix);
+            if (parsed == null) return "-";
+            return plugin.getStatsManager().topPlayerByBestLap(parsed.trackToken(), parsed.laps()).map(e -> formatMillis(e.getValue())).orElse("-");
+        }
+
+        if (key.startsWith("player_best_race_ms_laps_")) {
+            String suffix = params.substring("player_best_race_ms_laps_".length());
+            TrackLapsToken parsed = parseTrackLapsToken(suffix);
+            if (parsed == null || player == null) return "-1";
+            Long v = plugin.getStatsManager().getPlayerBestRace(player.getUniqueId(), parsed.trackToken(), parsed.laps());
+            return v == null ? "-1" : String.valueOf(v);
+        }
+        if (key.startsWith("player_best_race_laps_")) {
+            String suffix = params.substring("player_best_race_laps_".length());
+            TrackLapsToken parsed = parseTrackLapsToken(suffix);
+            if (parsed == null || player == null) return "-";
+            Long v = plugin.getStatsManager().getPlayerBestRace(player.getUniqueId(), parsed.trackToken(), parsed.laps());
+            return v == null ? "-" : formatMillis(v);
+        }
+        if (key.startsWith("player_best_lap_ms_laps_")) {
+            String suffix = params.substring("player_best_lap_ms_laps_".length());
+            TrackLapsToken parsed = parseTrackLapsToken(suffix);
+            if (parsed == null || player == null) return "-1";
+            Long v = plugin.getStatsManager().getPlayerBestLap(player.getUniqueId(), parsed.trackToken(), parsed.laps());
+            return v == null ? "-1" : String.valueOf(v);
+        }
+        if (key.startsWith("player_best_lap_laps_")) {
+            String suffix = params.substring("player_best_lap_laps_".length());
+            TrackLapsToken parsed = parseTrackLapsToken(suffix);
+            if (parsed == null || player == null) return "-";
+            Long v = plugin.getStatsManager().getPlayerBestLap(player.getUniqueId(), parsed.trackToken(), parsed.laps());
+            return v == null ? "-" : formatMillis(v);
+        }
+        if (key.startsWith("player_best_race_ms_track_")) {
+            String trackToken = params.substring("player_best_race_ms_track_".length());
+            String normalized = normalizeTrackToken(trackToken);
+            if (normalized.isEmpty() || player == null) return "-1";
+            Long v = plugin.getStatsManager().getPlayerBestRace(player.getUniqueId(), normalized);
+            return v == null ? "-1" : String.valueOf(v);
+        }
+        if (key.startsWith("player_best_race_track_")) {
+            String trackToken = params.substring("player_best_race_track_".length());
+            String normalized = normalizeTrackToken(trackToken);
+            if (normalized.isEmpty() || player == null) return "-";
+            Long v = plugin.getStatsManager().getPlayerBestRace(player.getUniqueId(), normalized);
+            return v == null ? "-" : formatMillis(v);
+        }
+        if (key.startsWith("player_best_lap_ms_track_")) {
+            String trackToken = params.substring("player_best_lap_ms_track_".length());
+            String normalized = normalizeTrackToken(trackToken);
+            if (normalized.isEmpty() || player == null) return "-1";
+            Long v = plugin.getStatsManager().getPlayerBestLap(player.getUniqueId(), normalized);
+            return v == null ? "-1" : String.valueOf(v);
+        }
+        if (key.startsWith("player_best_lap_track_")) {
+            String trackToken = params.substring("player_best_lap_track_".length());
+            String normalized = normalizeTrackToken(trackToken);
+            if (normalized.isEmpty() || player == null) return "-";
+            Long v = plugin.getStatsManager().getPlayerBestLap(player.getUniqueId(), normalized);
+            return v == null ? "-" : formatMillis(v);
+        }
 
         if (key.equals("track_name")) {
             String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
@@ -92,6 +197,24 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         }
         if (key.equals("track_best_player")) return trackBestEntryForTrackToken(currentTrackToken()).map(e -> safePlayerName(e.getKey())).orElse("-");
         if (key.equals("track_best_time")) return trackBestEntryForTrackToken(currentTrackToken()).map(e -> formatMillis(e.getValue())).orElse("-");
+        if (key.startsWith("track_best_player_laps_")) {
+            String suffix = params.substring("track_best_player_laps_".length());
+            TrackLapsToken parsed = parseTrackLapsToken(suffix);
+            if (parsed == null) return "-";
+            return trackBestEntryForTrackTokenAndLaps(parsed.trackToken(), parsed.laps()).map(e -> safePlayerName(e.getKey())).orElse("-");
+        }
+        if (key.startsWith("track_best_time_ms_laps_")) {
+            String suffix = params.substring("track_best_time_ms_laps_".length());
+            TrackLapsToken parsed = parseTrackLapsToken(suffix);
+            if (parsed == null) return "-1";
+            return trackBestEntryForTrackTokenAndLaps(parsed.trackToken(), parsed.laps()).map(e -> String.valueOf(e.getValue())).orElse("-1");
+        }
+        if (key.startsWith("track_best_time_laps_")) {
+            String suffix = params.substring("track_best_time_laps_".length());
+            TrackLapsToken parsed = parseTrackLapsToken(suffix);
+            if (parsed == null) return "-";
+            return trackBestEntryForTrackTokenAndLaps(parsed.trackToken(), parsed.laps()).map(e -> formatMillis(e.getValue())).orElse("-");
+        }
         if (key.startsWith("track_best_player_")) {
             String token = params.substring("track_best_player_".length());
             return trackBestEntryForTrackToken(token).map(e -> safePlayerName(e.getKey())).orElse("-");
@@ -189,13 +312,13 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         if (key.startsWith("player_track_best_")) {
             UUID target = resolvePlayerId(params.substring("player_track_best_".length()));
             if (target == null) return "-";
-            Long v = plugin.getTrackConfig().getBestTime(target);
+            Long v = plugin.getTrackConfig().getBestTime(target, currentTrackLaps());
             return v == null ? "-" : formatMillis(v);
         }
         if (key.startsWith("player_track_best_ms_")) {
             UUID target = resolvePlayerId(params.substring("player_track_best_ms_".length()));
             if (target == null) return "-1";
-            Long v = plugin.getTrackConfig().getBestTime(target);
+            Long v = plugin.getTrackConfig().getBestTime(target, currentTrackLaps());
             return v == null ? "-1" : String.valueOf(v);
         }
         if (key.startsWith("player_team_name_")) {
@@ -313,11 +436,11 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         }
 
         if (key.equals("player_track_best")) {
-            Long v = plugin.getTrackConfig().getBestTime(pid);
+            Long v = plugin.getTrackConfig().getBestTime(pid, currentTrackLaps());
             return v == null ? "-" : formatMillis(v);
         }
         if (key.equals("player_track_best_ms")) {
-            Long v = plugin.getTrackConfig().getBestTime(pid);
+            Long v = plugin.getTrackConfig().getBestTime(pid, currentTrackLaps());
             return v == null ? "-1" : String.valueOf(v);
         }
 
@@ -465,12 +588,50 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         return value.trim().replace(' ', '_');
     }
 
-    private Optional<Map.Entry<UUID, Long>> trackBestEntry() {
-        return trackBestEntry(plugin.getTrackConfig());
+    private int globalDefaultLaps() {
+        return Math.max(1, plugin.getConfig().getInt("racing.laps", 3));
+    }
+
+    private int currentTrackLaps() {
+        String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
+
+        if (current == null || current.isBlank()) {
+            RaceManager unsavedSession = plugin.getRaceManager();
+            if (unsavedSession != null) return Math.max(1, unsavedSession.getTotalLaps());
+            return plugin.getTrackConfig().getConfiguredLaps(globalDefaultLaps());
+        }
+
+        RaceManager currentSession = plugin.getRaceManagerByTrack(current);
+        if (currentSession != null) return Math.max(1, currentSession.getTotalLaps());
+        return plugin.getTrackConfig().getConfiguredLaps(globalDefaultLaps());
     }
 
     private String resolveTrackTopPlaceholder(String key, String params) {
         for (int rank = 1; rank <= 3; rank++) {
+            String playerLapsPrefix = "track_top_" + rank + "_player_laps_";
+            if (key.startsWith(playerLapsPrefix)) {
+                String suffix = params.substring(playerLapsPrefix.length());
+                TrackLapsToken parsed = parseTrackLapsToken(suffix);
+                if (parsed == null) return "-";
+                return trackTopEntryForTrackTokenAndLaps(parsed.trackToken(), parsed.laps(), rank).map(e -> safePlayerName(e.getKey())).orElse("-");
+            }
+
+            String timeMsLapsPrefix = "track_top_" + rank + "_time_ms_laps_";
+            if (key.startsWith(timeMsLapsPrefix)) {
+                String suffix = params.substring(timeMsLapsPrefix.length());
+                TrackLapsToken parsed = parseTrackLapsToken(suffix);
+                if (parsed == null) return "-1";
+                return trackTopEntryForTrackTokenAndLaps(parsed.trackToken(), parsed.laps(), rank).map(e -> String.valueOf(e.getValue())).orElse("-1");
+            }
+
+            String timeLapsPrefix = "track_top_" + rank + "_time_laps_";
+            if (key.startsWith(timeLapsPrefix)) {
+                String suffix = params.substring(timeLapsPrefix.length());
+                TrackLapsToken parsed = parseTrackLapsToken(suffix);
+                if (parsed == null) return "-";
+                return trackTopEntryForTrackTokenAndLaps(parsed.trackToken(), parsed.laps(), rank).map(e -> formatMillis(e.getValue())).orElse("-");
+            }
+
             String playerPrefix = "track_top_" + rank + "_player_";
             if (key.startsWith(playerPrefix)) {
                 String token = params.substring(playerPrefix.length());
@@ -497,16 +658,16 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         if (requested.isEmpty()) return Optional.empty();
 
         if (requested.equalsIgnoreCase("unsaved")) {
-            return trackBestEntry(plugin.getTrackConfig());
+            return trackBestEntry(plugin.getTrackConfig(), currentTrackLaps());
         }
 
         RaceManager rm = plugin.getRaceManagerByTrack(requested);
-        if (rm != null) return trackBestEntry(rm.getTrack());
+        if (rm != null) return trackBestEntry(rm.getTrack(), rm.getTotalLaps());
 
         if (plugin.getTrackLibrary() == null || !plugin.getTrackLibrary().exists(requested)) {
             String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
             if (current != null && normalizeTrackToken(current).equalsIgnoreCase(requested)) {
-                return trackBestEntry(plugin.getTrackConfig());
+                return trackBestEntry(plugin.getTrackConfig(), currentTrackLaps());
             }
             return Optional.empty();
         }
@@ -521,9 +682,45 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         return loaded;
     }
 
+    private Optional<Map.Entry<UUID, Long>> trackBestEntryForTrackTokenAndLaps(String token, int laps) {
+        String requested = normalizeTrackToken(token);
+        int normalizedLaps = Math.max(1, laps);
+        if (requested.isEmpty()) return Optional.empty();
+
+        if (requested.equalsIgnoreCase("unsaved")) {
+            return trackBestEntry(plugin.getTrackConfig(), normalizedLaps);
+        }
+
+        RaceManager rm = plugin.getRaceManagerByTrack(requested);
+        if (rm != null) return trackBestEntry(rm.getTrack(), normalizedLaps);
+
+        if (plugin.getTrackLibrary() == null || !plugin.getTrackLibrary().exists(requested)) {
+            String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
+            if (current != null && normalizeTrackToken(current).equalsIgnoreCase(requested)) {
+                return trackBestEntry(plugin.getTrackConfig(), normalizedLaps);
+            }
+            return Optional.empty();
+        }
+
+        String cacheKey = requested.toLowerCase(Locale.ROOT) + "::laps::" + normalizedLaps;
+        long now = System.currentTimeMillis();
+        CachedTrackBest cached = trackFileBestCache.get(cacheKey);
+        if (cached != null && (now - cached.loadedAtMs) <= TRACK_FILE_BEST_CACHE_TTL_MS) return cached.value;
+
+        Optional<Map.Entry<UUID, Long>> loaded = loadTrackBestEntryFromFile(requested, normalizedLaps);
+        trackFileBestCache.put(cacheKey, new CachedTrackBest(now, loaded));
+        return loaded;
+    }
+
     private Optional<Map.Entry<UUID, Long>> trackTopEntryForTrackToken(String token, int rank) {
         if (rank < 1) return Optional.empty();
         List<Map.Entry<UUID, Long>> top = trackTopEntriesForTrackToken(token, rank);
+        return top.size() >= rank ? Optional.of(top.get(rank - 1)) : Optional.empty();
+    }
+
+    private Optional<Map.Entry<UUID, Long>> trackTopEntryForTrackTokenAndLaps(String token, int laps, int rank) {
+        if (rank < 1) return Optional.empty();
+        List<Map.Entry<UUID, Long>> top = trackTopEntriesForTrackTokenAndLaps(token, laps, rank);
         return top.size() >= rank ? Optional.of(top.get(rank - 1)) : Optional.empty();
     }
 
@@ -533,16 +730,16 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         if (requested.isEmpty()) return Collections.emptyList();
 
         if (requested.equalsIgnoreCase("unsaved")) {
-            return trackTopEntries(plugin.getTrackConfig(), limit);
+            return trackTopEntries(plugin.getTrackConfig(), currentTrackLaps(), limit);
         }
 
         RaceManager rm = plugin.getRaceManagerByTrack(requested);
-        if (rm != null) return trackTopEntries(rm.getTrack(), limit);
+        if (rm != null) return trackTopEntries(rm.getTrack(), rm.getTotalLaps(), limit);
 
         if (plugin.getTrackLibrary() == null || !plugin.getTrackLibrary().exists(requested)) {
             String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
             if (current != null && normalizeTrackToken(current).equalsIgnoreCase(requested)) {
-                return trackTopEntries(plugin.getTrackConfig(), limit);
+                return trackTopEntries(plugin.getTrackConfig(), currentTrackLaps(), limit);
             }
             return Collections.emptyList();
         }
@@ -559,6 +756,39 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         return loaded.stream().limit(limit).collect(Collectors.toList());
     }
 
+    private List<Map.Entry<UUID, Long>> trackTopEntriesForTrackTokenAndLaps(String token, int laps, int limit) {
+        if (limit <= 0) return Collections.emptyList();
+        String requested = normalizeTrackToken(token);
+        int normalizedLaps = Math.max(1, laps);
+        if (requested.isEmpty()) return Collections.emptyList();
+
+        if (requested.equalsIgnoreCase("unsaved")) {
+            return trackTopEntries(plugin.getTrackConfig(), normalizedLaps, limit);
+        }
+
+        RaceManager rm = plugin.getRaceManagerByTrack(requested);
+        if (rm != null) return trackTopEntries(rm.getTrack(), normalizedLaps, limit);
+
+        if (plugin.getTrackLibrary() == null || !plugin.getTrackLibrary().exists(requested)) {
+            String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
+            if (current != null && normalizeTrackToken(current).equalsIgnoreCase(requested)) {
+                return trackTopEntries(plugin.getTrackConfig(), normalizedLaps, limit);
+            }
+            return Collections.emptyList();
+        }
+
+        String cacheKey = requested.toLowerCase(Locale.ROOT) + "::laps::" + normalizedLaps;
+        long now = System.currentTimeMillis();
+        CachedTrackTop cached = trackFileTopCache.get(cacheKey);
+        if (cached != null && (now - cached.loadedAtMs) <= TRACK_FILE_BEST_CACHE_TTL_MS) {
+            return cached.value.stream().limit(limit).collect(Collectors.toList());
+        }
+
+        List<Map.Entry<UUID, Long>> loaded = loadTrackTopEntriesFromFile(requested, normalizedLaps, 3);
+        trackFileTopCache.put(cacheKey, new CachedTrackTop(now, loaded));
+        return loaded.stream().limit(limit).collect(Collectors.toList());
+    }
+
     private String currentTrackToken() {
         String current = plugin.getTrackLibrary() != null ? plugin.getTrackLibrary().getCurrent() : null;
         return current != null ? current : "unsaved";
@@ -570,7 +800,17 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
 
         es.jaie55.boatracing.track.TrackConfig cfg = new es.jaie55.boatracing.track.TrackConfig(plugin.getDataFolder());
         cfg.setBackingFile(trackFile);
-        return trackBestEntry(cfg);
+        int laps = cfg.getConfiguredLaps(globalDefaultLaps());
+        return trackBestEntry(cfg, laps);
+    }
+
+    private Optional<Map.Entry<UUID, Long>> loadTrackBestEntryFromFile(String trackToken, int laps) {
+        java.io.File trackFile = new java.io.File(new java.io.File(plugin.getDataFolder(), "tracks"), trackToken + ".yml");
+        if (!trackFile.exists()) return Optional.empty();
+
+        es.jaie55.boatracing.track.TrackConfig cfg = new es.jaie55.boatracing.track.TrackConfig(plugin.getDataFolder());
+        cfg.setBackingFile(trackFile);
+        return trackBestEntry(cfg, Math.max(1, laps));
     }
 
     private List<Map.Entry<UUID, Long>> loadTrackTopEntriesFromFile(String trackToken, int limit) {
@@ -579,12 +819,22 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
 
         es.jaie55.boatracing.track.TrackConfig cfg = new es.jaie55.boatracing.track.TrackConfig(plugin.getDataFolder());
         cfg.setBackingFile(trackFile);
-        return trackTopEntries(cfg, limit);
+        int laps = cfg.getConfiguredLaps(globalDefaultLaps());
+        return trackTopEntries(cfg, laps, limit);
     }
 
-    private Optional<Map.Entry<UUID, Long>> trackBestEntry(es.jaie55.boatracing.track.TrackConfig trackConfig) {
+    private List<Map.Entry<UUID, Long>> loadTrackTopEntriesFromFile(String trackToken, int laps, int limit) {
+        java.io.File trackFile = new java.io.File(new java.io.File(plugin.getDataFolder(), "tracks"), trackToken + ".yml");
+        if (!trackFile.exists()) return Collections.emptyList();
+
+        es.jaie55.boatracing.track.TrackConfig cfg = new es.jaie55.boatracing.track.TrackConfig(plugin.getDataFolder());
+        cfg.setBackingFile(trackFile);
+        return trackTopEntries(cfg, Math.max(1, laps), limit);
+    }
+
+    private Optional<Map.Entry<UUID, Long>> trackBestEntry(es.jaie55.boatracing.track.TrackConfig trackConfig, int laps) {
         if (trackConfig == null) return Optional.empty();
-        return trackConfig.getBestTimes().entrySet().stream()
+        return trackConfig.getBestTimesForLaps(Math.max(1, laps)).entrySet().stream()
                 .map(e -> {
                     try {
                         return Map.entry(UUID.fromString(e.getKey()), e.getValue());
@@ -596,9 +846,9 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
                 .min(Map.Entry.comparingByValue());
     }
 
-    private List<Map.Entry<UUID, Long>> trackTopEntries(es.jaie55.boatracing.track.TrackConfig trackConfig, int limit) {
+    private List<Map.Entry<UUID, Long>> trackTopEntries(es.jaie55.boatracing.track.TrackConfig trackConfig, int laps, int limit) {
         if (trackConfig == null || limit <= 0) return Collections.emptyList();
-        return trackConfig.getBestTimes().entrySet().stream()
+        return trackConfig.getBestTimesForLaps(Math.max(1, laps)).entrySet().stream()
                 .map(e -> {
                     try {
                         return Map.entry(UUID.fromString(e.getKey()), e.getValue());
@@ -611,6 +861,8 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
                 .limit(limit)
                 .collect(Collectors.toList());
     }
+
+    private record TrackLapsToken(String trackToken, int laps) {}
 
     private record TrackSectionToken(String trackToken, int sectionIndex) {}
 
@@ -635,6 +887,21 @@ public class BoatRacingPlaceholderExpansion extends PlaceholderExpansion {
         String trackToken = raw.substring(0, split);
         if (trackToken.isBlank()) return null;
         return new TrackSectionToken(normalizeTrackToken(trackToken), section);
+    }
+
+    private TrackLapsToken parseTrackLapsToken(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+
+        String trimmed = raw.trim();
+        int split = trimmed.lastIndexOf('_');
+        if (split <= 0 || split >= trimmed.length() - 1) return null;
+
+        Integer laps = parsePositiveInt(trimmed.substring(split + 1));
+        if (laps == null) return null;
+
+        String trackToken = trimmed.substring(0, split);
+        if (trackToken.isBlank()) return null;
+        return new TrackLapsToken(normalizeTrackToken(trackToken), laps);
     }
 
     private static String formatPracticeMillis(Long millis, boolean rawMillis) {

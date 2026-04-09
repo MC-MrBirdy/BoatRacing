@@ -6,6 +6,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.Locale;
 
 /**
  * Persistent aggregate stats used by placeholders and holograms.
@@ -20,6 +21,10 @@ public class StatsManager {
     private final Map<UUID, Map<Integer, Integer>> playerPositions = new HashMap<>();
     private final Map<UUID, Long> playerBestRace = new HashMap<>();
     private final Map<UUID, Long> playerBestLap = new HashMap<>();
+    private final Map<String, Map<UUID, Long>> playerBestRaceByTrack = new HashMap<>();
+    private final Map<String, Map<UUID, Long>> playerBestLapByTrack = new HashMap<>();
+    private final Map<String, Map<Integer, Map<UUID, Long>>> playerBestRaceByTrackLaps = new HashMap<>();
+    private final Map<String, Map<Integer, Map<UUID, Long>>> playerBestLapByTrackLaps = new HashMap<>();
 
     public StatsManager(es.jaie55.boatracing.BoatRacingPlugin plugin) {
         this.plugin = plugin;
@@ -35,12 +40,20 @@ public class StatsManager {
         playerPositions.clear();
         playerBestRace.clear();
         playerBestLap.clear();
+        playerBestRaceByTrack.clear();
+        playerBestLapByTrack.clear();
+        playerBestRaceByTrackLaps.clear();
+        playerBestLapByTrackLaps.clear();
 
         readIntMap("playerWins", playerWins);
         readIntMap("teamWins", teamWins);
         readPositionMap("playerPositions", playerPositions);
         readLongMap("playerBestRace", playerBestRace);
         readLongMap("playerBestLap", playerBestLap);
+        readTrackLongMap("playerBestRaceByTrack", playerBestRaceByTrack);
+        readTrackLongMap("playerBestLapByTrack", playerBestLapByTrack);
+        readTrackLapLongMap("playerBestRaceByTrackLaps", playerBestRaceByTrackLaps);
+        readTrackLapLongMap("playerBestLapByTrackLaps", playerBestLapByTrackLaps);
 
         // Legacy compatibility: if no explicit position map exists yet,
         // bootstrap 1st-place counts from historical player wins.
@@ -62,6 +75,10 @@ public class StatsManager {
         writePositionMap("playerPositions", playerPositions);
         writeLongMap("playerBestRace", playerBestRace);
         writeLongMap("playerBestLap", playerBestLap);
+        writeTrackLongMap("playerBestRaceByTrack", playerBestRaceByTrack);
+        writeTrackLongMap("playerBestLapByTrack", playerBestLapByTrack);
+        writeTrackLapLongMap("playerBestRaceByTrackLaps", playerBestRaceByTrackLaps);
+        writeTrackLapLongMap("playerBestLapByTrackLaps", playerBestLapByTrackLaps);
         try {
             cfg.save(file);
         } catch (IOException e) {
@@ -123,8 +140,40 @@ public class StatsManager {
         return playerBestRace.get(playerId);
     }
 
+    public Long getPlayerBestRace(UUID playerId, String trackToken) {
+        if (playerId == null || trackToken == null || trackToken.isBlank()) return null;
+        Map<UUID, Long> perTrack = playerBestRaceByTrack.get(normalizeTrackToken(trackToken));
+        if (perTrack == null) return null;
+        return perTrack.get(playerId);
+    }
+
+    public Long getPlayerBestRace(UUID playerId, String trackToken, int laps) {
+        if (playerId == null || trackToken == null || trackToken.isBlank()) return null;
+        Map<Integer, Map<UUID, Long>> perTrack = playerBestRaceByTrackLaps.get(normalizeTrackToken(trackToken));
+        if (perTrack == null) return null;
+        Map<UUID, Long> perTrackLap = perTrack.get(Math.max(1, laps));
+        if (perTrackLap == null) return null;
+        return perTrackLap.get(playerId);
+    }
+
     public Long getPlayerBestLap(UUID playerId) {
         return playerBestLap.get(playerId);
+    }
+
+    public Long getPlayerBestLap(UUID playerId, String trackToken) {
+        if (playerId == null || trackToken == null || trackToken.isBlank()) return null;
+        Map<UUID, Long> perTrack = playerBestLapByTrack.get(normalizeTrackToken(trackToken));
+        if (perTrack == null) return null;
+        return perTrack.get(playerId);
+    }
+
+    public Long getPlayerBestLap(UUID playerId, String trackToken, int laps) {
+        if (playerId == null || trackToken == null || trackToken.isBlank()) return null;
+        Map<Integer, Map<UUID, Long>> perTrack = playerBestLapByTrackLaps.get(normalizeTrackToken(trackToken));
+        if (perTrack == null) return null;
+        Map<UUID, Long> perTrackLap = perTrack.get(Math.max(1, laps));
+        if (perTrackLap == null) return null;
+        return perTrackLap.get(playerId);
     }
 
     public void addPlayerWin(UUID playerId) {
@@ -148,6 +197,39 @@ public class StatsManager {
         }
     }
 
+    public void updatePlayerBestRace(UUID playerId, long millis, String trackToken, int laps) {
+        if (playerId == null || millis < 0) return;
+
+        boolean changed = false;
+        Long curGlobal = playerBestRace.get(playerId);
+        if (curGlobal == null || millis < curGlobal) {
+            playerBestRace.put(playerId, millis);
+            changed = true;
+        }
+
+        if (trackToken != null && !trackToken.isBlank()) {
+            String normalizedTrack = normalizeTrackToken(trackToken);
+
+            Map<UUID, Long> perTrack = playerBestRaceByTrack.computeIfAbsent(normalizedTrack, ignored -> new HashMap<>());
+            Long curTrack = perTrack.get(playerId);
+            if (curTrack == null || millis < curTrack) {
+                perTrack.put(playerId, millis);
+                changed = true;
+            }
+
+            int normalizedLaps = Math.max(1, laps);
+            Map<Integer, Map<UUID, Long>> perTrackLaps = playerBestRaceByTrackLaps.computeIfAbsent(normalizedTrack, ignored -> new HashMap<>());
+            Map<UUID, Long> perTrackLap = perTrackLaps.computeIfAbsent(normalizedLaps, ignored -> new HashMap<>());
+            Long curTrackLap = perTrackLap.get(playerId);
+            if (curTrackLap == null || millis < curTrackLap) {
+                perTrackLap.put(playerId, millis);
+                changed = true;
+            }
+        }
+
+        if (changed) save();
+    }
+
     public void updatePlayerBestLap(UUID playerId, long millis) {
         if (playerId == null || millis < 0) return;
         Long cur = playerBestLap.get(playerId);
@@ -155,6 +237,39 @@ public class StatsManager {
             playerBestLap.put(playerId, millis);
             save();
         }
+    }
+
+    public void updatePlayerBestLap(UUID playerId, long millis, String trackToken, int laps) {
+        if (playerId == null || millis < 0) return;
+
+        boolean changed = false;
+        Long curGlobal = playerBestLap.get(playerId);
+        if (curGlobal == null || millis < curGlobal) {
+            playerBestLap.put(playerId, millis);
+            changed = true;
+        }
+
+        if (trackToken != null && !trackToken.isBlank()) {
+            String normalizedTrack = normalizeTrackToken(trackToken);
+
+            Map<UUID, Long> perTrack = playerBestLapByTrack.computeIfAbsent(normalizedTrack, ignored -> new HashMap<>());
+            Long curTrack = perTrack.get(playerId);
+            if (curTrack == null || millis < curTrack) {
+                perTrack.put(playerId, millis);
+                changed = true;
+            }
+
+            int normalizedLaps = Math.max(1, laps);
+            Map<Integer, Map<UUID, Long>> perTrackLaps = playerBestLapByTrackLaps.computeIfAbsent(normalizedTrack, ignored -> new HashMap<>());
+            Map<UUID, Long> perTrackLap = perTrackLaps.computeIfAbsent(normalizedLaps, ignored -> new HashMap<>());
+            Long curTrackLap = perTrackLap.get(playerId);
+            if (curTrackLap == null || millis < curTrackLap) {
+                perTrackLap.put(playerId, millis);
+                changed = true;
+            }
+        }
+
+        if (changed) save();
     }
 
     public Optional<Map.Entry<UUID, Integer>> topPlayerByWins() {
@@ -169,8 +284,40 @@ public class StatsManager {
         return playerBestRace.entrySet().stream().min(Map.Entry.comparingByValue());
     }
 
+    public Optional<Map.Entry<UUID, Long>> topPlayerByBestRace(String trackToken) {
+        if (trackToken == null || trackToken.isBlank()) return Optional.empty();
+        Map<UUID, Long> perTrack = playerBestRaceByTrack.get(normalizeTrackToken(trackToken));
+        if (perTrack == null || perTrack.isEmpty()) return Optional.empty();
+        return perTrack.entrySet().stream().min(Map.Entry.comparingByValue());
+    }
+
+    public Optional<Map.Entry<UUID, Long>> topPlayerByBestRace(String trackToken, int laps) {
+        if (trackToken == null || trackToken.isBlank()) return Optional.empty();
+        Map<Integer, Map<UUID, Long>> perTrack = playerBestRaceByTrackLaps.get(normalizeTrackToken(trackToken));
+        if (perTrack == null || perTrack.isEmpty()) return Optional.empty();
+        Map<UUID, Long> perTrackLap = perTrack.get(Math.max(1, laps));
+        if (perTrackLap == null || perTrackLap.isEmpty()) return Optional.empty();
+        return perTrackLap.entrySet().stream().min(Map.Entry.comparingByValue());
+    }
+
     public Optional<Map.Entry<UUID, Long>> topPlayerByBestLap() {
         return playerBestLap.entrySet().stream().min(Map.Entry.comparingByValue());
+    }
+
+    public Optional<Map.Entry<UUID, Long>> topPlayerByBestLap(String trackToken) {
+        if (trackToken == null || trackToken.isBlank()) return Optional.empty();
+        Map<UUID, Long> perTrack = playerBestLapByTrack.get(normalizeTrackToken(trackToken));
+        if (perTrack == null || perTrack.isEmpty()) return Optional.empty();
+        return perTrack.entrySet().stream().min(Map.Entry.comparingByValue());
+    }
+
+    public Optional<Map.Entry<UUID, Long>> topPlayerByBestLap(String trackToken, int laps) {
+        if (trackToken == null || trackToken.isBlank()) return Optional.empty();
+        Map<Integer, Map<UUID, Long>> perTrack = playerBestLapByTrackLaps.get(normalizeTrackToken(trackToken));
+        if (perTrack == null || perTrack.isEmpty()) return Optional.empty();
+        Map<UUID, Long> perTrackLap = perTrack.get(Math.max(1, laps));
+        if (perTrackLap == null || perTrackLap.isEmpty()) return Optional.empty();
+        return perTrackLap.entrySet().stream().min(Map.Entry.comparingByValue());
     }
 
     private void ensureFile() {
@@ -207,6 +354,68 @@ public class StatsManager {
             } catch (IllegalArgumentException ignored) {
                 plugin.getLogger().finer("Ignoring invalid UUID in stats.yml at " + path + "." + key);
             }
+        }
+    }
+
+    private void readTrackLongMap(String path, Map<String, Map<UUID, Long>> out) {
+        ConfigurationSection root = cfg.getConfigurationSection(path);
+        if (root == null) return;
+
+        for (String trackKey : root.getKeys(false)) {
+            ConfigurationSection trackSec = root.getConfigurationSection(trackKey);
+            if (trackSec == null) continue;
+
+            Map<UUID, Long> perTrack = new HashMap<>();
+            for (String uuidKey : trackSec.getKeys(false)) {
+                try {
+                    UUID id = UUID.fromString(uuidKey);
+                    long value = trackSec.getLong(uuidKey, -1L);
+                    if (value >= 0L) perTrack.put(id, value);
+                } catch (IllegalArgumentException ignored) {
+                    plugin.getLogger().finer("Ignoring invalid UUID in stats.yml at " + path + "." + trackKey + "." + uuidKey);
+                }
+            }
+
+            if (!perTrack.isEmpty()) out.put(normalizeTrackToken(trackKey), perTrack);
+        }
+    }
+
+    private void readTrackLapLongMap(String path, Map<String, Map<Integer, Map<UUID, Long>>> out) {
+        ConfigurationSection root = cfg.getConfigurationSection(path);
+        if (root == null) return;
+
+        for (String trackKey : root.getKeys(false)) {
+            ConfigurationSection trackSec = root.getConfigurationSection(trackKey);
+            if (trackSec == null) continue;
+
+            Map<Integer, Map<UUID, Long>> perTrack = new HashMap<>();
+            for (String lapKey : trackSec.getKeys(false)) {
+                int laps;
+                try {
+                    laps = Integer.parseInt(lapKey);
+                } catch (NumberFormatException ignored) {
+                    continue;
+                }
+                if (laps < 1) continue;
+
+                ConfigurationSection lapSec = trackSec.getConfigurationSection(lapKey);
+                if (lapSec == null) continue;
+
+                Map<UUID, Long> perLap = new HashMap<>();
+                for (String uuidKey : lapSec.getKeys(false)) {
+                    try {
+                        UUID id = UUID.fromString(uuidKey);
+                        long value = lapSec.getLong(uuidKey, -1L);
+                        if (value >= 0L) perLap.put(id, value);
+                    } catch (IllegalArgumentException ignored) {
+                        plugin.getLogger().finer("Ignoring invalid UUID in stats.yml at " + path + "." + trackKey + "." + lapKey + "." + uuidKey);
+                    }
+                }
+
+                if (!perLap.isEmpty()) perTrack.put(laps, perLap);
+            }
+
+            if (!perTrack.isEmpty()) out.put(normalizeTrackToken(trackKey), perTrack);
         }
     }
 
@@ -254,6 +463,49 @@ public class StatsManager {
         for (Map.Entry<UUID, Long> e : in.entrySet()) {
             cfg.set(path + "." + e.getKey(), e.getValue());
         }
+    }
+
+    private void writeTrackLongMap(String path, Map<String, Map<UUID, Long>> in) {
+        cfg.set(path, null);
+        for (Map.Entry<String, Map<UUID, Long>> trackEntry : in.entrySet()) {
+            String trackToken = trackEntry.getKey();
+            Map<UUID, Long> perTrack = trackEntry.getValue();
+            if (trackToken == null || trackToken.isBlank() || perTrack == null || perTrack.isEmpty()) continue;
+
+            for (Map.Entry<UUID, Long> playerEntry : perTrack.entrySet()) {
+                UUID playerId = playerEntry.getKey();
+                Long millis = playerEntry.getValue();
+                if (playerId == null || millis == null || millis < 0L) continue;
+                cfg.set(path + "." + trackToken + "." + playerId, millis);
+            }
+        }
+    }
+
+    private void writeTrackLapLongMap(String path, Map<String, Map<Integer, Map<UUID, Long>>> in) {
+        cfg.set(path, null);
+        for (Map.Entry<String, Map<Integer, Map<UUID, Long>>> trackEntry : in.entrySet()) {
+            String trackToken = trackEntry.getKey();
+            Map<Integer, Map<UUID, Long>> perTrack = trackEntry.getValue();
+            if (trackToken == null || trackToken.isBlank() || perTrack == null || perTrack.isEmpty()) continue;
+
+            for (Map.Entry<Integer, Map<UUID, Long>> lapEntry : perTrack.entrySet()) {
+                Integer laps = lapEntry.getKey();
+                Map<UUID, Long> perLap = lapEntry.getValue();
+                if (laps == null || laps < 1 || perLap == null || perLap.isEmpty()) continue;
+
+                for (Map.Entry<UUID, Long> playerEntry : perLap.entrySet()) {
+                    UUID playerId = playerEntry.getKey();
+                    Long millis = playerEntry.getValue();
+                    if (playerId == null || millis == null || millis < 0L) continue;
+                    cfg.set(path + "." + trackToken + "." + laps + "." + playerId, millis);
+                }
+            }
+        }
+    }
+
+    private static String normalizeTrackToken(String token) {
+        if (token == null || token.isBlank()) return "unsaved";
+        return token.trim().replace(' ', '_').toLowerCase(Locale.ROOT);
     }
 
     private void writePositionMap(String path, Map<UUID, Map<Integer, Integer>> in) {

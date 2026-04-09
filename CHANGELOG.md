@@ -1,5 +1,47 @@
 ﻿# Changelog
 
+## 1.1.6 — 08/04/2026
+### Added
+- **Admin Race checkpoint editor UI**: added checkpoint management directly in the race admin inventory with paginated listing and in-place actions (add from selection, replace, remove, move up/down).
+- **Admin Race pitstop quick controls**: added mandatory pitstop quick-set actions (`0/1/2`) plus custom anvil input from the race admin inventory.
+- **Setup selection particle visualizer**: added built-in wand selection wireframe rendering using particles, configurable under `setup.selection-visualizer.*` (`enabled`, `period-ticks`, `particle`, `spacing`, `max-particles-per-player`, `view-distance`, `show-only-with-wand`).
+- **Explicit track+laps placeholders**: added lap-scoped variants for comparative panels: `%boatracing_track_best_player_laps_<track>_<laps>%`, `%boatracing_track_best_time_laps_<track>_<laps>%`, `%boatracing_track_best_time_ms_laps_<track>_<laps>%`, plus `%boatracing_track_top_1|2|3_player|time|time_ms_laps_<track>_<laps>%`.
+- **Stats placeholders by track and laps**: added best-race/best-lap variants for viewer and top contexts scoped by track and by track+laps (for example `%boatracing_player_best_race_laps_<track>_<laps>%` and `%boatracing_top_player_best_race_name_laps_<track>_<laps>%`).
+
+### Changed
+- **Track-scoped Admin Race actions**: race/setup operations in Admin Race GUI now resolve the active track session explicitly, so edits and status reflect the selected track context.
+- **GUI setup persistence path**: laps/pitstops/checkpoint edits issued from Admin Race GUI now write through track configuration overrides as part of the same action flow.
+- **Setup override synchronization**: `/boatracing setup setlaps <n>` and `/boatracing setup setpitstops <n>` now also update the active in-memory race session for the selected track when that session already exists.
+- **Setup command docs clarity**: README setup command descriptions now state that laps/pitstops overrides apply immediately without restart/reload.
+- **Lap-context track records/placeholders**: track bests are now stored and resolved per lap count (`bestTimesByLaps`), preventing 2-lap records from overriding 3-lap placeholders (and vice versa) across `%boatracing_track_best_*%`, `%boatracing_track_top_*%`, and `%boatracing_player_track_best%`.
+- **Selection visualizer edge distribution**: particle allocation is now balanced across all box edges and visibility culling is performed against the full selection box distance, reducing inconsistent partial rendering.
+
+### Fixed
+- **Stale per-track override reads in existing sessions**: race settings load now refreshes track data before reading `racing.*` overrides, preventing old values from being reused in cached track sessions.
+- **`setlaps` runtime mismatch**: fixed issue where `/boatracing setup setlaps <n>` acknowledged the new value but `/boatracing race open <track>` could still open registration with a previous lap count until server restart.
+- **`setpitstops` runtime mismatch**: fixed equivalent stale-value behavior for per-track `mandatory-pitstops` after `/boatracing setup setpitstops <n>`.
+- **Track setup editability after creation**: added granular setup editing commands so admins can remove one start/light by index (`removestart`, `removelight`) and clear finish/default pit (`clearfinish`, `clearpit`) without rebuilding the whole track config.
+- **Admin Race GUI i18n regression**: removed newly introduced hardcoded user-facing strings and routed checkpoint/pitstop/editor labels, lore, and action feedback through message keys.
+- **Localized coverage gap for new GUI keys**: added missing `gui.race.*` keys for all bundled locales so non-EN bundles no longer miss editor/pagination/pitstop texts.
+- **Stats tab-complete DataConverter spam**: player-name suggestions for `/boatracing stats <player>` no longer rely on `OfflinePlayer#getName()` in tab-complete paths, avoiding repeated Paper 1.21 `Failed to convert json to nbt` / `MalformedJsonException` console errors on malformed legacy playerdata.
+- **Setup wand text key fallback**: fixed wand name/lore rendering when message bundles store those entries under `setup.usage.*`; setup wand now resolves localized text instead of showing raw key strings.
+- **Selection wireframe truncation under tight budgets**: fixed abrupt edge cutoffs in large selections when particle limits are reached.
+
+### Stats Persistence
+- **`stats.yml` (competitive aggregate)** stores `playerWins`.
+- **`stats.yml` (competitive aggregate)** stores `teamWins`.
+- **`stats.yml` (competitive aggregate)** stores `playerPositions`.
+- **`stats.yml` (competitive aggregate)** stores `playerBestRace` (global per player).
+- **`stats.yml` (competitive aggregate)** stores `playerBestLap` (global per player).
+- **`stats.yml` (competitive aggregate)** stores `playerBestRaceByTrack` (per player and track).
+- **`stats.yml` (competitive aggregate)** stores `playerBestLapByTrack` (per player and track).
+- **`stats.yml` (competitive aggregate)** stores `playerBestRaceByTrackLaps` (per player, track, and lap count).
+- **`stats.yml` (competitive aggregate)** stores `playerBestLapByTrackLaps` (per player, track, and lap-context).
+- **`practice-stats.yml` (practice telemetry)** remains separate and stores run/lap/sector best/last per player and track.
+
+### Docs
+- Added 1.1.6 release notes and QA coverage in README, CHANGELOG, and CHECKLIST (including checkpoint editor + pitstops GUI checks).
+
 ## 1.1.5 — 06/04/2026
 ### Added
 - **Solo practice mode command**: added `/boatracing race practice <track>` to start a one-player practice race on a ready track without requiring the minimum race player threshold.

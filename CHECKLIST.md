@@ -1,5 +1,71 @@
 README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 
+## What to verify for 1.1.6
+- Admin Race GUI checkpoint editor flow:
+	- Open `/boatracing admin` -> Race GUI and verify a checkpoint editor entry is available.
+	- Open editor on a track with checkpoints and verify each checkpoint item shows region + click instructions.
+	- Left-click a checkpoint with a valid selection and verify replacement succeeds.
+	- Right-click a checkpoint and verify removal succeeds.
+	- Shift-left / shift-right on a checkpoint and verify order changes (move up/down).
+	- Use clear checkpoints button and verify all checkpoints are removed.
+	- Add one checkpoint from current selection and verify it appears in the editor list.
+	- With >45 checkpoints, verify prev/next page navigation and page indicator are correct.
+- Admin Race GUI pitstops controls:
+	- From Race GUI, click quick pitstop buttons (0/1/2) and verify `race status` reflects the new mandatory pitstops value.
+	- Use custom pitstops anvil input and verify valid numeric input applies and persists to `tracks/<track>.yml` (`racing.mandatory-pitstops`).
+	- Verify custom laps anvil input still applies and persists to `tracks/<track>.yml` (`racing.laps`).
+- Track-session aware edits:
+	- Select track A, change laps/pitstops/checkpoints from Admin Race GUI, then open status for track A and verify values are updated immediately.
+	- Select track B and confirm track A changes did not leak into track B.
+- Edit guards during active race states:
+	- While registration is open or race/countdown is active, attempt checkpoint/laps/pitstops edits and verify actions are blocked with race-state feedback.
+- i18n regression checks for new GUI actions:
+	- In at least `en`, `es`, and one community locale (for example `de` or `zh_CN`), open Admin Race GUI/editor and verify no hardcoded English leaks and no raw message keys are shown.
+	- Verify new labels/messages render for checkpoint editor, pitstops controls, checkpoint actions, and pagination texts.
+- Setup wand and selection visualizer:
+	- Run `/boatracing setup wand` and verify item name/lore render localized text (not raw keys like `setup.wand-name` or `setup.wand-lore-left`).
+	- With both selection corners set, verify particle wireframe appears while holding the wand (default `setup.selection-visualizer.show-only-with-wand: true`).
+	- Create a large selection and verify wireframe edges do not appear abruptly cut/truncated at random corners.
+	- Set `setup.selection-visualizer.view-distance: 0` and verify the full selection wireframe still renders consistently regardless of player distance.
+	- Reduce `setup.selection-visualizer.max-particles-per-player` and verify shape remains evenly represented (all edges visible, lower density only).
+- Stats tab-complete stability (Paper 1.21+):
+	- Type `/boatracing stats ` and wait for player-name suggestions; verify suggestions still include online and cached offline names.
+	- While suggestions load, confirm console does not print `Failed to convert json to nbt` or `MalformedJsonException` from DataConverter paths.
+- Setup post-creation granular edits:
+	- With multiple start slots configured, run `/boatracing setup removestart 2` and verify only slot #2 is removed and remaining slots keep valid order.
+	- With start lights configured, run `/boatracing setup removelight 1` and verify only the selected light is removed.
+	- Run `/boatracing setup clearfinish` and verify track readiness reports missing finish until set again.
+	- Run `/boatracing setup clearpit` and verify default pit is removed without affecting unrelated track data.
+- Docs consistency:
+	- `README.md` status line shows `Public release (1.1.6)`.
+	- `README.md` includes a dedicated `What's New (1.1.6)` section.
+	- `CHANGELOG.md` includes a dedicated `1.1.6` section with added/changed/fixed/docs bullets.
+
+- Setup override synchronization checks:
+- Per-track setup overrides apply immediately (no stale session values):
+	- Select/load a named track and run `/boatracing setup setlaps 3`; verify success feedback.
+	- Without server restart and without `/boatracing reload`, run `/boatracing race open <track>` and `/boatracing race status <track>`; verify laps shows `3`.
+	- Change again to `/boatracing setup setlaps 5`, re-open registration, and verify race status now reports `5` immediately.
+	- Repeat with `/boatracing setup setpitstops <n>` and verify `race status` mandatory pitstops reflects the latest value immediately.
+	- Verify `tracks/<track>.yml` persists updated `racing.laps` and `racing.mandatory-pitstops` values after each setup command.
+	- Ensure this works even when the track already had an existing race session in memory before running setup commands.
+- Lap-scoped track records/placeholders:
+	- On one track, run a race with `3` laps and set a baseline best time; verify `%boatracing_track_best_time_<track>%` and `%boatracing_track_top_1_time_<track>%` show that 3-lap result.
+	- Change to `2` laps, run a faster absolute time, and verify the 2-lap result is shown while `2` laps are active.
+	- Switch back to `3` laps and verify placeholders return to the previous 3-lap record (not the 2-lap time).
+	- Verify explicit placeholders by lap return stable values regardless of currently active laps: `%boatracing_track_best_time_laps_<track>_2%`, `%boatracing_track_best_time_laps_<track>_3%`, `%boatracing_track_top_1_time_laps_<track>_3%`.
+	- Verify `%boatracing_track_top_2_time_laps_<track>_3%` and `%boatracing_track_top_3_time_laps_<track>_3%` follow the same lap-specific ranking context.
+	- Verify stats placeholders by track/laps do not mix contexts: `%boatracing_player_best_race_track_<track>%`, `%boatracing_player_best_race_laps_<track>_2%`, `%boatracing_player_best_race_laps_<track>_3%`, `%boatracing_player_best_lap_laps_<track>_3%`.
+	- Verify top stats placeholders by track/laps: `%boatracing_top_player_best_race_name_track_<track>%`, `%boatracing_top_player_best_race_name_laps_<track>_3%`, `%boatracing_top_player_best_lap_name_laps_<track>_3%`.
+	- Verify `%boatracing_player_track_best%` and `%boatracing_player_track_best_ms%` also change with lap context instead of showing a mixed global minimum.
+	- Open registration after changing laps and verify start-grid ordering prefers same-lap personal bests (with legacy fallback only when lap-specific data does not exist).
+- Unsaved track regression check:
+	- With no named track selected (`unsaved` flow), run `/boatracing setup setlaps <n>` and `/boatracing setup setpitstops <n>` and verify race open/status behavior remains correct.
+- Docs consistency:
+	- `README.md` status line shows `Public release (1.1.6)`.
+	- `README.md` includes a dedicated `What's New (1.1.6)` section.
+	- `CHANGELOG.md` includes a dedicated `1.1.6` section with added/changed/fixed/docs bullets for this release.
+
 ## What to verify for 1.1.5
 - Solo practice mode:
 	- Permission defaults: `boatracing.race.practice` is granted by default to non-op players.
