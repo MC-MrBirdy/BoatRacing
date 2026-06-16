@@ -159,7 +159,7 @@ race:
   checkpoints-incomplete: "&cTu precisas de passar por todos os pontos de controlo antes de terminar. &7Restantes: &f{remain}"
   false-start: "&cPartida em falso! &7Penalidade de tempo: &f+{time}s"
   false-start-broadcast: "&f{player} &7fez partida em falso: &f+{time}s"
-  forfeit: "&cDesistiu da corrida!"
+  forfeit: "&cDesististe da corrida!"
   forfeit-other: "&7{player} desistiu da corrida!"
 
   cancelled-general: "&cCorrida cancelada."
