@@ -1043,7 +1043,13 @@ public class BoatRacingPlugin extends JavaPlugin {
 
                         Player player = (Player) sender;
                         RaceManager rm = getRaceManagerForPlayer(player.getUniqueId());
-                        if (rm != null && rm.isRunning()) rm.forfeit(player);
+                        
+                        if (rm != null && rm.isRunning()) {
+                            rm.forfeit(player);
+                        } else {
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.registration.not-registered")));
+                            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+                        }
                         return true;
                     }
                     case "back" -> {
