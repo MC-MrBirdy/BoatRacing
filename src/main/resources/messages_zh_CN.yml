@@ -159,6 +159,8 @@ race:
   checkpoints-incomplete: "&c你必须通过所有检查点才能完成比赛。&7剩余：&f{remain}"
   false-start: "&c抢跑！&7时间罚时：&f+{time}s"
   false-start-broadcast: "&f{player} &7抢跑：&f+{time}s"
+  forfeit: "&c放弃了比赛！"
+  forfeit-other: "&7{player} 放弃了比赛！"
 
   cancelled-general: "&c比赛已取消。"
   cancelled-no-participants: "&7比赛已取消：无已报名的参与者。"

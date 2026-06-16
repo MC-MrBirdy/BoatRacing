@@ -28,6 +28,7 @@ permissions:
       boatracing.admin.language: true
       boatracing.race.join: true
       boatracing.race.leave: true
+      boatracing.race.forfeit: true
       boatracing.race.back: true
       boatracing.race.practice: true
       boatracing.race.status: true
@@ -43,6 +44,7 @@ permissions:
       boatracing.stats.others: true
       boatracing.race.join: true
       boatracing.race.leave: true
+      boatracing.race.forfeit: true
       boatracing.race.back: true
       boatracing.race.practice: true
       boatracing.race.status: true
@@ -82,6 +84,7 @@ permissions:
       boatracing.admin.language: true
       boatracing.race.join: true
       boatracing.race.leave: true
+      boatracing.race.forfeit: true
       boatracing.race.back: true
       boatracing.race.practice: true
       boatracing.race.status: true
@@ -92,6 +95,9 @@ permissions:
     default: op
   boatracing.race.join:
     description: Join a race registration
+    default: true
+  boatracing.race.forfeit:
+    description: Forfeit a race
     default: true
   boatracing.race.leave:
     description: Leave a race registration

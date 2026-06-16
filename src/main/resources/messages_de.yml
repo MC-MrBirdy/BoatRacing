@@ -160,6 +160,8 @@ race:
   checkpoints-incomplete: "&cDu musst vor dem Zieleinlauf alle Checkpoints passieren. &7Verbleibend: &f{remain}"
   false-start: "&cFrühstart! &7Zeitstrafe: &f+{time}s"
   false-start-broadcast: "&f{player} &7ist früh gestartet: &f+{time}s"
+  forfeit: "&cDas Rennen aufgegeben!"
+  forfeit-other: "&7{player} das Rennen aufgegeben!"
 
   cancelled-general: "&cRennen abgebrochen."
   cancelled-no-participants: "&7Rennen abgebrochen: keine angemeldeten Teilnehmer."

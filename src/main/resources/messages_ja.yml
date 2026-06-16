@@ -160,6 +160,8 @@ race:
   checkpoints-incomplete: "&cフィニッシュ前に全チェックポイントを通過する必要があります。&7残り: &f{remain}"
   false-start: "&cフライング! &7タイムペナルティ: &f+{time}s"
   false-start-broadcast: "&f{player} &7がフライング: &f+{time}s"
+  forfeit: "&cレースを棄権しました！"
+  forfeit-other: "&7{player} レースを棄権しました！"
 
   cancelled-general: "&cレースがキャンセルされました。"
   cancelled-no-participants: "&7レース中止: 登録参加者がいません。"

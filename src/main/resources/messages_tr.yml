@@ -160,6 +160,8 @@ race:
   checkpoints-incomplete: "&cBitirmeden önce tüm kontrol noktalarından geçmelisin. &7Kalan: &f{remain}"
   false-start: "&cHatalı çıkış! &7Zaman cezası: &f+{time}s"
   false-start-broadcast: "&f{player} &7hatalı çıkış yaptı: &f+{time}s"
+  forfeit: "&cYarıştan çekildi!"
+  forfeit-other: "&7{player} yarıştan çekildi!"
 
   cancelled-general: "&cYarış iptal edildi."
   cancelled-no-participants: "&7Yarış iptal edildi: kayıtlı katılımcı yok."

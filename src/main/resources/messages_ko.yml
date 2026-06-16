@@ -159,6 +159,8 @@ race:
   checkpoints-incomplete: "&c완료하기 전에 모든 체크포인트를 통과해야 합니다. &7남은 것: &f{remain}"
   false-start: "&c잘못된 출발! &7페널티: &f+{time}s"
   false-start-broadcast: "&f{player} &7님이 잘못 출발했습니다: &f+{time}s"
+  forfeit: "&c경기를 기권했습니다!"
+  forfeit-other: "&7{player} 경기를 기권했습니다!"
 
   cancelled-general: "&c레이스가 취소되었습니다."
   cancelled-no-participants: "&7레이스 취소: 등록된 참가자가 없습니다."
