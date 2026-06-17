@@ -1372,7 +1372,7 @@ public class RaceManager {
         running = false;
         closeRegistrationWindow();
         clearCountdownLock();
-        cleanupRaceVehicleForPlayer(playerId);
+        cleanupRaceVehicles();
         states.remove(playerId);
 
         if (returnToLobby && player.isOnline()) {
@@ -1383,7 +1383,7 @@ public class RaceManager {
         clearPracticeSessionState();
 
         if (sendMessage && player.isOnline()) {
-            player.sendMessage(color(plugin.pref() + plugin.msg().get("race.practice.left", "track", getTrackName())));
+            player.sendMessage(color(plugin.pref() + plugin.msg().get("race.practice.left")));
         }
         return true;
     }
