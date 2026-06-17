@@ -159,6 +159,8 @@ race:
   checkpoints-incomplete: "&cВы должны пройти все контрольные точки. &7Осталось: &f{remain}"
   false-start: "&cФальстарт! &7Штраф: &f+{time}s"
   false-start-broadcast: "&f{player} &7совершил фальстарт: &f+{time}s"
+  forfeit: "&cСошёл с дистанции!"
+  forfeit-other: "&7{player} cошёл с дистанции!"
 
   cancelled-general: "&cГонка отменена."
   cancelled-no-participants: "&7Гонка отменена: нет зарегистрированных участников."

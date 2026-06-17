@@ -160,6 +160,8 @@ race:
   checkpoints-incomplete: "&cDu måste passera alla kontrollpunkter innan målgång. &7Kvar: &f{remain}"
   false-start: "&cTjuvstart! &7Tidsstraff: &f+{time}s"
   false-start-broadcast: "&f{player} &7tjuvstartade: &f+{time}s"
+  forfeit: "&cBröt loppet!"
+  forfeit-other: "&7{player} bröt loppet!"
 
   cancelled-general: "&cLoppet avbröts."
   cancelled-no-participants: "&7Loppet avbröts: inga anmälda deltagare."

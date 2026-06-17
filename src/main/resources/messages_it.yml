@@ -160,6 +160,8 @@ race:
   checkpoints-incomplete: "&cDevi passare tutti i checkpoint prima di finire. &7Rimanenti: &f{remain}"
   false-start: "&cPartenza falsa! &7Penalita tempo: &f+{time}s"
   false-start-broadcast: "&f{player} &7ha fatto falsa partenza: &f+{time}s"
+  forfeit: "&cTi sei ritirato dalla gara!"
+  forfeit-other: "&7{player} si è ritirato dalla gara!"
 
   cancelled-general: "&cGara annullata."
   cancelled-no-participants: "&7Gara annullata: nessun partecipante iscritto."

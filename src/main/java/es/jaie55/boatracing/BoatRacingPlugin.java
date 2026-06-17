@@ -1034,6 +1034,24 @@ public class BoatRacingPlugin extends JavaPlugin {
                         }
                         return true;
                     }
+                    case "forfeit" -> {
+                        if (!p.hasPermission("boatracing.race.forfeit")) {
+                            p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
+                            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+                            return true;
+                        }
+
+                        Player player = (Player) sender;
+                        RaceManager rm = getRaceManagerForPlayer(player.getUniqueId());
+                        
+                        if (rm != null && rm.isRunning()) {
+                            rm.forfeit(player);
+                        } else {
+                            p.sendMessage(Text.colorize(prefix + msg().get("race.registration.not-registered")));
+                            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+                        }
+                        return true;
+                    }
                     case "back" -> {
                         if (!p.hasPermission("boatracing.race.back")) {
                             p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
@@ -2288,7 +2306,7 @@ public class BoatRacingPlugin extends JavaPlugin {
                 if (args.length == 2) {
                     java.util.List<String> subs = new java.util.ArrayList<>();
                     subs.add("help");
-                    subs.add("join"); subs.add("leave"); subs.add("status");
+                    subs.add("join"); subs.add("leave"); subs.add("forfeit"); subs.add("status");
                     subs.add("vote"); subs.add("voteui"); subs.add("votestatus");
                     if (sender.hasPermission("boatracing.race.back")) subs.add("back");
                     if (sender.hasPermission("boatracing.race.practice")) subs.add("practice");

@@ -865,6 +865,43 @@ public class RaceManager {
         return removed;
     }
 
+    public void forfeit(Player p) {
+        if (!running) return;
+
+        UUID id = p.getUniqueId();
+        states.remove(id);
+
+        Scoreboard our = scoreboards.get(id);
+        Scoreboard prev = previousScoreboards.get(id);
+        try {
+            if (overlayPlayers.contains(id)) {
+                restoreOverlaySidebar(p, our, previousSidebarObjectives.get(id));
+            } else {
+                Scoreboard current = p.getScoreboard();
+                boolean usingOurBoard = (our != null && current == our) || isBoatRacingBoard(current);
+                if (usingOurBoard) {
+                    restorePreviousScoreboard(p, prev);
+                }
+            }
+        } catch (Exception ignored) {
+            plugin.getLogger().finer("Failed to restore previous scoreboard for " + p.getName() + ": " + ignored.getMessage());
+        }
+
+        scoreboards.remove(id);
+        previousScoreboards.remove(id);
+        sidebarDisabledPlayers.remove(id);
+        overlayPlayers.remove(id);
+        previousSidebarObjectives.remove(id);
+        trySimpleScoreShow(p);
+
+        p.sendMessage(color(plugin.pref() + plugin.msg().get("race.forfeit")));
+        broadcast(color(plugin.msg().get("race.forfeit-other", "player", p.getName())));
+
+        cleanupRaceVehicleForPlayer(id);
+        sendParticipantToLobbyAfterRace(id, p);
+        checkAllFinished();
+    }
+
     public boolean forceStart() {
         if (running || isCountdownActive()) return false;
         closeRegistrationWindow();

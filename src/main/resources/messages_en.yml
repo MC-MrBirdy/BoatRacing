@@ -156,6 +156,8 @@ race:
   checkpoints-incomplete: "&cYou must pass all checkpoints before finishing. &7Remaining: &f{remain}"
   false-start: "&cFalse start! &7Time penalty: &f+{time}s"
   false-start-broadcast: "&f{player} &7false-started: &f+{time}s"
+  forfeit: "&cForfeited the race!"
+  forfeit-other: "&7{player} forfeited the race!"
 
   cancelled-general: "&cRace cancelled."
   cancelled-no-participants: "&7Race cancelled: no registered participants."
