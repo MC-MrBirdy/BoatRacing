@@ -7,13 +7,13 @@ import org.bukkit.entity.Player;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-public final class Wrapper26_R1_Fixed implements VersionWrapper {
+public final class Wrapper26_R1_LocalShim implements VersionWrapper {
     private static final String CLOSE_REASON_CLASS = "org.bukkit.event.inventory.InventoryCloseEvent$Reason";
     private static volatile boolean warnedOnce;
 
     private final VersionWrapper delegate;
 
-    public Wrapper26_R1_Fixed() {
+    public Wrapper26_R1_LocalShim() {
         this.delegate = new net.wesjd.anvilgui.version.Wrapper26_R1();
     }
 
@@ -189,7 +189,7 @@ public final class Wrapper26_R1_Fixed implements VersionWrapper {
             return;
         }
         warnedOnce = true;
-        Bukkit.getLogger().warning("[BoatRacing] Applied AnvilGUI 26.1 compatibility fallback for inventory close handling: "
+        Bukkit.getLogger().warning("[BoatRacing] Applied AnvilGUI compatibility fallback for inventory close handling: "
                 + cause.getClass().getSimpleName());
     }
 }

@@ -1,6 +1,17 @@
+# ------------------------------------------------------------
+# General
+# ------------------------------------------------------------
+# Prefix shown in chat, titles, and command feedback.
 prefix: "&6[BoatRacing] "
-language: "en"  # Bundled: en/es/es_419/fr/pt_BR/pt_PT/de/it/pl/tr/ja/ko/sv/zh_TW/zh_CN/ru. Custom: set e.g. "eo" and create messages_eo.yml in plugins/BoatRacing/
+# Default language bundle. Bundled: en/es/es_419/fr/pt_BR/pt_PT/de/it/pl/tr/ja/ko/sv/zh_TW/zh_CN/ru.
+# Custom: set e.g. "eo" and create messages_eo.yml in plugins/BoatRacing/.
+language: "en"
+# Maximum players per team.
 max-members-per-team: 2
+
+# ------------------------------------------------------------
+# Team Permissions
+# ------------------------------------------------------------
 player-actions:
   # Allow non-admin players to perform these actions
   allow-team-create: true
@@ -12,6 +23,10 @@ player-actions:
   # Allow non-admin players to open, start, force-start and stop races.
   # Can also be overridden per-track in tracks/<name>.yml under racing.allow-player-start
   allow-player-race-start: false
+
+# ------------------------------------------------------------
+# Setup Helpers
+# ------------------------------------------------------------
 setup:
   selection-visualizer:
     enabled: true
@@ -28,6 +43,62 @@ setup:
     # Skip rendering only if the player is too far from the selection box.
     # Once inside this range, the full wireframe is rendered.
     view-distance: 96.0
+
+# ------------------------------------------------------------
+# Persistent Storage
+# ------------------------------------------------------------
+# Persistent player data is stored here instead of in YAML files.
+# This covers competitive stats, practice stats, and practice ghosts.
+# Modes:
+#   YAML   -> local YAML files (`stats.yml`, `practice-stats.yml`, `practice-ghosts.yml`)
+#   SQLITE -> local SQLite database file
+#   MYSQL  -> external/shared MySQL database
+# SQLITE is recommended for a single server.
+# MYSQL is useful if you want multiple servers to share the same data.
+database:
+  mode: "SQLITE"
+  # When enabled, the first load imports existing YAML data into the database.
+  # Only applies when mode is SQLITE or MYSQL.
+  migrate-legacy-yaml: true
+  # Table used to store the YAML documents in the database.
+  # Only applies when mode is SQLITE or MYSQL.
+  table: "boatracing_data"
+  sqlite:
+    # Used only when mode is SQLITE.
+    # Relative to the plugin data folder.
+    file: "boatracing.db"
+  mysql:
+    # Used only when mode is MYSQL.
+    host: "localhost"
+    port: 3306
+    database: "boatracing"
+    username: "root"
+    password: ""
+    # Optional advanced JDBC params. Leave empty to use safe defaults.
+    parameters: ""
+
+# ------------------------------------------------------------
+# Practice Ghosts
+# ------------------------------------------------------------
+practice:
+  ghost:
+    enabled: true
+    # Keep ghost mode scoped to solo practice sessions.
+    only-in-practice: true
+    # Capture interval in ticks while a practice run is active.
+    sample-ticks: 2
+    # Replay update interval in ticks.
+    playback-ticks: 1
+    # Minimum movement distance (blocks) required to store a new sample.
+    min-distance: 0.20
+    # Safety cap to avoid unbounded memory/IO on very long runs.
+    max-samples: 6000
+    # Show runner name above the ghost rider.
+    show-name: true
+
+# ------------------------------------------------------------
+# Metrics and Updates
+# ------------------------------------------------------------
 bstats:
   enabled: true
   # Anonymous usage metrics via bStats. Set to false to opt-out.
@@ -37,6 +108,10 @@ updates:
   console-warn: true
   # Notify admins with permission in-game on join
   notify-admins: true
+
+# ------------------------------------------------------------
+# Race Defaults
+# ------------------------------------------------------------
 racing:
   # Default values for all tracks. Each track can override these
   # in its own tracks/<name>.yml file under a 'racing:' section.

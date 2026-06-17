@@ -27,6 +27,9 @@ import es.jaie55.boatracing.race.RaceManager;
 import es.jaie55.boatracing.reward.RewardManager;
 import es.jaie55.boatracing.setup.SetupWizard;
 import es.jaie55.boatracing.util.MessageManager;
+import es.jaie55.boatracing.util.DocumentStore;
+import es.jaie55.boatracing.util.DocumentStoreFactory;
+import es.jaie55.boatracing.util.PracticeGhostManager;
 import es.jaie55.boatracing.util.PracticeStatsManager;
 import es.jaie55.boatracing.util.StatsManager;
 import es.jaie55.boatracing.placeholder.BoatRacingPlaceholderExpansion;
@@ -53,8 +56,10 @@ public class BoatRacingPlugin extends JavaPlugin {
     private RewardManager rewardManager;
     private SetupWizard setupWizard;
     private MessageManager messageManager;
+    private DocumentStore documentStore;
     private StatsManager statsManager;
     private PracticeStatsManager practiceStatsManager;
+    private PracticeGhostManager practiceGhostManager;
     private BoatRacingPlaceholderExpansion placeholderExpansion;
     private es.jaie55.boatracing.track.SelectionVisualizer selectionVisualizer;
     private es.jaie55.boatracing.ui.AdminTracksGUI tracksGUI;
@@ -84,6 +89,8 @@ public class BoatRacingPlugin extends JavaPlugin {
     public MessageManager msg() { return messageManager; }
     public StatsManager getStatsManager() { return statsManager; }
     public PracticeStatsManager getPracticeStatsManager() { return practiceStatsManager; }
+    public PracticeGhostManager getPracticeGhostManager() { return practiceGhostManager; }
+    public DocumentStore getDocumentStore() { return documentStore; }
     public java.util.Collection<RaceManager> getAllRaceManagers() {
         java.util.List<RaceManager> out = new java.util.ArrayList<>();
         out.addAll(raceSessions.values());
@@ -622,6 +629,17 @@ public class BoatRacingPlugin extends JavaPlugin {
     }
     
 
+    private boolean canUsePracticeCommand(org.bukkit.command.CommandSender sender) {
+        return sender != null && sender.hasPermission("boatracing.race.practice");
+    }
+
+    private void handlePracticeExitOnDisconnect(Player player) {
+        if (player == null) return;
+        RaceManager rm = getRaceManagerForPlayer(player.getUniqueId());
+        if (rm == null || !rm.isPracticeMode() || !rm.isParticipant(player.getUniqueId())) return;
+        rm.leavePractice(player, false, false);
+    }
+
     @Override
     public void onEnable() {
         instance = this;
@@ -637,8 +655,10 @@ public class BoatRacingPlugin extends JavaPlugin {
         this.prefix = Text.colorize(getConfig().getString("prefix", "&6[BoatRacing] "));
         this.messageManager = new MessageManager(this);
         this.teamManager = new TeamManager(this);
+        this.documentStore = DocumentStoreFactory.create(this);
         this.statsManager = new StatsManager(this);
         this.practiceStatsManager = new PracticeStatsManager(this);
+        this.practiceGhostManager = new PracticeGhostManager(this);
         this.teamGUI = new TeamGUI(this);
     this.adminGUI = new es.jaie55.boatracing.ui.AdminGUI(this);
     this.adminRaceGUI = new es.jaie55.boatracing.ui.AdminRaceGUI(this);
@@ -670,6 +690,16 @@ public class BoatRacingPlugin extends JavaPlugin {
                         && from.getBlockY() == to.getBlockY()
                         && from.getBlockZ() == to.getBlockZ()) return;
                 tickPlayerAcrossRaceSessions(e.getPlayer(), to);
+            }
+
+            @org.bukkit.event.EventHandler
+            public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
+                handlePracticeExitOnDisconnect(e.getPlayer());
+            }
+
+            @org.bukkit.event.EventHandler
+            public void onKick(org.bukkit.event.player.PlayerKickEvent e) {
+                handlePracticeExitOnDisconnect(e.getPlayer());
             }
 
             @org.bukkit.event.EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST, ignoreCancelled = true)
@@ -827,8 +857,10 @@ public class BoatRacingPlugin extends JavaPlugin {
         if (teamManager != null) teamManager.save();
         if (statsManager != null) statsManager.save();
         if (practiceStatsManager != null) practiceStatsManager.save();
+        if (practiceGhostManager != null) practiceGhostManager.save();
         if (selectionVisualizer != null) selectionVisualizer.stop();
         if (placeholderExpansion != null) placeholderExpansion.unregister();
+        if (documentStore != null) { try { documentStore.close(); } catch (Exception ignored) { getLogger().finer("Failed to close persistent storage: " + ignored.getMessage()); } }
     }
 
     @Override
@@ -899,6 +931,8 @@ public class BoatRacingPlugin extends JavaPlugin {
                 else this.statsManager.reload();
                 if (this.practiceStatsManager == null) this.practiceStatsManager = new PracticeStatsManager(this);
                 else this.practiceStatsManager.reload();
+                if (this.practiceGhostManager == null) this.practiceGhostManager = new PracticeGhostManager(this);
+                else this.practiceGhostManager.reload();
                 if (this.selectionVisualizer == null) this.selectionVisualizer = new es.jaie55.boatracing.track.SelectionVisualizer(this);
                 this.selectionVisualizer.startOrReload();
                 p.sendMessage(Text.colorize(prefix + msg().get("plugin.reloaded")));
@@ -1173,16 +1207,33 @@ public class BoatRacingPlugin extends JavaPlugin {
                         return true;
                     }
                     case "practice" -> {
-                        if (args.length < 3) { p.sendMessage(Text.colorize(prefix + msg().get("race.usage.practice", "label", label))); return true; }
-                        if (!p.hasPermission("boatracing.race.practice")) {
+                        // One permission gates both starting and leaving practice.
+                        if (!canUsePracticeCommand(p)) {
                             p.sendMessage(Text.colorize(prefix + msg().get("general.no-permission")));
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
                             return true;
                         }
-                        String tname = args[2];
+                        if (args.length < 3) { p.sendMessage(Text.colorize(prefix + msg().get("race.usage.practice", "label", label))); return true; }
+
+                        boolean leavePractice = args[2].equalsIgnoreCase("leave") || args[2].equalsIgnoreCase("exit");
+                        String tname = leavePractice
+                                ? (args.length >= 4 ? args[3] : "")
+                                : args[2];
+                        if (tname.isBlank()) {
+                            p.sendMessage(Text.colorize(prefix + (leavePractice
+                                    ? "&eUsage: /" + label + " race practice leave <track>"
+                                    : msg().get("race.usage.practice", "label", label))));
+                            return true;
+                        }
                         if (!trackExistsForRace(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
                         RaceManager rm = getOrCreateRaceSession(tname);
                         if (rm == null) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
+                        if (leavePractice) {
+                            if (!rm.leavePractice(p)) {
+                                p.sendMessage(Text.colorize(prefix + "&eNo active practice session was found for &f" + tname + "&e."));
+                            }
+                            return true;
+                        }
                         if (!rm.getTrack().isReady()) {
                             p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-ready", "requirements", formatTrackRequirements(rm.getTrack().missingRequirements()))));
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
@@ -2325,10 +2376,28 @@ public class BoatRacingPlugin extends JavaPlugin {
                 }
                 // For subcommands that take <track>, suggest track names from library
                 String raceSub = args[1].toLowerCase();
-                if (raceSub.equals("practice") && !sender.hasPermission("boatracing.race.practice")) {
+                if (raceSub.equals("practice") && !canUsePracticeCommand(sender)) {
                     return java.util.Collections.emptyList();
                 }
-                if (args.length == 3 && java.util.Arrays.asList("open","join","leave","force","start","practice","stop","status","vote").contains(raceSub)) {
+                if (args.length == 3 && raceSub.equals("practice")) {
+                    java.util.List<String> options = new java.util.ArrayList<>();
+                    options.add("leave");
+                    if (trackLibrary != null) {
+                        for (String n : trackLibrary.list()) if (n.toLowerCase().startsWith(args[2].toLowerCase())) options.add(n);
+                    }
+                    if ("unsaved".startsWith(args[2].toLowerCase())) options.add("unsaved");
+                    return options;
+                }
+                if (args.length == 4 && raceSub.equals("practice") && (args[2].equalsIgnoreCase("leave") || args[2].equalsIgnoreCase("exit"))) {
+                    String prefix = args[3] == null ? "" : args[3].toLowerCase();
+                    java.util.List<String> names = new java.util.ArrayList<>();
+                    if (trackLibrary != null) {
+                        for (String n : trackLibrary.list()) if (n.toLowerCase().startsWith(prefix)) names.add(n);
+                    }
+                    if ("unsaved".startsWith(prefix)) names.add("unsaved");
+                    return names;
+                }
+                if (args.length == 3 && java.util.Arrays.asList("open","join","leave","force","start","stop","status","vote").contains(raceSub)) {
                     String prefix = args[2] == null ? "" : args[2].toLowerCase();
                     java.util.List<String> names = new java.util.ArrayList<>();
                     if (trackLibrary != null) {

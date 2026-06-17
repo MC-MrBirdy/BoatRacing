@@ -4,13 +4,19 @@ import es.jaie55.boatracing.BoatRacingPlugin;
 import es.jaie55.boatracing.team.Team;
 import es.jaie55.boatracing.track.Region;
 import es.jaie55.boatracing.track.TrackConfig;
+import es.jaie55.boatracing.util.PracticeGhostManager;
 import es.jaie55.boatracing.util.PracticeStatsManager;
 import es.jaie55.boatracing.util.SchedulerCompat;
 import es.jaie55.boatracing.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Vehicle;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -120,6 +126,21 @@ public class RaceManager {
     // Leader finish time per lap
     private final Map<Integer, Long> lapLeaderFinishTimes = new HashMap<>();
     private long progressOrderCounter = 0L;
+
+    // Practice ghost (advanced vanilla MVP) state
+    private SchedulerCompat.TaskHandle practiceGhostCaptureTask;
+    private List<PracticeGhostManager.GhostSample> practiceGhostCapturedSamples = new ArrayList<>();
+    private int practiceGhostMaxSamples = 6000;
+    private double practiceGhostMinSampleDistanceSq = 0.04D;
+    private String practiceGhostCapturedBoatType = Material.OAK_BOAT.name();
+    private String practiceGhostCapturedWorld = "";
+    private SchedulerCompat.TaskHandle practiceGhostReplayTask;
+    private Vehicle practiceGhostBoat;
+    private ArmorStand practiceGhostRider;
+    private List<PracticeGhostManager.GhostSample> practiceGhostReplaySamples = Collections.emptyList();
+    private int practiceGhostReplayIndex = 0;
+    private String practiceGhostCollisionTeamName;
+    private int practiceGhostHideTickCounter = 0;
 
     public RaceManager(BoatRacingPlugin plugin, TrackConfig track) {
         this(plugin, track, null);
@@ -273,6 +294,11 @@ public class RaceManager {
             states.put(p.getUniqueId(), st);
             setupPlayerBoard(p);
             pitCount.put(p.getUniqueId(), 0);
+        }
+        if (practiceMode) {
+            startPracticeGhostSystems(participants);
+        } else {
+            stopPracticeGhostSystems();
         }
         for (Player p : raceAudience(participants)) {
             p.sendMessage(color(plugin.pref() + plugin.msg().get("race.started", "laps", String.valueOf(totalLaps))));
@@ -430,12 +456,14 @@ public class RaceManager {
                     }
                     if (practiceMode) {
                         PracticeStatsManager practiceStats = plugin.getPracticeStatsManager();
+                        PracticeStatsManager.PracticeUpdate runUpdate = null;
                         if (practiceStats != null) {
-                            PracticeStatsManager.PracticeUpdate runUpdate = practiceStats.recordRun(p.getUniqueId(), getTrackName(), st.finishTime);
+                            runUpdate = practiceStats.recordRun(p.getUniqueId(), getTrackName(), st.finishTime);
                             sendPracticeRunFeedback(p, runUpdate);
                         } else {
                             p.sendMessage(color(plugin.pref() + plugin.msg().get("race.practice.run-completed", "time", formatSeconds(st.finishTime))));
                         }
+                        maybeStorePracticeGhost(p, st.finishTime, runUpdate);
                         p.playSound(p.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.3f);
                     } else {
                         // Winner reference and gap to winner (same line)
@@ -680,12 +708,436 @@ public class RaceManager {
     }
 
     private void clearPracticeSessionState() {
+        stopPracticeGhostSystems();
         practiceMode = false;
         practicePlayerId = null;
     }
 
     private Player practicePlayer() {
         return practicePlayerId != null ? Bukkit.getPlayer(practicePlayerId) : null;
+    }
+
+    private boolean isPracticeGhostEnabled() {
+        return plugin.getConfig().getBoolean("practice.ghost.enabled", true);
+    }
+
+    private void startPracticeGhostSystems(Collection<Player> participants) {
+        stopPracticeGhostSystems();
+        if (!isPracticeGhostEnabled()) return;
+
+        boolean onlyPractice = plugin.getConfig().getBoolean("practice.ghost.only-in-practice", true);
+        if (onlyPractice && !practiceMode) return;
+
+        Player runner = practicePlayer();
+        if (runner == null || !runner.isOnline()) return;
+
+        practiceGhostCapturedSamples = new ArrayList<>();
+        practiceGhostMaxSamples = Math.max(200, plugin.getConfig().getInt("practice.ghost.max-samples", 6000));
+        double minDistance = Math.max(0.01D, plugin.getConfig().getDouble("practice.ghost.min-distance", 0.20D));
+        practiceGhostMinSampleDistanceSq = minDistance * minDistance;
+        practiceGhostCapturedWorld = runner.getWorld().getName();
+        practiceGhostCapturedBoatType = resolveBoatTypeForPlayer(runner);
+
+        capturePracticeGhostSample(runner, 0L, true);
+
+        int sampleTicks = Math.max(1, plugin.getConfig().getInt("practice.ghost.sample-ticks", 2));
+        practiceGhostCaptureTask = SchedulerCompat.runTimer(plugin, () -> capturePracticeGhostTick(runner.getUniqueId()), sampleTicks, sampleTicks);
+
+        startPracticeGhostReplay(runner);
+    }
+
+    private void stopPracticeGhostSystems() {
+        stopPracticeGhostCapture();
+        stopPracticeGhostReplay();
+        practiceGhostCapturedSamples = new ArrayList<>();
+        practiceGhostCapturedWorld = "";
+        practiceGhostCapturedBoatType = Material.OAK_BOAT.name();
+    }
+
+    private void stopPracticeGhostCapture() {
+        if (practiceGhostCaptureTask != null) {
+            try {
+                practiceGhostCaptureTask.cancel();
+            } catch (Exception ignored) {
+            }
+            practiceGhostCaptureTask = null;
+        }
+    }
+
+    private void stopPracticeGhostReplay() {
+        if (practiceGhostReplayTask != null) {
+            try {
+                practiceGhostReplayTask.cancel();
+            } catch (Exception ignored) {
+            }
+            practiceGhostReplayTask = null;
+        }
+
+        removeGhostNoCollisionRules();
+
+        if (practiceGhostBoat != null && practiceGhostBoat.isValid()) {
+            try {
+                practiceGhostBoat.remove();
+            } catch (Exception ignored) {
+            }
+        }
+        if (practiceGhostRider != null && practiceGhostRider.isValid()) {
+            try {
+                practiceGhostRider.remove();
+            } catch (Exception ignored) {
+            }
+        }
+
+        practiceGhostBoat = null;
+        practiceGhostRider = null;
+        practiceGhostReplaySamples = Collections.emptyList();
+        practiceGhostReplayIndex = 0;
+        practiceGhostHideTickCounter = 0;
+    }
+
+    private void capturePracticeGhostTick(UUID runnerId) {
+        if (!running || !practiceMode) return;
+        Player runner = Bukkit.getPlayer(runnerId);
+        if (runner == null || !runner.isOnline()) return;
+        if (!runner.getWorld().getName().equalsIgnoreCase(practiceGhostCapturedWorld)) return;
+
+        long elapsed = Math.max(0L, System.currentTimeMillis() - startTime);
+        capturePracticeGhostSample(runner, elapsed, false);
+    }
+
+    private void capturePracticeGhostSample(Player runner, long elapsedMs, boolean force) {
+        if (runner == null || !runner.isOnline()) return;
+        if (practiceGhostCapturedSamples.size() >= practiceGhostMaxSamples) return;
+
+        Location loc = runner.getLocation();
+        PracticeGhostManager.GhostSample sample = new PracticeGhostManager.GhostSample(
+                Math.max(0L, elapsedMs),
+                loc.getX(),
+                loc.getY(),
+                loc.getZ(),
+                loc.getYaw(),
+                loc.getPitch()
+        );
+
+        if (!force && !practiceGhostCapturedSamples.isEmpty()) {
+            PracticeGhostManager.GhostSample last = practiceGhostCapturedSamples.get(practiceGhostCapturedSamples.size() - 1);
+            double dx = sample.getX() - last.getX();
+            double dy = sample.getY() - last.getY();
+            double dz = sample.getZ() - last.getZ();
+            double distSq = dx * dx + dy * dy + dz * dz;
+            if (distSq < practiceGhostMinSampleDistanceSq && (sample.getTimeMs() - last.getTimeMs()) < 100L) {
+                return;
+            }
+        }
+
+        practiceGhostCapturedSamples.add(sample);
+    }
+
+    private void maybeStorePracticeGhost(Player runner, long runMillis, PracticeStatsManager.PracticeUpdate runUpdate) {
+        if (runner == null || !runner.isOnline()) return;
+
+        capturePracticeGhostSample(runner, Math.max(0L, System.currentTimeMillis() - startTime), true);
+        stopPracticeGhostCapture();
+
+        if (!isPracticeGhostEnabled()) return;
+        if (runUpdate != null && !runUpdate.isImproved()) return;
+        if (practiceGhostCapturedSamples.size() < 2) return;
+
+        PracticeGhostManager ghostManager = plugin.getPracticeGhostManager();
+        if (ghostManager == null) return;
+
+        ghostManager.updateBestGhost(
+                getTrackName(),
+                totalLaps,
+                runner.getUniqueId(),
+                runner.getName(),
+                practiceGhostCapturedWorld,
+                practiceGhostCapturedBoatType,
+                runMillis,
+                new ArrayList<>(practiceGhostCapturedSamples)
+        );
+    }
+
+    private void startPracticeGhostReplay(Player runner) {
+        if (runner == null || !runner.isOnline()) return;
+
+        PracticeGhostManager ghostManager = plugin.getPracticeGhostManager();
+        if (ghostManager == null) return;
+
+        PracticeGhostManager.GhostPath path = ghostManager.getBestGhost(getTrackName(), totalLaps);
+        if (path == null || path.getSamples().size() < 2) return;
+
+        if (path.getWorldName() != null && !path.getWorldName().isBlank()) {
+            if (!runner.getWorld().getName().equalsIgnoreCase(path.getWorldName())) return;
+        }
+
+        PracticeGhostManager.GhostSample first = path.getSamples().get(0);
+        Location spawn = new Location(
+                runner.getWorld(),
+                first.getX(),
+                first.getY(),
+                first.getZ(),
+                first.getYaw(),
+                first.getPitch()
+        );
+
+        String normalizedGhostBoat = normalizeBoatMaterialName(path.getBoatType());
+        boolean ghostChestFallback = normalizedGhostBoat.contains("_CHEST_");
+        Vehicle ghostBoat;
+        ArmorStand ghostRider;
+        try {
+            ghostBoat = spawnRaceVehicle(runner.getWorld(), spawn, normalizedGhostBoat, ghostChestFallback);
+            if (ghostBoat == null) {
+                plugin.getLogger().warning("Could not spawn practice ghost vehicle for type " + normalizedGhostBoat + " on track " + getTrackName());
+                return;
+            }
+            ghostRider = runner.getWorld().spawn(spawn, ArmorStand.class);
+        } catch (Exception ex) {
+            plugin.getLogger().finer("Could not spawn practice ghost entities: " + ex.getMessage());
+            return;
+        }
+
+        ghostBoat.setGravity(false);
+        ghostBoat.setInvulnerable(true);
+        ghostBoat.setSilent(true);
+        ghostBoat.setPersistent(false);
+        setEntityCollidable(ghostBoat, false);
+
+        applyBoatVariantReliably(ghostBoat, normalizedGhostBoat);
+
+        ghostRider.setInvisible(true);
+        ghostRider.setMarker(true);
+        ghostRider.setGravity(false);
+        ghostRider.setInvulnerable(true);
+        ghostRider.setSilent(true);
+        ghostRider.setPersistent(false);
+        setEntityCollidable(ghostRider, false);
+
+        boolean showName = plugin.getConfig().getBoolean("practice.ghost.show-name", true);
+        if (showName) {
+            ghostRider.setCustomName(path.getOwnerName() == null || path.getOwnerName().isBlank() ? "Ghost" : path.getOwnerName());
+            ghostRider.setCustomNameVisible(true);
+        }
+
+        ItemStack head = buildGhostHead(path.getOwnerUuid());
+        if (head != null && ghostRider.getEquipment() != null) {
+            ghostRider.getEquipment().setHelmet(head);
+        }
+
+        try {
+            ghostBoat.addPassenger(ghostRider);
+        } catch (Exception ignored) {
+        }
+
+        practiceGhostBoat = ghostBoat;
+        practiceGhostRider = ghostRider;
+        practiceGhostReplaySamples = path.getSamples();
+        practiceGhostReplayIndex = 0;
+        practiceGhostHideTickCounter = 0;
+
+        applyGhostNoCollisionRules(ghostBoat, ghostRider);
+        ensureGhostHiddenFromOthers(runner, ghostBoat, ghostRider);
+
+        int playbackTicks = Math.max(1, plugin.getConfig().getInt("practice.ghost.playback-ticks", 1));
+        practiceGhostReplayTask = SchedulerCompat.runTimer(plugin, () -> tickPracticeGhostReplay(runner.getUniqueId()), playbackTicks, playbackTicks);
+    }
+
+    private void tickPracticeGhostReplay(UUID runnerId) {
+        if (!running || !practiceMode) {
+            stopPracticeGhostReplay();
+            return;
+        }
+
+        Player runner = Bukkit.getPlayer(runnerId);
+        if (runner == null || !runner.isOnline()) {
+            stopPracticeGhostReplay();
+            return;
+        }
+
+        if (practiceGhostBoat == null || !practiceGhostBoat.isValid() || practiceGhostReplaySamples.isEmpty()) {
+            stopPracticeGhostReplay();
+            return;
+        }
+
+        if (!runner.getWorld().equals(practiceGhostBoat.getWorld())) {
+            stopPracticeGhostReplay();
+            return;
+        }
+
+        long elapsed = Math.max(0L, System.currentTimeMillis() - startTime);
+        long lastTime = practiceGhostReplaySamples.get(practiceGhostReplaySamples.size() - 1).getTimeMs();
+        if (elapsed > lastTime) {
+            stopPracticeGhostReplay();
+            return;
+        }
+
+        while (practiceGhostReplayIndex + 1 < practiceGhostReplaySamples.size()
+                && practiceGhostReplaySamples.get(practiceGhostReplayIndex + 1).getTimeMs() <= elapsed) {
+            practiceGhostReplayIndex++;
+        }
+
+        PracticeGhostManager.GhostSample a = practiceGhostReplaySamples.get(practiceGhostReplayIndex);
+        PracticeGhostManager.GhostSample b = (practiceGhostReplayIndex + 1 < practiceGhostReplaySamples.size())
+                ? practiceGhostReplaySamples.get(practiceGhostReplayIndex + 1)
+                : a;
+
+        long dt = Math.max(1L, b.getTimeMs() - a.getTimeMs());
+        double t = Math.max(0.0D, Math.min(1.0D, (double) (elapsed - a.getTimeMs()) / (double) dt));
+
+        double x = lerp(a.getX(), b.getX(), t);
+        double y = lerp(a.getY(), b.getY(), t);
+        double z = lerp(a.getZ(), b.getZ(), t);
+        float yaw = lerpAngle(a.getYaw(), b.getYaw(), t);
+        float pitch = lerpAngle(a.getPitch(), b.getPitch(), t);
+
+        Location target = new Location(runner.getWorld(), x, y, z, yaw, pitch);
+        practiceGhostBoat.teleport(target);
+
+        if (practiceGhostRider != null && practiceGhostRider.isValid()) {
+            if (!practiceGhostBoat.getPassengers().contains(practiceGhostRider)) {
+                try {
+                    practiceGhostBoat.addPassenger(practiceGhostRider);
+                } catch (Exception ignored) {
+                }
+            }
+        }
+
+        practiceGhostHideTickCounter++;
+        if (practiceGhostHideTickCounter >= 20) {
+            practiceGhostHideTickCounter = 0;
+            ensureGhostHiddenFromOthers(runner, practiceGhostBoat, practiceGhostRider);
+        }
+    }
+
+    private static double lerp(double a, double b, double t) {
+        return a + (b - a) * t;
+    }
+
+    private static float lerpAngle(float a, float b, double t) {
+        float delta = b - a;
+        while (delta > 180.0F) delta -= 360.0F;
+        while (delta < -180.0F) delta += 360.0F;
+        return (float) (a + delta * t);
+    }
+
+    private void ensureGhostHiddenFromOthers(Player runner, Entity ghostBoat, Entity ghostRider) {
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (online == null || !online.isOnline()) continue;
+            if (online.getUniqueId().equals(runner.getUniqueId())) continue;
+            try {
+                online.hideEntity(plugin, ghostBoat);
+                if (ghostRider != null) online.hideEntity(plugin, ghostRider);
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private String resolveBoatTypeForPlayer(Player player) {
+        if (player == null) return Material.OAK_BOAT.name();
+        String selectedBoat = plugin.getTeamManager()
+                .getTeamByMember(player.getUniqueId())
+            .map((es.jaie55.boatracing.team.Team t) -> t.getBoatType(player.getUniqueId()))
+                .orElse(Material.OAK_BOAT.name());
+        return normalizeBoatMaterialName(selectedBoat);
+    }
+
+    private ItemStack buildGhostHead(UUID ownerUuid) {
+        if (ownerUuid == null) return null;
+
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD, 1);
+        if (!(head.getItemMeta() instanceof SkullMeta meta)) return null;
+
+        try {
+            meta.setOwningPlayer(Bukkit.getOfflinePlayer(ownerUuid));
+            head.setItemMeta(meta);
+            return head;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private void applyGhostNoCollisionRules(Entity ghostBoat, Entity ghostRider) {
+        if (ghostBoat == null) return;
+        if (Bukkit.getScoreboardManager() == null) return;
+
+        String teamName = "brghost" + ghostBoat.getUniqueId().toString().replace("-", "").substring(0, 9);
+        org.bukkit.scoreboard.Team team = Bukkit.getScoreboardManager().getMainScoreboard().getTeam(teamName);
+        if (team == null) {
+            try {
+                team = Bukkit.getScoreboardManager().getMainScoreboard().registerNewTeam(teamName);
+            } catch (IllegalArgumentException ex) {
+                team = Bukkit.getScoreboardManager().getMainScoreboard().getTeam(teamName);
+            }
+        }
+        if (team == null) return;
+
+        try {
+            team.setOption(org.bukkit.scoreboard.Team.Option.COLLISION_RULE, org.bukkit.scoreboard.Team.OptionStatus.NEVER);
+        } catch (Exception ignored) {
+        }
+        try {
+            team.setCanSeeFriendlyInvisibles(true);
+        } catch (Exception ignored) {
+        }
+
+        addEntityToTeam(team, ghostBoat);
+        if (ghostRider != null) addEntityToTeam(team, ghostRider);
+        practiceGhostCollisionTeamName = teamName;
+    }
+
+    private void removeGhostNoCollisionRules() {
+        if (practiceGhostCollisionTeamName == null || practiceGhostCollisionTeamName.isBlank()) return;
+        if (Bukkit.getScoreboardManager() == null) {
+            practiceGhostCollisionTeamName = null;
+            return;
+        }
+
+        org.bukkit.scoreboard.Team team = Bukkit.getScoreboardManager().getMainScoreboard().getTeam(practiceGhostCollisionTeamName);
+        if (team == null) {
+            practiceGhostCollisionTeamName = null;
+            return;
+        }
+
+        if (practiceGhostBoat != null) removeEntityFromTeam(team, practiceGhostBoat);
+        if (practiceGhostRider != null) removeEntityFromTeam(team, practiceGhostRider);
+
+        try {
+            if (team.getEntries().isEmpty()) team.unregister();
+        } catch (Exception ignored) {
+        }
+
+        practiceGhostCollisionTeamName = null;
+    }
+
+    private static void addEntityToTeam(org.bukkit.scoreboard.Team team, Entity entity) {
+        if (team == null || entity == null) return;
+        try {
+            Method addEntity = team.getClass().getMethod("addEntity", Entity.class);
+            addEntity.invoke(team, entity);
+            return;
+        } catch (Exception ignored) {
+        }
+        team.addEntry(entity.getUniqueId().toString());
+    }
+
+    private static void removeEntityFromTeam(org.bukkit.scoreboard.Team team, Entity entity) {
+        if (team == null || entity == null) return;
+        try {
+            Method removeEntity = team.getClass().getMethod("removeEntity", Entity.class);
+            removeEntity.invoke(team, entity);
+            return;
+        } catch (Exception ignored) {
+        }
+        team.removeEntry(entity.getUniqueId().toString());
+    }
+
+    private static void setEntityCollidable(Entity entity, boolean collidable) {
+        if (entity == null) return;
+        try {
+            Method method = entity.getClass().getMethod("setCollidable", boolean.class);
+            method.invoke(entity, collidable);
+        } catch (Exception ignored) {
+        }
     }
 
     private Collection<Player> raceAudience(Collection<Player> participants) {
@@ -906,6 +1358,34 @@ public class RaceManager {
         cleanupRaceVehicleForPlayer(id);
         sendParticipantToLobbyAfterRace(id, p);
         checkAllFinished();
+    }
+
+    public boolean leavePractice(Player player) {
+        return leavePractice(player, true, true);
+    }
+
+    public boolean leavePractice(Player player, boolean returnToLobby, boolean sendMessage) {
+        if (player == null) return false;
+        if (!practiceMode || !isParticipant(player.getUniqueId())) return false;
+
+        UUID playerId = player.getUniqueId();
+        running = false;
+        closeRegistrationWindow();
+        clearCountdownLock();
+        cleanupRaceVehicleForPlayer(playerId);
+        states.remove(playerId);
+
+        if (returnToLobby && player.isOnline()) {
+            sendParticipantToLobbyAfterRace(playerId, player);
+        }
+
+        stopScoreboard();
+        clearPracticeSessionState();
+
+        if (sendMessage && player.isOnline()) {
+            player.sendMessage(color(plugin.pref() + plugin.msg().get("race.practice.left", "track", getTrackName())));
+        }
+        return true;
     }
 
     public boolean forceStart() {

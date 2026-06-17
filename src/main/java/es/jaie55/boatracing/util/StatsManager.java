@@ -1,10 +1,8 @@
-package es.jaie55.boatracing.util;
+﻿package es.jaie55.boatracing.util;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.Locale;
 
@@ -13,7 +11,8 @@ import java.util.Locale;
  */
 public class StatsManager {
     private final es.jaie55.boatracing.BoatRacingPlugin plugin;
-    private final File file;
+    private final DocumentStore store;
+    private final String documentName = "stats.yml";
     private YamlConfiguration cfg;
 
     private final Map<UUID, Integer> playerWins = new HashMap<>();
@@ -28,13 +27,12 @@ public class StatsManager {
 
     public StatsManager(es.jaie55.boatracing.BoatRacingPlugin plugin) {
         this.plugin = plugin;
-        this.file = new File(plugin.getDataFolder(), "stats.yml");
-        ensureFile();
+        this.store = plugin.getDocumentStore();
         reload();
     }
 
-    public void reload() {
-        cfg = YamlConfiguration.loadConfiguration(file);
+    public synchronized void reload() {
+        cfg = new YamlConfiguration();
         playerWins.clear();
         teamWins.clear();
         playerPositions.clear();
@@ -44,6 +42,17 @@ public class StatsManager {
         playerBestLapByTrack.clear();
         playerBestRaceByTrackLaps.clear();
         playerBestLapByTrackLaps.clear();
+
+        try {
+            if (store != null) {
+                String raw = store.read(documentName);
+                if (raw != null && !raw.isBlank()) {
+                    cfg.loadFromString(raw);
+                }
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to load stats data: " + e.getMessage());
+        }
 
         readIntMap("playerWins", playerWins);
         readIntMap("teamWins", teamWins);
@@ -65,10 +74,11 @@ public class StatsManager {
                 per.put(1, wins);
                 playerPositions.put(e.getKey(), per);
             }
+            save();
         }
     }
 
-    public void save() {
+    public synchronized void save() {
         if (cfg == null) cfg = new YamlConfiguration();
         writeIntMap("playerWins", playerWins);
         writeIntMap("teamWins", teamWins);
@@ -80,9 +90,11 @@ public class StatsManager {
         writeTrackLapLongMap("playerBestRaceByTrackLaps", playerBestRaceByTrackLaps);
         writeTrackLapLongMap("playerBestLapByTrackLaps", playerBestLapByTrackLaps);
         try {
-            cfg.save(file);
-        } catch (IOException e) {
-            plugin.getLogger().warning("Failed to save stats.yml: " + e.getMessage());
+            if (store != null) {
+                store.write(documentName, cfg.saveToString());
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to save stats data: " + e.getMessage());
         }
     }
 
@@ -318,17 +330,6 @@ public class StatsManager {
         Map<UUID, Long> perTrackLap = perTrack.get(Math.max(1, laps));
         if (perTrackLap == null || perTrackLap.isEmpty()) return Optional.empty();
         return perTrackLap.entrySet().stream().min(Map.Entry.comparingByValue());
-    }
-
-    private void ensureFile() {
-        if (!plugin.getDataFolder().exists()) plugin.getDataFolder().mkdirs();
-        if (!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                plugin.getLogger().warning("Failed to create stats.yml: " + e.getMessage());
-            }
-        }
     }
 
     private void readIntMap(String path, Map<UUID, Integer> out) {

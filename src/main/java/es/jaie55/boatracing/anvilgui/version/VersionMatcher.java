@@ -12,6 +12,11 @@ public class VersionMatcher {
     private static final String FALLBACK_REVISION = "26_R1";
 
     static {
+        VERSION_TO_REVISION.put("1.19", "1_19_R1");
+        VERSION_TO_REVISION.put("1.19.1", "1_19_R1");
+        VERSION_TO_REVISION.put("1.19.2", "1_19_R2");
+        VERSION_TO_REVISION.put("1.19.3", "1_19_R3");
+        VERSION_TO_REVISION.put("1.19.4", "1_19_R3");
         VERSION_TO_REVISION.put("1.20", "1_20_R1");
         VERSION_TO_REVISION.put("1.20.1", "1_20_R1");
         VERSION_TO_REVISION.put("1.20.2", "1_20_R2");
@@ -33,6 +38,9 @@ public class VersionMatcher {
         VERSION_TO_REVISION.put("1.21.11", "1_21_R7");
         VERSION_TO_REVISION.put("26.1", "26_R1");
         VERSION_TO_REVISION.put("26.1.1", "26_R1");
+        VERSION_TO_REVISION.put("26.1.2", "26_R1");
+        VERSION_TO_REVISION.put("26.2", "26_R2");
+        VERSION_TO_REVISION.put("26.2.1", "26_R2");
     }
 
     public VersionWrapper match() {
@@ -41,10 +49,11 @@ public class VersionMatcher {
 
         if ("26_R1".equals(revision)) {
             try {
-                return instantiate(packageName + ".Wrapper26_R1_Fixed");
-            } catch (ReflectiveOperationException ignored) {
-                // Fallback to upstream class if custom wrapper is unavailable.
-            }
+                return instantiate(packageName + ".Wrapper26_R1_LocalShim");
+            } catch (ReflectiveOperationException ignored) { }
+            try {
+                return instantiate(packageName + ".Wrapper26_R1");
+            } catch (ReflectiveOperationException ignored) { }
         }
 
         try {

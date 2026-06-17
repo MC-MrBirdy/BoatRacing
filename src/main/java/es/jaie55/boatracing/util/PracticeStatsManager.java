@@ -1,10 +1,8 @@
-package es.jaie55.boatracing.util;
+﻿package es.jaie55.boatracing.util;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -98,7 +96,8 @@ public class PracticeStatsManager {
     }
 
     private final es.jaie55.boatracing.BoatRacingPlugin plugin;
-    private final File file;
+    private final DocumentStore store;
+    private final String documentName = "practice-stats.yml";
     private YamlConfiguration cfg;
 
     // trackToken -> (playerId -> stats)
@@ -106,14 +105,24 @@ public class PracticeStatsManager {
 
     public PracticeStatsManager(es.jaie55.boatracing.BoatRacingPlugin plugin) {
         this.plugin = plugin;
-        this.file = new File(plugin.getDataFolder(), "practice-stats.yml");
-        ensureFile();
+        this.store = plugin.getDocumentStore();
         reload();
     }
 
     public synchronized void reload() {
-        cfg = YamlConfiguration.loadConfiguration(file);
+        cfg = new YamlConfiguration();
         data.clear();
+
+        try {
+            if (store != null) {
+                String raw = store.read(documentName);
+                if (raw != null && !raw.isBlank()) {
+                    cfg.loadFromString(raw);
+                }
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to load practice stats data: " + e.getMessage());
+        }
 
         ConfigurationSection tracks = cfg.getConfigurationSection("tracks");
         if (tracks == null) return;
@@ -187,9 +196,11 @@ public class PracticeStatsManager {
         }
 
         try {
-            cfg.save(file);
-        } catch (IOException e) {
-            plugin.getLogger().warning("Failed to save practice-stats.yml: " + e.getMessage());
+            if (store != null) {
+                store.write(documentName, cfg.saveToString());
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Failed to save practice stats data: " + e.getMessage());
         }
     }
 
@@ -306,17 +317,6 @@ public class PracticeStatsManager {
         Map<UUID, PlayerPracticeStats> perTrack = data.get(normalizeTrackToken(trackToken));
         if (perTrack == null) return null;
         return perTrack.get(playerId);
-    }
-
-    private void ensureFile() {
-        if (!plugin.getDataFolder().exists()) plugin.getDataFolder().mkdirs();
-        if (!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                plugin.getLogger().warning("Failed to create practice-stats.yml: " + e.getMessage());
-            }
-        }
     }
 
     private static String normalizeTrackToken(String token) {
