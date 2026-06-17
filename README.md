@@ -34,9 +34,6 @@ This is how we test the plugin to validate its behavior after each update: see t
 <details>
 <summary><strong>What's New (1.1.6)</strong></summary>
 
-<details>
-<summary><strong>What's New (1.1.6)</strong></summary>
-
 Admin Race GUI workflow, track-session sync, and localization consistency release:
 
 Added:
