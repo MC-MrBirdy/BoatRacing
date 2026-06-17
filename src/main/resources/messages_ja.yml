@@ -149,6 +149,7 @@ race:
       new-best: "&a練習走行終了: &f{time} &7(新ベスト, -{improve})"
       completed: "&e練習走行終了: &f{time} &7(ベスト {best} に対して +{delta})"
     run-completed: "&e練習走行終了: &f{time}"
+    left: "&e練習セッションを退出しました。"
   lap-completed: "&e周回 &f{lap}/{total}"
   lap-finished: "&e周回 &f{num} &7完了: &f{player}{gap}"
   player-finished: "&a{player} がフィニッシュ! &7タイム: &f{time}{gap}"

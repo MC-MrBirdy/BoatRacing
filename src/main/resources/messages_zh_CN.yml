@@ -148,6 +148,7 @@ race:
       new-best: "&a练习完成: &f{time} &7（新最佳，-{improve}）"
       completed: "&e练习完成: &f{time} &7（比最佳 {best} 慢 +{delta}）"
     run-completed: "&e练习完成: &f{time}"
+    left: "&e你已离开练习模式。"
   lap-completed: "&e第 &f{lap}/{total} &e圈"
   lap-finished: "&e第 &f{num} &7圈完成：&f{player}{gap}"
   player-finished: "&a{player} 完成！&7用时：&f{time}{gap}"

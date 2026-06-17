@@ -148,6 +148,7 @@ race:
       new-best: "&aTreino concluído: &f{time} &7(novo recorde, -{improve})"
       completed: "&eTreino concluído: &f{time} &7(+{delta} vs melhor {best})"
     run-completed: "&eTreino concluído: &f{time}"
+    left: "&eSaíste da sessão de treino."
   lap-completed: "&eVolta &f{lap}/{total}"
   lap-finished: "&eVolta &f{num} &7concluida: &f{player}{gap}"
   player-finished: "&a{player} terminou! &7Tempo: &f{time}{gap}"

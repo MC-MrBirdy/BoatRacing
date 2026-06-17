@@ -149,6 +149,7 @@ race:
       new-best: "&aTräningsrunda avslutad: &f{time} &7(nytt personbästa, -{improve})"
       completed: "&eTräningsrunda avslutad: &f{time} &7(+{delta} mot bästa {best})"
     run-completed: "&eTräningsrunda avslutad: &f{time}"
+    left: "&eDu lämnade träningspasset."
   lap-completed: "&eVarv &f{lap}/{total}"
   lap-finished: "&eVarv &f{num} &7avslutat: &f{player}{gap}"
   player-finished: "&a{player} i mål! &7Tid: &f{time}{gap}"

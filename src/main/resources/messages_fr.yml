@@ -148,6 +148,7 @@ race:
       new-best: "&aEntraînement terminé : &f{time} &7(nouveau record, -{improve})"
       completed: "&eEntraînement terminé : &f{time} &7(+{delta} vs meilleur {best})"
     run-completed: "&eEntraînement terminé : &f{time}"
+    left: "&eTu as quitté la séance d'entraînement."
   lap-completed: "&eTour &f{lap}/{total}"
   lap-finished: "&eTour &f{num} &7terminé : &f{player}{gap}"
   player-finished: "&a{player} a terminé ! &7Temps : &f{time}{gap}"

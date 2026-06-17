@@ -149,6 +149,7 @@ race:
       new-best: "&aAntrenman tamamlandi: &f{time} &7(yeni en iyi, -{improve})"
       completed: "&eAntrenman tamamlandi: &f{time} &7(en iyi {best} degerine gore +{delta})"
     run-completed: "&eAntrenman tamamlandi: &f{time}"
+    left: "&eAntrenman seansından ayrıldın."
   lap-completed: "&eTur &f{lap}/{total}"
   lap-finished: "&eTur &f{num} &7bitti: &f{player}{gap}"
   player-finished: "&a{player} bitirdi! &7Süre: &f{time}{gap}"

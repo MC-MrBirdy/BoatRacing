@@ -894,8 +894,14 @@ public class RaceManager {
         previousSidebarObjectives.remove(id);
         trySimpleScoreShow(p);
 
-        p.sendMessage(color(plugin.pref() + plugin.msg().get("race.forfeit")));
-        broadcast(color(plugin.msg().get("race.forfeit-other", "player", p.getName())));
+        if (practiceMode) {
+            p.sendMessage(color(plugin.pref() + plugin.msg().get("race.practice.left")));
+        } else {
+            p.sendMessage(color(plugin.pref() + plugin.msg().get("race.forfeit")));
+            for (Player r : raceAudience(statesToPlayers())) {
+                r.sendMessage(color(plugin.msg().get("race.forfeit-other", "player", p.getName())));
+            }
+        }
 
         cleanupRaceVehicleForPlayer(id);
         sendParticipantToLobbyAfterRace(id, p);

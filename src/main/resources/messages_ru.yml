@@ -148,6 +148,7 @@ race:
       new-best: "&aТренировка завершена: &f{time} &7(новый рекорд, -{improve})"
       completed: "&eТренировка завершена: &f{time} &7(+{delta} к лучшему {best})"
     run-completed: "&eТренировка завершена: &f{time}"
+    left: "&eВы покинули тренировочную сессию."
   lap-completed: "&eКруг &f{lap}/{total}"
   lap-finished: "&eКруг &f{num} &7завершён: &f{player}{gap}"
   player-finished: "&a{player} финишировал! &7Время: &f{time}{gap}"

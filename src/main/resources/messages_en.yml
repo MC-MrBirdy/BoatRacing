@@ -145,6 +145,7 @@ race:
       new-best: "&aPractice run finished: &f{time} &7(new best, -{improve})"
       completed: "&ePractice run finished: &f{time} &7(+{delta} vs best {best})"
     run-completed: "&ePractice run finished: &f{time}"
+    left: "&eYou left the practice session."
   lap-completed: "&eLap &f{lap}/{total}"
   lap-finished: "&eLap &f{num} &7finished: &f{player}{gap}"
   player-finished: "&a{player} finished! &7Time: &f{time}{gap}"

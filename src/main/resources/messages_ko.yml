@@ -148,6 +148,7 @@ race:
       new-best: "&a연습 주행 완료: &f{time} &7(신기록, -{improve})"
       completed: "&e연습 주행 완료: &f{time} &7(베스트 {best} 대비 +{delta})"
     run-completed: "&e연습 주행 완료: &f{time}"
+    left: "&e연습 세션을 떠났습니다."
   lap-completed: "&e랩 &f{lap}/{total}"
   lap-finished: "&e랩 &f{num} &7완료: &f{player}{gap}"
   player-finished: "&a{player} 완료! &7시간: &f{time}{gap}"
