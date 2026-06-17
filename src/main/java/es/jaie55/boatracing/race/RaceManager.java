@@ -42,6 +42,7 @@ public class RaceManager {
         public boolean wasInFinish = false;
         public boolean wasInPit = false;
         public boolean wasInCheckpoint = false; // for current next checkpoint only
+        public boolean forfeited = false;
     }
 
     public enum BackResult {
@@ -538,6 +539,13 @@ public class RaceManager {
         List<Map.Entry<UUID, RaceState>> list = new ArrayList<>(states.entrySet());
         list.sort(Comparator.comparingLong(e -> timeFor(e.getValue())));
 
+        List<Map.Entry<UUID, RaceState>> finishers = new ArrayList<>();
+        List<Map.Entry<UUID, RaceState>> forfeitedEntries = new ArrayList<>();
+        for (Map.Entry<UUID, RaceState> e : list) {
+            if (e.getValue().forfeited) forfeitedEntries.add(e);
+            else finishers.add(e);
+        }
+
         Collection<Player> recipients;
         if (practiceMode) {
             Player runner = practicePlayer();
@@ -550,30 +558,23 @@ public class RaceManager {
             recipients = new ArrayList<>(Bukkit.getOnlinePlayers());
         }
 
-        // Persist winner stats for placeholders/holograms
-        if (!practiceMode && !list.isEmpty() && plugin.getStatsManager() != null) {
+        // Persist winner stats for placeholders/holograms (only for finishers, not forfeited)
+        if (!practiceMode && !finishers.isEmpty() && plugin.getStatsManager() != null) {
             java.util.List<UUID> finishOrder = new java.util.ArrayList<>();
-            for (Map.Entry<UUID, RaceState> e : list) finishOrder.add(e.getKey());
+            for (Map.Entry<UUID, RaceState> e : finishers) finishOrder.add(e.getKey());
             plugin.getStatsManager().recordPlayerPositions(finishOrder);
 
-            UUID winner = list.get(0).getKey();
+            UUID winner = finishers.get(0).getKey();
             plugin.getStatsManager().addPlayerWin(winner);
             plugin.getTeamManager().getTeamByMember(winner).ifPresent(t -> plugin.getStatsManager().addTeamWin(t.getId()));
         }
 
         for (Player p : recipients) p.sendMessage(color(plugin.msg().get("race.results.header")));
-        int pos = 1;
-        for (Map.Entry<UUID, RaceState> e : list) {
-            UUID id = e.getKey();
-            Player online = Bukkit.getPlayer(id);
-            String name;
-            if (online != null) {
-                name = safeRenderName(online);
-            } else {
-                name = Optional.ofNullable(Bukkit.getOfflinePlayer(id).getName()).orElse(id.toString().substring(0,8));
-            }
-            if (name == null || name.isEmpty()) name = id.toString().substring(0,8);
 
+        int pos = 1;
+        for (Map.Entry<UUID, RaceState> e : finishers) {
+            UUID id = e.getKey();
+            String name = resolveResultName(id);
             RaceState s = e.getValue();
             long t = timeFor(s);
 
@@ -590,14 +591,20 @@ public class RaceManager {
             for (Player p : recipients) p.sendMessage(color(line));
         }
 
-        // Distribute rewards
+        for (Map.Entry<UUID, RaceState> e : forfeitedEntries) {
+            String name = resolveResultName(e.getKey());
+            String line = plugin.msg().get("race.results.forfeited", "player", name);
+            for (Player p : recipients) p.sendMessage(color(line));
+        }
+
+        // Distribute rewards (only for finishers, not forfeited)
         if (!practiceMode) {
             try {
                 es.jaie55.boatracing.reward.RewardManager rm = plugin.getRewardManager();
                 if (rm != null && rm.isEnabled()) {
                     String trackName = getTrackName();
                     List<Map.Entry<UUID, Long>> results = new ArrayList<>();
-                    for (Map.Entry<UUID, RaceState> e : list) {
+                    for (Map.Entry<UUID, RaceState> e : finishers) {
                         results.add(new AbstractMap.SimpleEntry<>(e.getKey(), timeFor(e.getValue())));
                     }
                     rm.giveRewards(results, trackName, totalLaps);
@@ -606,6 +613,15 @@ public class RaceManager {
                 plugin.getLogger().warning("Failed to distribute rewards: " + ex.getMessage());
             }
         }
+    }
+
+    private String resolveResultName(UUID id) {
+        Player online = Bukkit.getPlayer(id);
+        if (online != null) {
+            return safeRenderName(online);
+        }
+        String name = Optional.ofNullable(Bukkit.getOfflinePlayer(id).getName()).orElse(null);
+        return (name != null && !name.isEmpty()) ? name : id.toString().substring(0, 8);
     }
 
     private long timeFor(RaceState s) {
@@ -1321,7 +1337,10 @@ public class RaceManager {
         if (!running) return;
 
         UUID id = p.getUniqueId();
-        states.remove(id);
+        RaceState st = states.get(id);
+        if (st == null) return;
+        st.forfeited = true;
+        st.finished = true;
 
         Scoreboard our = scoreboards.get(id);
         Scoreboard prev = previousScoreboards.get(id);
@@ -1351,7 +1370,9 @@ public class RaceManager {
         } else {
             p.sendMessage(color(plugin.pref() + plugin.msg().get("race.forfeit")));
             for (Player r : raceAudience(statesToPlayers())) {
-                r.sendMessage(color(plugin.msg().get("race.forfeit-other", "player", p.getName())));
+                if (!r.getUniqueId().equals(id)) {
+                    r.sendMessage(color(plugin.msg().get("race.forfeit-other", "player", p.getName())));
+                }
             }
         }
 
