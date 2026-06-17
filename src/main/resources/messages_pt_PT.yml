@@ -173,7 +173,7 @@ race:
     second: "&7\uD83E\uDD48 &7#{pos} &f{player} &7- &f{time}{penalty}"
     third: "&c\uD83E\uDD49 &c#{pos} &f{player} &7- &f{time}{penalty}"
     other: "&7#{pos} &f{player} &7- &f{time}{penalty}"
-    forfeited: "&cDNF &f{player} &7(forfeited)"
+    forfeited: "&cDNF &f{player} &7(desistiu)"
 
   status:
     header: "&eEstado da corrida:"
