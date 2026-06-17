@@ -654,8 +654,8 @@ public class BoatRacingPlugin extends JavaPlugin {
         }
         this.prefix = Text.colorize(getConfig().getString("prefix", "&6[BoatRacing] "));
         this.messageManager = new MessageManager(this);
-        this.teamManager = new TeamManager(this);
         this.documentStore = DocumentStoreFactory.create(this);
+        this.teamManager = new TeamManager(this);
         this.statsManager = new StatsManager(this);
         this.practiceStatsManager = new PracticeStatsManager(this);
         this.practiceGhostManager = new PracticeGhostManager(this);
