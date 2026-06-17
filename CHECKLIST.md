@@ -1,6 +1,32 @@
 README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 
 ## What to verify for 1.1.6
+- Forfeit command:
+	- Join a race and run `/boatracing race forfeit` while racing; verify you receive the forfeited confirmation and are teleported to lobby.
+	- While other racers are still running, verify you are removed from the race without stopping it for others.
+	- Verify forfeited players appear as `DNF {player} (forfeited)` at the bottom of race results after the race ends.
+	- Verify forfeited players do not receive rewards, wins, or position stats.
+	- Verify the `race.forfeit-other` message is shown to remaining participants and admins, not globally.
+- Practice leave:
+	- Start a practice run and disconnect mid-race; verify clean exit with practice session cleanup.
+	- Run `/boatracing race practice leave <track>` during active practice; verify practice session exits cleanly and player is returned to lobby.
+	- Verify practice leave sends only private messages to the runner.
+- Practice ghost replay:
+	- Start a solo practice run on a configured track with `practice.ghost.enabled: true`.
+	- Complete a full run and verify a ghost entity (boat + rider) appears on the next practice start, following the recorded path.
+	- Complete a faster run and verify the ghost updates to the new best path.
+	- Verify the ghost entity does not collide with the player and is hidden from other players on the server.
+	- Disable ghost via config and verify no ghost spawns on next practice run.
+- DocumentStore persistence:
+	- With default `database.mode: SQLITE`, create a team, set racer number, and restart the server; verify all data persists.
+	- Switch to `database.mode: YAML` and verify teams/stats/practice data persist in traditional YAML files.
+	- Verify legacy YAML files (teams.yml, stats.yml, practice-stats.yml) are migrated to the database on first load when switching to SQLite.
+- AnvilGUI 26.1/26.2 compatibility:
+	- On a 26.2 server, open all Anvil flows (team rename, admin team create, custom laps/pitstops, vote seconds) and verify no crashes.
+	- On a 26.1 server, verify the LocalShim fallback works and the close-event compatibility warning appears at most once.
+- DNF results:
+	- Run a multi-player race where one player forfeits before the end; verify results show finishers with positions and forfeited player(s) listed as DNF at the bottom.
+	- Verify forfeited player names and DNF labels are localized across all bundled language files.
 - Admin Race GUI checkpoint editor flow:
 	- Open `/boatracing admin` -> Race GUI and verify a checkpoint editor entry is available.
 	- Open editor on a track with checkpoints and verify each checkpoint item shows region + click instructions.
@@ -65,6 +91,15 @@ README — BoatRacing QA checklist (teams, admin, tracks; two-player tests)
 	- `README.md` status line shows `Public release (1.1.6)`.
 	- `README.md` includes a dedicated `What's New (1.1.6)` section.
 	- `CHANGELOG.md` includes a dedicated `1.1.6` section with added/changed/fixed/docs bullets for this release.
+- Recent bugfix verifications:
+	- Start a solo practice run and forfeit mid-race; verify no `Results:` header or DNF line appears — the session ends cleanly.
+	- Start a multiplayer race, have one player forfeit, wait for the remaining racer(s) to finish; verify DNF entries appear correctly at the bottom.
+	- Verify practice forfeit still saves no practice stats or ghost data.
+	- Set `database.table` in config to a value with special characters (e.g. `test;DROP--`) and restart; verify the plugin sanitizes it and creates a valid table name.
+	- Start a practice run with ghosts enabled on a server with a long-running uptime; verify the ghost collision team name generation does not throw on UUID manipulation.
+	- Set up a track with checkpoints and a finish line; use a high-speed ice boat to cross a checkpoint at maximum velocity; verify the checkpoint registers correctly (not skipped).
+	- Cross the finish line at high speed; verify lap completion registers correctly.
+	- Start a practice countdown, then immediately use `/boatracing race practice leave <track>`; verify the countdown cancels and no race starts.
 
 ## What to verify for 1.1.5
 - Solo practice mode:

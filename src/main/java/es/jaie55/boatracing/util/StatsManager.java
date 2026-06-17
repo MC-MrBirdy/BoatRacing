@@ -1,4 +1,4 @@
-﻿package es.jaie55.boatracing.util;
+package es.jaie55.boatracing.util;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;

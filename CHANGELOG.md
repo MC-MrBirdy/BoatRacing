@@ -1,12 +1,23 @@
 ﻿# Changelog
 
-## 1.1.6 — 08/04/2026
+## 1.1.6 — 17/06/2026
 ### Added
 - **Admin Race checkpoint editor UI**: added checkpoint management directly in the race admin inventory with paginated listing and in-place actions (add from selection, replace, remove, move up/down).
 - **Admin Race pitstop quick controls**: added mandatory pitstop quick-set actions (`0/1/2`) plus custom anvil input from the race admin inventory.
 - **Setup selection particle visualizer**: added built-in wand selection wireframe rendering using particles, configurable under `setup.selection-visualizer.*` (`enabled`, `period-ticks`, `particle`, `spacing`, `max-particles-per-player`, `view-distance`, `show-only-with-wand`).
 - **Explicit track+laps placeholders**: added lap-scoped variants for comparative panels: `%boatracing_track_best_player_laps_<track>_<laps>%`, `%boatracing_track_best_time_laps_<track>_<laps>%`, `%boatracing_track_best_time_ms_laps_<track>_<laps>%`, plus `%boatracing_track_top_1|2|3_player|time|time_ms_laps_<track>_<laps>%`.
 - **Stats placeholders by track and laps**: added best-race/best-lap variants for viewer and top contexts scoped by track and by track+laps (for example `%boatracing_player_best_race_laps_<track>_<laps>%` and `%boatracing_top_player_best_race_name_laps_<track>_<laps>%`).
+- **Forfeit command** (`/boatracing race forfeit`): players can abandon a running race without stopping it for others. Permission `boatracing.race.forfeit` (default: true). Contributed by [@MC-MrBirdy](https://github.com/MC-MrBirdy) in [#3](https://github.com/Jaie55/BoatRacing/pull/3).
+- **DNF results display**: forfeited players appear as `DNF {player} (forfeited)` at the bottom of race results, separated from finishers. Finishers keep normal positions and rewards; forfeited players do not receive rewards or win/loss stats.
+- **Practice ghost replay (advanced vanilla MVP)**: solo practice sessions now capture sample paths and replay the best recorded ghost alongside the current run. Ghost entities (boat + armorstand) use no-collision rules, are hidden from other players, and interpolate smoothly with angular rotation.
+- **PracticeGhostManager**: new manager class for ghost persistence per track and lap count, using the DocumentStore backend. Ghosts are stored in `practice-ghosts.yml`.
+- **DocumentStore persistence layer**: new pluggable storage interface with three backends — YAML files (`YamlFileDocumentStore`), local SQLite (`JdbcDocumentStore` with SQLite dialect), and remote MySQL (`JdbcDocumentStore` with MySQL dialect). Backend selected via `config.yml` → `database.mode`.
+- **DocumentStoreFactory**: resolves the active store implementation from config and provides automatic legacy-YAML migration on first load when switching to SQLite/MySQL.
+- **Database config section**: new `database` block in `config.yml` with mode (`YAML`/`SQLITE`/`MYSQL`), table name, SQLite file path, and MySQL connection settings.
+- **Practice ghost config section**: new `practice.ghost` block in `config.yml` with enable toggle, sample/playback tick rates, minimum distance filter, sample cap, and name display option.
+- **Practice leave command**: `/boatracing race practice leave <track>` (and `exit` alias) to cleanly exit a practice session. Also handles disconnect/quit/kick via `PlayerQuitEvent` and `PlayerKickEvent` handlers.
+- **AnvilGUI 26.1/26.2 compatibility**: switched from upstream `net.wesjd:anvilgui:1.10.12-SNAPSHOT` to the `feeeedox/AnvilGUI` fork via JitPack. Added `Wrapper26_R1_LocalShim` as compatibility fallback for 26.1 close-event handling. Extended `VersionMatcher` with 1.19.x mappings, `26.1.2`, and `26.2`/`26.2.1`→`26_R2` entries, loading native `Wrapper26_R2` from the fork on 26.2.
+- **Race result forfeited message**: added `race.results.forfeited` key to all 16 bundled language files with translations.
 
 ### Changed
 - **Track-scoped Admin Race actions**: race/setup operations in Admin Race GUI now resolve the active track session explicitly, so edits and status reflect the selected track context.
@@ -15,6 +26,11 @@
 - **Setup command docs clarity**: README setup command descriptions now state that laps/pitstops overrides apply immediately without restart/reload.
 - **Lap-context track records/placeholders**: track bests are now stored and resolved per lap count (`bestTimesByLaps`), preventing 2-lap records from overriding 3-lap placeholders (and vice versa) across `%boatracing_track_best_*%`, `%boatracing_track_top_*%`, and `%boatracing_player_track_best%`.
 - **Selection visualizer edge distribution**: particle allocation is now balanced across all box edges and visibility culling is performed against the full selection box distance, reducing inconsistent partial rendering.
+- **Forfeit broadcast scoping**: `forfeit()` now uses `raceAudience()` (participants + admins) instead of global `broadcast()` for the `{player} forfeited` message in competitive mode. Practice mode forfeits show a private `You left the practice session` message only to the runner.
+- **TeamManager, StatsManager, PracticeStatsManager refactored**: all three managers now read/write through `DocumentStore` instead of direct `File` + `YamlConfiguration.save/load`. Legacy YAML files are automatically migrated to the database on first load when using SQLite/MySQL mode.
+- **config.yml restructured** with section header comments and new `database` / `practice.ghost` blocks.
+- **Race state marking**: `RaceState` now includes a `forfeited` flag. `forfeit()` marks the state instead of removing it, so `checkAllFinished()` triggers correctly and `announceResults()` can display the player as DNF.
+- **Project version**: bumped to 1.1.6. Minecraft support range extended from 26.1 → 26.2.
 
 ### Fixed
 - **Stale per-track override reads in existing sessions**: race settings load now refreshes track data before reading `racing.*` overrides, preventing old values from being reused in cached track sessions.
@@ -26,6 +42,19 @@
 - **Stats tab-complete DataConverter spam**: player-name suggestions for `/boatracing stats <player>` no longer rely on `OfflinePlayer#getName()` in tab-complete paths, avoiding repeated Paper 1.21 `Failed to convert json to nbt` / `MalformedJsonException` console errors on malformed legacy playerdata.
 - **Setup wand text key fallback**: fixed wand name/lore rendering when message bundles store those entries under `setup.usage.*`; setup wand now resolves localized text instead of showing raw key strings.
 - **Selection wireframe truncation under tight budgets**: fixed abrupt edge cutoffs in large selections when particle limits are reached.
+- **DocumentStore initialization order**: `DocumentStoreFactory.create()` now runs before `TeamManager` instantiation in `onEnable()`, so TeamManager receives a valid store reference instead of null (which caused silent team data loss).
+- **Scoreboard DataConverter spam on Paper 26.1+**: replaced remaining `OfflinePlayer#getName()` calls in the scoreboard timer and result name resolution with `safeOfflineName()` that reads the player profile via reflection, avoiding `Failed to convert json to nbt` console errors from malformed legacy playerdata.
+- **SimpleScore sidebar reclamation during races**: the scoreboard timer now periodically re-hides SimpleScore (every ~2 seconds) during active races and practice sessions, preventing the external sidebar from overwriting the BoatRacing race display mid-session.
+- **`leavePractice()` vehicle cleanup**: changed from per-player `cleanupRaceVehicleForPlayer()` to full `cleanupRaceVehicles()` for consistency.
+- **Removed unused `{track}` placeholder** from `race.practice.left` message call in `leavePractice()`.
+- **Runtime JDBC driver loading**: SQLite and MySQL drivers are no longer shaded into the JAR. On first startup, the plugin downloads the required JDBC JARs (`sqlite-jdbc`, `mysql-connector-j`, `slf4j-api`, `slf4j-simple`) from Maven Central with SHA-256 checksum verification and caches them in `plugins/BoatRacing/lib/`. If the libs are unavailable (no internet, download failure, checksum mismatch) the plugin falls back gracefully to YAML mode. This keeps the plugin JAR at ~675 KB instead of ~18 MB.
+- **Practice forfeit no longer shows results header**: `forfeit()` in practice mode now calls `stopRace(false)` instead of `checkAllFinished()` → `stopRace(true)`, skipping the `Results:`/DNF display since there is no competitive outcome for a forfeited practice run.
+- **SQL injection hardening in JdbcDocumentStore**: the `database.table` config value is now sanitized to `[A-Za-z0-9_]` before use in DDL statements, preventing injection through the table name.
+- **Ghost collision team name bounds**: UUID substring extraction for the no-collision team name now uses `Math.min(9, uuidStr.length())` to guard against edge cases.
+- **Checkpoint/finish line fast-crossing detection**: `tickPlayer()` now uses ray-AABB segment intersection to detect when a boat passes through a checkpoint or finish region between movement ticks, preventing missed crossings at high boat speeds (ice boats, speed boosts).
+- **Countdown cancellation on practice leave**: `clearCountdownLock()` now cancels the scheduled countdown timer tasks, so leaving practice during pre-start lights no longer allows the countdown to continue and start a race.
+- **Hardcoded usage message removed**: the practice leave usage text now uses the `race.usage.practice-leave` message key across all language bundles.
+- **SimpleScore sidebar flickering**: the scoreboard timer now re-hides SimpleScore immediately on the first tick instead of waiting 2 seconds, preventing brief sidebar takeover at race/practice start.
 
 ### Stats Persistence
 - **`stats.yml` (competitive aggregate)** stores `playerWins`.
@@ -40,7 +69,8 @@
 - **`practice-stats.yml` (practice telemetry)** remains separate and stores run/lap/sector best/last per player and track.
 
 ### Docs
-- Added 1.1.6 release notes and QA coverage in README, CHANGELOG, and CHECKLIST (including checkpoint editor + pitstops GUI checks).
+- Added 1.1.6 release notes and QA coverage in README, CHANGELOG, and CHECKLIST (including checkpoint editor, pitstops GUI checks, forfeit, ghost replay, and DocumentStore features).
+- Removed 26.1 snapshot warning from README (26.2 is now fully supported).
 
 ## 1.1.5 — 06/04/2026
 ### Added

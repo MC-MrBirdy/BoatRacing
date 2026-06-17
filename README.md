@@ -8,7 +8,7 @@
 <a id="en"></a>
 # BoatRacing
 
-[![Modrinth](https://img.shields.io/modrinth/v/boatracing?logo=modrinth&label=Modrinth)](https://modrinth.com/plugin/boatracing) [![Downloads](https://img.shields.io/modrinth/dt/boatracing?logo=modrinth&label=Downloads)](https://modrinth.com/plugin/boatracing) [![Minecraft](https://img.shields.io/badge/Minecraft-1.19--26.1.1-3b82f6)](https://modrinth.com/plugin/boatracing/versions) [![Java](https://img.shields.io/badge/Java-17%2B-22c55e)](https://adoptium.net/) [![Servers](https://img.shields.io/badge/Servers-Bukkit%20%7C%20Spigot%20%7C%20Paper%20%7C%20Purpur-f59e0b)](https://modrinth.com/plugin/boatracing)
+[![Modrinth](https://img.shields.io/modrinth/v/boatracing?logo=modrinth&label=Modrinth)](https://modrinth.com/plugin/boatracing) [![Downloads](https://img.shields.io/modrinth/dt/boatracing?logo=modrinth&label=Downloads)](https://modrinth.com/plugin/boatracing) [![Minecraft](https://img.shields.io/badge/Minecraft-1.19--26.2-3b82f6)](https://modrinth.com/plugin/boatracing/versions) [![Java](https://img.shields.io/badge/Java-17%2B-22c55e)](https://adoptium.net/) [![Servers](https://img.shields.io/badge/Servers-Bukkit%20%7C%20Spigot%20%7C%20Paper%20%7C%20Purpur-f59e0b)](https://modrinth.com/plugin/boatracing)
 
 [![Compatible with SimpleScore](https://img.shields.io/badge/Compatible%20with-SimpleScore-3fb950)](https://github.com/RuiPereiraDev/SimpleScore) [![Compatible with TAB](https://img.shields.io/badge/Compatible%20with-TAB-3fb950)](https://github.com/NEZNAMY/TAB)
 
@@ -22,24 +22,17 @@ An F1‒style ice boat racing plugin for Bukkit/Spigot (compatible with Paper/Pu
 
 <a id="snapshot-261-warning"></a>
 > [!WARNING]
-> Snapshot name: **snapshot-26.1-gui-fallback-01**
-> Snapshot only for Paper 26.1.
-> If your server version is not 26.1, please wait for the stable release.
-> This build includes a temporary reflective fallback implementation for AnvilGUI, and some GUI/Anvil flows may still contain errors on certain server builds or forks.
-
-<details>
-<summary><strong>Snapshot 26.1 Note (snapshot-26.1-gui-fallback-01)</strong></summary>
-
-- Snapshot target: Paper 26.1 first validation build.
-- Implementation type: temporary reflective fallback for AnvilGUI close-event compatibility (`handleInventoryCloseEvent`).
-- Known risk: GUI/anvil interactions may still fail on some 26.1 dev builds and non-Paper forks.
-- Plan: keep this fallback until an official AnvilGUI release ships a stable 26.1 close-event fix.
-
-</details>
+> Snapshot name: **snapshot-26.1-gui-fallback-01** (historical — no longer needed)
+> This snapshot was published for early Paper 26.1 validation.
+> **As of 1.1.6, BoatRacing has full support for 26.1 via the feeeedox/AnvilGUI fork.**
+> You can safely upgrade to the latest release.
 
 See the changelog in [CHANGELOG.md](https://github.com/Jaie55/BoatRacing/blob/main/CHANGELOG.md).
 
 This is how we test the plugin to validate its behavior after each update: see the QA checklist in [CHECKLIST.md](CHECKLIST.md)
+
+<details>
+<summary><strong>What's New (1.1.6)</strong></summary>
 
 <details>
 <summary><strong>What's New (1.1.6)</strong></summary>
@@ -60,6 +53,12 @@ Added:
 - Stats placeholders now also support track-scoped and lap-scoped best race/lap contexts:
 	- Viewer: `%boatracing_player_best_race_track_<track>%`, `%boatracing_player_best_lap_track_<track>%`, `%boatracing_player_best_race_laps_<track>_<laps>%`, `%boatracing_player_best_lap_laps_<track>_<laps>%`
 	- Top: `%boatracing_top_player_best_race_name_track_<track>%`, `%boatracing_top_player_best_lap_name_track_<track>%`, `%boatracing_top_player_best_race_name_laps_<track>_<laps>%`, `%boatracing_top_player_best_lap_name_laps_<track>_<laps>%`
+- **Forfeit command** (`/boatracing race forfeit`): players can abandon a running race without stopping it for others. Permission: `boatracing.race.forfeit` (default: true). Contributed by [@MC-MrBirdy](https://github.com/MC-MrBirdy) in [#3](https://github.com/Jaie55/BoatRacing/pull/3).
+- **Practice ghost replay**: best-run ghosts are captured as sample paths during solo practice and replayed alongside the current run. Ghost entities use no-collision rules, are hidden from other players, and interpolate smoothly between samples with accurate rotation.
+- **DocumentStore persistence layer**: pluggable backend (YAML files / SQLite / MySQL) for teams, racers, competitive stats, practice stats, and practice ghosts. Configurable via `config.yml` → `database`.
+- **Practice leave flow**: new `/boatracing race practice leave <track>` command and automatic exit on disconnect/quit/kick for practice sessions.
+- **AnvilGUI 26.1/26.2 compatibility**: switched to the `feeeedox/AnvilGUI` fork via JitPack, with a local shim for close-event fallback on 26.1 and native 26.2 support via `Wrapper26_R2`.
+- **DNF result entries**: forfeited players now appear as "DNF" at the bottom of race results instead of disappearing entirely. Finishers keep normal positions and rewards; forfeited players do not receive rewards or win stats.
 
 Changed:
 - Admin Race GUI race/setup actions now resolve and operate on the active track session instead of relying on a single shared runtime manager.
@@ -68,6 +67,11 @@ Changed:
 - Setup command docs now explicitly state that these overrides apply immediately (no restart/reload required).
 - Track record storage and placeholders are now lap-aware (`bestTimesByLaps`), so 2-lap bests no longer overwrite or display as 3-lap bests (and vice versa) in `%boatracing_track_best_*%`, `%boatracing_track_top_*%`, and `%boatracing_player_track_best%`.
 - Selection visualizer rendering now distributes particle budget across all box edges and culls by selection-box distance, improving shape consistency on large selections.
+- Forfeit broadcast scope now uses `raceAudience()` (participants + admins) instead of global `broadcast()` in competitive mode; practice mode shows private messages only to the runner.
+- TeamManager, StatsManager, and PracticeStatsManager migrated to use DocumentStore instead of direct file I/O, with automatic legacy YAML-to-database migration on first load.
+- **Default storage is now SQLite** (instead of YAML files). The plugin automatically downloads the required JDBC drivers on first startup and stores all persistent data (`teams`, `racers`, `stats`, `practice-stats`, `practice-ghosts`) in a local SQLite database (`boatracing.db`). YAML mode remains available via `database.mode: "YAML"`.
+- `config.yml` gained new `database` and `practice.ghost` sections with sensible defaults.
+- **Runtime JDBC driver loading**: SQLite and MySQL drivers are downloaded on first use from Maven Central with SHA-256 verification, cached in `plugins/BoatRacing/lib/`, and loaded via an isolated classloader. Falls back to YAML if drivers are unavailable. JAR size stays at ~675 KB.
 
 Fixed:
 - `RaceManager` now reloads track data when applying race settings, so `race open <track>` always uses the latest saved `tracks/<track>.yml -> racing.*` overrides even for pre-existing sessions.
@@ -79,9 +83,16 @@ Fixed:
 - Stats tab-complete now avoids unsafe offline-name reads during `/boatracing stats <player>` suggestions, preventing repeated Paper 1.21 DataConverter console errors (`Failed to convert json to nbt` / `MalformedJsonException`) on malformed legacy playerdata.
 - Fixed setup wand display regression where some servers showed raw message keys (`setup.wand-name`, `setup.wand-lore-left`, `setup.wand-lore-right`) instead of localized text.
 - Fixed intermittent wireframe edge truncation in the selection visualizer when particle limits were reached.
+- **Scoreboard DataConverter spam fix**: replaced remaining `OfflinePlayer#getName()` calls in the scoreboard timer with a reflection-based safe name resolver, preventing console errors from malformed legacy playerdata on Paper 26.1+.
+- **SimpleScore sidebar reclamation fix**: the race scoreboard timer now periodically re-hides SimpleScore during active races and practice sessions, keeping the BoatRacing sidebar visible throughout the session.
+- **Practice forfeit UX fix**: forfeiting a practice run no longer shows the `Results:` header and DNF line — the session ends cleanly without competitive result display.
+- **Table name sanitization**: the `database.table` config value is validated to prevent accidental or malicious SQL injection through identifier names.
+- **Ghost collision safeguards**: UUID-derived collision team names now include bounds protection.
+- **Checkpoint/finish fast-crossing detection**: `tickPlayer()` now uses ray-AABB segment intersection so boats moving at high speed (ice boats) no longer skip over checkpoints or the finish line between movement ticks.
 
 Docs:
-- README, CHANGELOG, and CHECKLIST now include 1.1.6 release and QA coverage for checkpoint editor + pitstops GUI controls and setup override sync.
+- README, CHANGELOG, and CHECKLIST now include 1.1.6 release and QA coverage for checkpoint editor, pitstops GUI controls, setup override sync, forfeit, ghost replay, and DocumentStore features.
+- Removed 26.1 snapshot warning from README (26.2 is now fully supported).
 
 </details>
 
@@ -365,7 +376,7 @@ Available codes and names:
 - Named tracks: each track lives in its own YAML file and can override core race settings such as laps, mandatory pit stops, registration time, penalties, and player race-start permissions.
 - Built-in setup flow: Blaze Rod selection wand, cuboid region tools, clickable setup tips, and a compact guided wizard with auto-advance where possible.
 - Grid control: custom per-player start slots, auto placement for the rest, and fallback ordering by best recorded track time.
-- Race systems: ordered checkpoints, optional pit area, optional mandatory pit stops, false-start penalties, registration lobby teleport/return, 5-light countdown, and live results broadcasting.
+- Race systems: ordered checkpoints, optional pit area, optional mandatory pit stops, false-start penalties, registration lobby teleport/return, 5-light countdown, live results broadcasting, forfeit command with DNF display, and pratice ghost replay.
 - Multi-track race orchestration: independent race sessions per track and map-vote commands for admins/players in chat.
 - HUD and scoreboard: in-race sidebar plus ActionBar with per-section config toggles, safe scoreboard restoration after races, and compatibility flow for external scoreboards.
 - Persistent stats: `stats.yml` stores wins, best race and best lap so PlaceholderAPI, holograms, scoreboards, and NPCs can show live and historical data.
@@ -480,6 +491,8 @@ Race commands:
 - `/boatracing race start <track>`
 - `/boatracing race force <track>`
 - `/boatracing race practice <track>`
+- `/boatracing race practice leave <track>`
+- `/boatracing race forfeit`
 - `/boatracing race stop <track>`
 - `/boatracing race status <track>`
 - `/boatracing race voteopen [all|<track1> <track2> ...] [seconds]`
@@ -593,6 +606,7 @@ Command equivalents:
 - `boatracing.race.back` (default: true): return to the saved pre-lobby location.
 - `boatracing.race.status` (default: true): check track race status.
 - `boatracing.race.practice` (default: true): start solo practice mode on a ready track.
+- `boatracing.race.forfeit` (default: true): forfeit an active race.
 - `boatracing.race.voteopen` (default: op): open map voting with `/boatracing race voteopen`.
 - `boatracing.race.admin` (default: op): manage races with `open`, `start`, `force`, `stop`, and `voteclose`.
 

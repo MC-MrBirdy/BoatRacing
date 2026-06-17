@@ -1,4 +1,4 @@
-﻿package es.jaie55.boatracing.team;
+package es.jaie55.boatracing.team;
 
 import es.jaie55.boatracing.BoatRacingPlugin;
 import es.jaie55.boatracing.util.DocumentStore;

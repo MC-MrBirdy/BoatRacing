@@ -38,7 +38,7 @@ final class JdbcDocumentStore implements DocumentStore {
     ) throws SQLException {
         this.logger = logger;
         this.dataFolder = dataFolder;
-        this.tableName = tableName == null || tableName.isBlank() ? "boatracing_data" : tableName;
+        this.tableName = sanitizeTableName(tableName);
         this.migrateLegacyYaml = migrateLegacyYaml;
         this.dialect = dialect == null ? Dialect.SQLITE : dialect;
         this.connection = DriverManager.getConnection(jdbcUrl, username, password);
@@ -80,6 +80,12 @@ final class JdbcDocumentStore implements DocumentStore {
         } catch (SQLException e) {
             throw new IOException("Failed to close database connection", e);
         }
+    }
+
+    private static String sanitizeTableName(String raw) {
+        if (raw == null || raw.isBlank()) return "boatracing_data";
+        String cleaned = raw.trim().replaceAll("[^A-Za-z0-9_]", "");
+        return cleaned.isBlank() ? "boatracing_data" : cleaned;
     }
 
     private void ensureSchema() throws SQLException {

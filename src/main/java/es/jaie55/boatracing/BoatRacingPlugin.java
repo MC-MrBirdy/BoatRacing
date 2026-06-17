@@ -444,13 +444,13 @@ public class BoatRacingPlugin extends JavaPlugin {
         return false;
     }
 
-    private void tickPlayerAcrossRaceSessions(Player player, org.bukkit.Location to) {
+    private void tickPlayerAcrossRaceSessions(Player player, org.bukkit.Location from, org.bukkit.Location to) {
         if (player == null || to == null) return;
         java.util.UUID playerId = player.getUniqueId();
         for (RaceManager rm : getAllRaceManagers()) {
             if (rm == null || !rm.isRunning()) continue;
             if (!rm.isParticipant(playerId)) continue;
-            rm.tickPlayer(player, to);
+            rm.tickPlayer(player, from, to);
             return;
         }
     }
@@ -689,7 +689,7 @@ public class BoatRacingPlugin extends JavaPlugin {
                 if (from.getBlockX() == to.getBlockX()
                         && from.getBlockY() == to.getBlockY()
                         && from.getBlockZ() == to.getBlockZ()) return;
-                tickPlayerAcrossRaceSessions(e.getPlayer(), to);
+                tickPlayerAcrossRaceSessions(e.getPlayer(), e.getFrom(), to);
             }
 
             @org.bukkit.event.EventHandler
@@ -1220,9 +1220,9 @@ public class BoatRacingPlugin extends JavaPlugin {
                                 ? (args.length >= 4 ? args[3] : "")
                                 : args[2];
                         if (tname.isBlank()) {
-                            p.sendMessage(Text.colorize(prefix + (leavePractice
-                                    ? "&eUsage: /" + label + " race practice leave <track>"
-                                    : msg().get("race.usage.practice", "label", label))));
+                            p.sendMessage(Text.colorize(prefix + msg().get(
+                                    leavePractice ? "race.usage.practice-leave" : "race.usage.practice",
+                                    "label", label)));
                             return true;
                         }
                         if (!trackExistsForRace(tname)) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-not-found", "track", tname))); return true; }
@@ -1230,7 +1230,7 @@ public class BoatRacingPlugin extends JavaPlugin {
                         if (rm == null) { p.sendMessage(Text.colorize(prefix + msg().get("race.track-load-failed", "track", tname))); return true; }
                         if (leavePractice) {
                             if (!rm.leavePractice(p)) {
-                                p.sendMessage(Text.colorize(prefix + "&eNo active practice session was found for &f" + tname + "&e."));
+                                p.sendMessage(Text.colorize(prefix + msg().get("race.practice.not-found", "track", tname)));
                             }
                             return true;
                         }

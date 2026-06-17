@@ -105,6 +105,8 @@ public class RaceManager {
     private final Map<UUID, UUID> raceVehicleByPlayer = new HashMap<>();
     // Participants locked in vehicle during pre-race lights countdown.
     private final Set<UUID> countdownLockedParticipants = new HashSet<>();
+    private SchedulerCompat.TaskHandle countdownLightTask;
+    private SchedulerCompat.TaskHandle countdownCheckTask;
 
     // Scoreboard handling
     private SchedulerCompat.TaskHandle scoreboardTask;
@@ -334,7 +336,7 @@ public class RaceManager {
     }
 
     // Called on player movement to update crossing events
-    public void tickPlayer(Player p, Location to) {
+    public void tickPlayer(Player p, Location from, Location to) {
         if (!running) return;
         RaceState st = states.get(p.getUniqueId());
         if (st == null || st.finished) return;
@@ -347,8 +349,11 @@ public class RaceManager {
         // Checkpoint progression
         if (st.nextCheckpoint < track.getCheckpoints().size()) {
             Region next = track.getCheckpoints().get(st.nextCheckpoint);
-            boolean inside = next.getBox().contains(to.toVector()) && to.getWorld().getName().equals(next.getWorldName());
-            if (inside && !st.wasInCheckpoint) {
+            boolean crossed = from != null && segmentIntersectsBox(from, to, next.getBox())
+                    && to.getWorld().getName().equals(next.getWorldName());
+            if (!crossed) crossed = next.getBox().contains(to.toVector())
+                    && to.getWorld().getName().equals(next.getWorldName());
+            if (crossed && !st.wasInCheckpoint) {
                 st.wasInCheckpoint = true;
                 st.nextCheckpoint++;
                 st.progressOrder = nextProgressOrder();
@@ -375,7 +380,7 @@ public class RaceManager {
                         for (Player r : raceAudience(statesToPlayers())) r.sendMessage(color(msg));
                     }
                 }
-            } else if (!inside && st.wasInCheckpoint) {
+            } else if (!crossed && st.wasInCheckpoint) {
                 st.wasInCheckpoint = false;
             }
         }
@@ -413,6 +418,9 @@ public class RaceManager {
 
         // Finish (or pit as finish) crossing only if all checkpoints collected this lap
         boolean insideFinish = finish.getBox().contains(to.toVector());
+        if (from != null && !insideFinish) {
+            insideFinish = segmentIntersectsBox(from, to, finish.getBox());
+        }
         boolean insideFinishOrPit = insideFinish || insidePit;
         if (insideFinishOrPit && !st.wasInFinish) {
             st.wasInFinish = true;
@@ -620,8 +628,29 @@ public class RaceManager {
         if (online != null) {
             return safeRenderName(online);
         }
-        String name = Optional.ofNullable(Bukkit.getOfflinePlayer(id).getName()).orElse(null);
+        String name = safeOfflineName(Bukkit.getOfflinePlayer(id));
         return (name != null && !name.isEmpty()) ? name : id.toString().substring(0, 8);
+    }
+
+    private String safeOfflineName(org.bukkit.OfflinePlayer target) {
+        if (target == null) return null;
+        Player online = target.getPlayer();
+        if (online != null && online.getName() != null && !online.getName().isBlank()) {
+            return online.getName();
+        }
+        try {
+            java.lang.reflect.Method getPlayerProfile = target.getClass().getMethod("getPlayerProfile");
+            Object profile = getPlayerProfile.invoke(target);
+            if (profile != null) {
+                java.lang.reflect.Method getName = profile.getClass().getMethod("getName");
+                Object rawName = getName.invoke(profile);
+                if (rawName instanceof String profileName && !profileName.isBlank()) {
+                    return profileName;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
     }
 
     private long timeFor(RaceState s) {
@@ -1076,7 +1105,8 @@ public class RaceManager {
         if (ghostBoat == null) return;
         if (Bukkit.getScoreboardManager() == null) return;
 
-        String teamName = "brghost" + ghostBoat.getUniqueId().toString().replace("-", "").substring(0, 9);
+        String uuidStr = ghostBoat.getUniqueId().toString().replace("-", "");
+        String teamName = "brghost" + uuidStr.substring(0, Math.min(9, uuidStr.length()));
         org.bukkit.scoreboard.Team team = Bukkit.getScoreboardManager().getMainScoreboard().getTeam(teamName);
         if (team == null) {
             try {
@@ -1378,7 +1408,11 @@ public class RaceManager {
 
         cleanupRaceVehicleForPlayer(id);
         sendParticipantToLobbyAfterRace(id, p);
-        checkAllFinished();
+        if (practiceMode) {
+            stopRace(false);
+        } else {
+            checkAllFinished();
+        }
     }
 
     public boolean leavePractice(Player player) {
@@ -2002,9 +2036,9 @@ public class RaceManager {
     final SchedulerCompat.TaskHandle[] checkTaskRef = new SchedulerCompat.TaskHandle[1];
 
         // False start checker (every 2 ticks) until GO
-    if (enableFalseStartPenalty) {
-            checkTaskRef[0] = SchedulerCompat.runTimer(plugin, () -> {
-                if (idx[0] >= ls.size()) return; // stop after GO
+     if (enableFalseStartPenalty) {
+            this.countdownCheckTask = checkTaskRef[0] = SchedulerCompat.runTimer(plugin, () -> {
+                if (idx[0] >= ls.size()) return;
                 for (Player p : participants) {
                     if (penalized.contains(p.getUniqueId()) || !p.isOnline()) continue;
                     Location origin = origins.get(p.getUniqueId());
@@ -2029,7 +2063,7 @@ public class RaceManager {
         }
 
         // Lights countdown (1 per second)
-        taskRef[0] = SchedulerCompat.runTimer(plugin, () -> {
+        this.countdownLightTask = taskRef[0] = SchedulerCompat.runTimer(plugin, () -> {
             if (idx[0] >= ls.size()) {
                 if (taskRef[0] != null) taskRef[0].cancel();
                 // Keep false-start checker running until actual GO
@@ -2080,6 +2114,8 @@ public class RaceManager {
     }
 
     private void clearCountdownLock() {
+        if (countdownLightTask != null) { try { countdownLightTask.cancel(); } catch (Exception ignored) {} countdownLightTask = null; }
+        if (countdownCheckTask != null) { try { countdownCheckTask.cancel(); } catch (Exception ignored) {} countdownCheckTask = null; }
         countdownLockedParticipants.clear();
     }
 
@@ -2143,9 +2179,23 @@ public class RaceManager {
     } catch (Exception ignored) { BoatRacingPlugin.getInstance().getLogger().finer("setupPlayerBoard failed: " + ignored.getMessage()); }
     }
 
+    private int simpleScoreRefixTickCounter = 39;
+
     private void startScoreboard() {
         if (scoreboardTask != null) return;
         scoreboardTask = SchedulerCompat.runTimer(plugin, () -> {
+            // Periodically re-hide SimpleScore to prevent it from reclaiming the sidebar
+            simpleScoreRefixTickCounter++;
+            if (simpleScoreRefixTickCounter >= 40) {
+                simpleScoreRefixTickCounter = 0;
+                for (UUID id : new ArrayList<>(simpleScoreHiddenByBoatRacing)) {
+                    Player p = Bukkit.getPlayer(id);
+                    if (p != null && p.isOnline()) {
+                        trySimpleScoreHide(p);
+                    }
+                }
+            }
+
             // Build global ordering once per tick
             List<Map.Entry<UUID, RaceState>> ordered = getOrderedRaceEntries();
 
@@ -2188,7 +2238,8 @@ public class RaceManager {
                         if (online != null) {
                             baseName = safeRenderName(online);
                         } else {
-                            baseName = Optional.ofNullable(Bukkit.getOfflinePlayer(pid).getName()).orElse(pid.toString().substring(0, 8));
+                            baseName = safeOfflineName(Bukkit.getOfflinePlayer(pid));
+                            if (baseName == null) baseName = pid.toString().substring(0, 8);
                         }
                         if (baseName == null) baseName = pid.toString().substring(0, 8);
                         String shown = baseName.length() > 12 ? baseName.substring(0, 12) + "..." : baseName;
@@ -2360,6 +2411,7 @@ public class RaceManager {
     }
 
     private void stopScoreboard() {
+        simpleScoreRefixTickCounter = 0;
         if (scoreboardTask != null) {
             try { scoreboardTask.cancel(); } catch (Exception ignored) { plugin.getLogger().finer("Failed to cancel scoreboard task: " + ignored.getMessage()); }
             scoreboardTask = null;
@@ -2538,5 +2590,49 @@ public class RaceManager {
             if (p != null && p.isOnline()) set.add(p);
         }
         return set;
+    }
+
+    private static boolean segmentIntersectsBox(Location from, Location to, org.bukkit.util.BoundingBox box) {
+        double dx = to.getX() - from.getX();
+        double dy = to.getY() - from.getY();
+        double dz = to.getZ() - from.getZ();
+
+        double tMin = 0.0;
+        double tMax = 1.0;
+
+        if (Math.abs(dx) < 1e-10) {
+            if (from.getX() < box.getMinX() || from.getX() > box.getMaxX()) return false;
+        } else {
+            double t1 = (box.getMinX() - from.getX()) / dx;
+            double t2 = (box.getMaxX() - from.getX()) / dx;
+            if (t1 > t2) { double tmp = t1; t1 = t2; t2 = tmp; }
+            tMin = Math.max(tMin, t1);
+            tMax = Math.min(tMax, t2);
+            if (tMin > tMax) return false;
+        }
+
+        if (Math.abs(dy) < 1e-10) {
+            if (from.getY() < box.getMinY() || from.getY() > box.getMaxY()) return false;
+        } else {
+            double t1 = (box.getMinY() - from.getY()) / dy;
+            double t2 = (box.getMaxY() - from.getY()) / dy;
+            if (t1 > t2) { double tmp = t1; t1 = t2; t2 = tmp; }
+            tMin = Math.max(tMin, t1);
+            tMax = Math.min(tMax, t2);
+            if (tMin > tMax) return false;
+        }
+
+        if (Math.abs(dz) < 1e-10) {
+            if (from.getZ() < box.getMinZ() || from.getZ() > box.getMaxZ()) return false;
+        } else {
+            double t1 = (box.getMinZ() - from.getZ()) / dz;
+            double t2 = (box.getMaxZ() - from.getZ()) / dz;
+            if (t1 > t2) { double tmp = t1; t1 = t2; t2 = tmp; }
+            tMin = Math.max(tMin, t1);
+            tMax = Math.min(tMax, t2);
+            if (tMin > tMax) return false;
+        }
+
+        return true;
     }
 }
