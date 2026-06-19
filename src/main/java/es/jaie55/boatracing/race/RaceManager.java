@@ -883,6 +883,7 @@ public class RaceManager {
                     restorePreviousScoreboard(p, prev);
                 }
             }
+            p.sendActionBar(net.kyori.adventure.text.Component.empty());
         } catch (Exception ignored) {
             plugin.getLogger().finer("Failed to restore previous scoreboard for " + p.getName() + ": " + ignored.getMessage());
         }
