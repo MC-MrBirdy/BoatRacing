@@ -29,7 +29,7 @@ public class RewardManager {
     }
 
     public boolean isEnabled() {
-        return this.rewardSection.getBoolean("enabled", false);
+        return this.rewardSection != null && this.rewardSection.getBoolean("enabled", false);
     }
 
     public boolean isEnabled(TrackConfig track) {
@@ -50,7 +50,7 @@ public class RewardManager {
      * @param totalLaps total laps in the race
      */
     public void giveRewards(List<Map.Entry<UUID, Long>> results, String trackName, int totalLaps) {
-        if (!isEnabled()) return;
+        if (this.rewardSection == null || !isEnabled()) return;
         ConfigurationSection posSection = this.rewardSection.getConfigurationSection("positions");
         if (posSection == null) return;
         ConfigurationSection defaultReward = posSection.getConfigurationSection("default");
