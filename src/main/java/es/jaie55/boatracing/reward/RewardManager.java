@@ -45,7 +45,7 @@ public class RewardManager {
     public void giveRewards(List<Map.Entry<UUID, Long>> results, String trackName, int totalLaps, TrackConfig track) {
         ConfigurationSection targetSection = (track == null) ? this.rewardSection : track.getRacingConfigurationSection("rewards", this.rewardSection);
         if (targetSection == null || !targetSection.getBoolean("enabled", false)) return;
-        ConfigurationSection posSection = this.rewardSection.getConfigurationSection("positions");
+        ConfigurationSection posSection = targetSection.getConfigurationSection("positions");
         if (posSection == null) return;
         ConfigurationSection defaultReward = posSection.getConfigurationSection("default");
 
