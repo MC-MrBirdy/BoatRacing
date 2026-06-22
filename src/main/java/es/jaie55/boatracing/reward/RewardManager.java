@@ -24,7 +24,6 @@ public class RewardManager {
 
     public RewardManager(BoatRacingPlugin plugin) {
         this.plugin = plugin;
-        this.rewardSection = plugin.getConfig().getConfigurationSection("racing.rewards");
         this.globalRewardSection = plugin.getConfig().getConfigurationSection("racing.rewards");
         this.rewardSection = this.globalRewardSection;
     }
