@@ -18,14 +18,10 @@ import es.jaie55.boatracing.util.Text;
  * Supports per-position commands, messages, and broadcasts with placeholders.
  */
 public class RewardManager {
-    private final BoatRacingPlugin plugin;
-    private final ConfigurationSection globalRewardSection;
-    private ConfigurationSection rewardSection;
+    private final ConfigurationSection rewardSection;
 
     public RewardManager(BoatRacingPlugin plugin) {
-        this.plugin = plugin;
-        this.globalRewardSection = plugin.getConfig().getConfigurationSection("racing.rewards");
-        this.rewardSection = this.globalRewardSection;
+        this.rewardSection = plugin.getConfig().getConfigurationSection("racing.rewards");
     }
 
     public boolean isEnabled() {
@@ -33,13 +29,10 @@ public class RewardManager {
     }
 
     public boolean isEnabled(TrackConfig track) {
-        if (track == null) {
-            this.rewardSection = this.globalRewardSection;
-        } else {
-            // Try to get the reward section from the track, else fall back to the default.
-            this.rewardSection = track.getRacingConfigurationSection("rewards", this.globalRewardSection);
-        }
-        return isEnabled();
+        if (track == null) return isEnabled();
+        // Try to get the reward section from the track, else fall back to the default.
+        ConfigurationSection trackSection = track.getRacingConfigurationSection("rewards", this.rewardSection);
+        return trackSection != null && trackSection.getBoolean("enabled", false);
     }
 
     /**
@@ -49,8 +42,9 @@ public class RewardManager {
      * @param trackName name of the track
      * @param totalLaps total laps in the race
      */
-    public void giveRewards(List<Map.Entry<UUID, Long>> results, String trackName, int totalLaps) {
-        if (this.rewardSection == null || !isEnabled()) return;
+    public void giveRewards(List<Map.Entry<UUID, Long>> results, String trackName, int totalLaps, TrackConfig track) {
+        ConfigurationSection targetSection = (track == null) ? this.rewardSection : track.getRacingConfigurationSection("rewards", this.rewardSection);
+        if (targetSection == null || !targetSection.getBoolean("enabled", false)) return;
         ConfigurationSection posSection = this.rewardSection.getConfigurationSection("positions");
         if (posSection == null) return;
         ConfigurationSection defaultReward = posSection.getConfigurationSection("default");

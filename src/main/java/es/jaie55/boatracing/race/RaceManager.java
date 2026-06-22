@@ -621,7 +621,7 @@ public class RaceManager {
                     for (Map.Entry<UUID, RaceState> e : finishers) {
                         results.add(new AbstractMap.SimpleEntry<>(e.getKey(), timeFor(e.getValue())));
                     }
-                    rm.giveRewards(results, trackName, totalLaps);
+                    rm.giveRewards(results, trackName, totalLaps, track);
                 }
             } catch (Exception ex) {
                 plugin.getLogger().warning("Failed to distribute rewards: " + ex.getMessage());
