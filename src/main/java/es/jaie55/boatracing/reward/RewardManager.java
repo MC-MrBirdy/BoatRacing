@@ -1,13 +1,17 @@
 package es.jaie55.boatracing.reward;
 
-import es.jaie55.boatracing.BoatRacingPlugin;
-import es.jaie55.boatracing.track.TrackConfig;
-import es.jaie55.boatracing.util.Text;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
-import java.util.*;
+import es.jaie55.boatracing.BoatRacingPlugin;
+import es.jaie55.boatracing.track.TrackConfig;
+import es.jaie55.boatracing.util.Text;
 
 /**
  * Manages race rewards configured in config.yml under racing.rewards.
@@ -15,20 +19,28 @@ import java.util.*;
  */
 public class RewardManager {
     private final BoatRacingPlugin plugin;
+    private final ConfigurationSection globalRewardSection;
     private ConfigurationSection rewardSection;
 
     public RewardManager(BoatRacingPlugin plugin) {
         this.plugin = plugin;
         this.rewardSection = plugin.getConfig().getConfigurationSection("racing.rewards");
+        this.globalRewardSection = plugin.getConfig().getConfigurationSection("racing.rewards");
+        this.rewardSection = this.globalRewardSection;
     }
 
     public boolean isEnabled() {
         return this.rewardSection.getBoolean("enabled", false);
     }
 
-    public void parseTrackConfig(TrackConfig track) {
-        // Try to get the reward section from the track, else fall back to the default.
-        this.rewardSection = track.getRacingConfigurationSection("rewards", this.rewardSection);
+    public boolean isEnabled(TrackConfig track) {
+        if (track == null) {
+            this.rewardSection = this.globalRewardSection;
+        } else {
+            // Try to get the reward section from the track, else fall back to the default.
+            this.rewardSection = track.getRacingConfigurationSection("rewards", this.globalRewardSection);
+        }
+        return isEnabled();
     }
 
     /**

@@ -198,6 +198,7 @@ public class RaceManager {
         this.abShowPit = cfg.getBoolean("racing.ui.actionbar.show-pitstops", true);
         // Lobby configuration
         ConfigurationSection trackLobby = track.getRacingConfigurationSection("lobby", cfg.getConfigurationSection("racing.lobby"));
+        if (trackLobby == null) trackLobby = new org.bukkit.configuration.MemoryConfiguration();
         this.lobbyEnabled = trackLobby.getBoolean("enabled", false);
         this.lobbyReturnOnLeave = trackLobby.getBoolean("return-on-leave", true);
         long configuredBackWindowSeconds = Math.max(1L, trackLobby.getLong("back-window-seconds", 180L));
@@ -614,8 +615,7 @@ public class RaceManager {
         if (!practiceMode) {
             try {
                 es.jaie55.boatracing.reward.RewardManager rm = plugin.getRewardManager();
-                rm.parseTrackConfig(track);
-                if (rm != null && rm.isEnabled()) {
+                if (rm != null && rm.isEnabled(track)) {
                     String trackName = getTrackName();
                     List<Map.Entry<UUID, Long>> results = new ArrayList<>();
                     for (Map.Entry<UUID, RaceState> e : finishers) {
@@ -2572,10 +2572,15 @@ public class RaceManager {
     // Number hiding helpers removed by request
 
     private void broadcast(String msg) {
-        String mode = (this.registering || this.broadcastMode == "global") ? "global" : "racers";
+        boolean globalMode = this.registering || "global".equalsIgnoreCase(this.broadcastMode);
         for (Player p : Bukkit.getOnlinePlayers()) {
             // When broadcast is set to racers and the player is not a racer skip.
-            if (mode == "racers" && !states.containsKey(p.getUniqueId())) continue;
+            UUID playerId = p.getUniqueId();
+            if (!globalMode
+                    && !states.containsKey(playerId)
+                    && !countdownLockedParticipants.contains(playerId)) {
+                continue;
+            }
             p.sendMessage(msg);
         }
     }
