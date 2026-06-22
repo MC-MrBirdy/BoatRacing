@@ -865,11 +865,30 @@ public class BoatRacingPlugin extends JavaPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) {
+        // Check for a targeted player (last argument).
+        Player other = null;
+        if (sender.hasPermission("boatracing.admin") && args.length != 0) {
+            String a = args[args.length - 1];
+            if (a.startsWith("-p:")) {
+                String target = a.substring(3);
+                other = org.bukkit.Bukkit.getPlayer(target);
+                // If the player was not found (or is offline)
+                if (other==null) {
+                    sender.sendMessage(Text.colorize(prefix + msg().get("stats.player-not-found", "player", target)));
+                    return true;
+                }
+            }
+        }
+
+        // Allow other senders if there's a targeted player.
+        if (other==null && !(sender instanceof Player)) {
             sender.sendMessage(Text.colorize(prefix + msg().get("general.players-only")));
             return true;
         }
-        Player p = (Player) sender;
+
+        // Set the player to either the sender or target.
+        Player p = (other==null) ? (Player) sender : other;
+
         if (command.getName().equalsIgnoreCase("boatracing")) {
             if (args.length == 0) {
                 p.sendMessage(Text.colorize(prefix + msg().get("race.usage.main", "label", label)));
@@ -1074,12 +1093,10 @@ public class BoatRacingPlugin extends JavaPlugin {
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
                             return true;
                         }
-
-                        Player player = (Player) sender;
-                        RaceManager rm = getRaceManagerForPlayer(player.getUniqueId());
+                        RaceManager rm = getRaceManagerForPlayer(p.getUniqueId());
                         
                         if (rm != null && rm.isRunning()) {
-                            rm.forfeit(player);
+                            rm.forfeit(p);
                         } else {
                             p.sendMessage(Text.colorize(prefix + msg().get("race.registration.not-registered")));
                             p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);

@@ -1,6 +1,7 @@
 package es.jaie55.boatracing.reward;
 
 import es.jaie55.boatracing.BoatRacingPlugin;
+import es.jaie55.boatracing.track.TrackConfig;
 import es.jaie55.boatracing.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -14,13 +15,20 @@ import java.util.*;
  */
 public class RewardManager {
     private final BoatRacingPlugin plugin;
+    private ConfigurationSection rewardSection;
 
     public RewardManager(BoatRacingPlugin plugin) {
         this.plugin = plugin;
+        this.rewardSection = plugin.getConfig().getConfigurationSection("racing.rewards");
     }
 
     public boolean isEnabled() {
-        return plugin.getConfig().getBoolean("racing.rewards.enabled", false);
+        return this.rewardSection.getBoolean("enabled", false);
+    }
+
+    public void parseTrackConfig(TrackConfig track) {
+        // Try to get the reward section from the track, else fall back to the default.
+        this.rewardSection = track.getRacingConfigurationSection("rewards", this.rewardSection);
     }
 
     /**
@@ -32,7 +40,7 @@ public class RewardManager {
      */
     public void giveRewards(List<Map.Entry<UUID, Long>> results, String trackName, int totalLaps) {
         if (!isEnabled()) return;
-        ConfigurationSection posSection = plugin.getConfig().getConfigurationSection("racing.rewards.positions");
+        ConfigurationSection posSection = this.rewardSection.getConfigurationSection("positions");
         if (posSection == null) return;
         ConfigurationSection defaultReward = posSection.getConfigurationSection("default");
 
